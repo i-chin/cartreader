@@ -750,6 +750,9 @@ void getCartInfo_SNES() {
     println_Msg(F("SA1 RAM BATT"));
     romType = SA;
   }
+  else if (romChips == 67) {
+    println_Msg(F("SDD1"));
+  }
   else if (romChips == 69) {
     println_Msg(F("SDD1 BATT"));
   }
