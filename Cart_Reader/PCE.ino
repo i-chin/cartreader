@@ -79,8 +79,8 @@ void pcsMenu(void) {
   // create menu with title and 3 options to choose from
   unsigned char pceDev;
   // Copy menuOptions out of progmem
-  convertPgm(menuOptionspce, 3);
-  pceDev = question_box(F("Select device"), menuOptions, 3, 0);
+  convertPgm(menuOptionspce, 4);
+  pceDev = question_box(F("Select device"), menuOptions, 4, 0);
 
   // wait for user choice to come back from the question box menu
   switch (pceDev)
