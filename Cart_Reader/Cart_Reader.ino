@@ -1816,6 +1816,7 @@ unsigned char questionBox_OLED(const __FlashStringHelper * question, char answer
  *****************************************/
 void resetEEPROM() {
   EEPROM_writeAnything(FOLDER_NUM,   0); // FOLDER #
+  EEPROM_writeAnything(PCE_ADAPTER,  1); // PCE ADAPTER_SWAPT
   EEPROM_writeAnything(NES_MAPPER,   0); // NES MAPPER
   EEPROM_writeAnything(NES_PRG_SIZE, 0); // NES PRG SIZE
   EEPROM_writeAnything(NES_CHR_SIZE, 0); // NES CHR SIZE
