@@ -20,6 +20,7 @@
 #define HUCARD 0
 #define TURBOCHIP 1
 #define HUCARD_NOSWAP 2
+#define TURBOCHIP_NOSWAP 4
 
 #define DETECTION_SIZE 64
 #define CHKSUM_SKIP 0
@@ -53,9 +54,9 @@ uint8_t tennokoe_bank_index = 0;
   Menu
 *****************************************/
 // PCE start menu
-static const char pceMenuItem1[] PROGMEM = "HuCARD (swapped)";
-static const char pceMenuItem2[] PROGMEM = "HuCARD(not swapped)";
-static const char pceMenuItem3[] PROGMEM = "Turbochip";
+static const char pceMenuItem1[] PROGMEM = "HuCARD";
+static const char pceMenuItem2[] PROGMEM = "Turbochip";
+static const char pceMenuItem3[] PROGMEM = "AdapterSetting";
 static const char pceMenuItem4[] PROGMEM = "Reset";
 static const char* const menuOptionspce[] PROGMEM = {pceMenuItem1, pceMenuItem2, pceMenuItem3, pceMenuItem4};
 
@@ -74,13 +75,21 @@ static const char pceTCMenuItem1[] PROGMEM = "Read ROM";
 static const char pceTCMenuItem2[] PROGMEM = "Reset";
 static const char* const menuOptionspceTC[] PROGMEM = {pceTCMenuItem1, pceTCMenuItem2};
 
+// Adapter Setting Menu items
+static const char pceAdapterMenuItem1[] PROGMEM = "Swap Adapter";
+static const char pceAdapterMenuItem2[] PROGMEM = "No Swap Adapter";
+static const char pceAdapterMenuItem3[] PROGMEM = "Reset";
+static const char* const menuOptionsAdapter[] PROGMEM = {pceAdapterMenuItem1, pceAdapterMenuItem2, pceAdapterMenuItem3};
+
 // PCE start menu
 void pcsMenu(void) {
-  // create menu with title and 3 options to choose from
+  byte adapterSwap;
+  EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
+  // create menu with title and 4 options to choose from
   unsigned char pceDev;
   // Copy menuOptions out of progmem
   convertPgm(menuOptionspce, 4);
-  pceDev = question_box(F("Select device"), menuOptions, 4, 0);
+  pceDev = question_box(adapterSwap == 1 ? F("Select Type(ADP:SWAP)") : F("Select Type(NOSWAP)"), menuOptions, 4, 0);
 
   // wait for user choice to come back from the question box menu
   switch (pceDev)
@@ -89,27 +98,33 @@ void pcsMenu(void) {
       //Hucard
       display_Clear();
       display_Update();
-      pce_internal_mode = HUCARD;
+      if(adapterSwap == 1){
+          pce_internal_mode = HUCARD;
+      }else{
+          pce_internal_mode = HUCARD_NOSWAP;
+      }
       setup_cart_PCE();
       mode = mode_PCE;
       break;
 
     case 1:
-      //Hucard not swapped
+      //Turbografx
       display_Clear();
       display_Update();
-      pce_internal_mode = HUCARD_NOSWAP;
+      if(adapterSwap == 1){
+        pce_internal_mode = TURBOCHIP;
+      }else{
+        pce_internal_mode = TURBOCHIP_NOSWAP;
+      }
       setup_cart_PCE();
       mode = mode_PCE;
       break;
 
     case 2:
-      //Turbografx
+      //AdapterSetting
       display_Clear();
       display_Update();
-      pce_internal_mode = TURBOCHIP;
-      setup_cart_PCE();
-      mode = mode_PCE;
+      adapter_Setting();
       break;
 
     case 3:
@@ -230,7 +245,7 @@ uint8_t read_byte_PCE(uint32_t address)
   ret = PINC;
 
   //Swap bit order for PC Engine HuCARD
-  if (pce_internal_mode == HUCARD)
+  if ((pce_internal_mode == HUCARD) || (pce_internal_mode == TURBOCHIP_NOSWAP))
   {
     ret = ((ret & 0x01) << 7) | ((ret & 0x02) << 5) | ((ret & 0x04) << 3) | ((ret & 0x08) << 1) | ((ret & 0x10) >> 1) | ((ret & 0x20) >> 3) | ((ret & 0x40) >> 5) | ((ret & 0x80) >> 7);
   }
@@ -262,7 +277,7 @@ void write_byte_PCE(uint32_t address, uint8_t data)
   __asm__("nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t");
 
   //Swap bit order for PC Engine HuCARD
-  if (pce_internal_mode == HUCARD)
+  if ((pce_internal_mode == HUCARD) || (pce_internal_mode == TURBOCHIP_NOSWAP))
   {
     data = ((data & 0x01) << 7) | ((data & 0x02) << 5) | ((data & 0x04) << 3) | ((data & 0x08) << 1) | ((data & 0x10) >> 1) | ((data & 0x20) >> 3) | ((data & 0x40) >> 5) | ((data & 0x80) >> 7);
   }
@@ -859,6 +874,8 @@ void read_rom_PCE(void)
 void pceMenu() {
   // create menu with title and 7 options to choose from
   unsigned char mainMenu;
+  byte adapterSwap;
+  EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
 
   if (pce_internal_mode == HUCARD || pce_internal_mode == HUCARD_NOSWAP)
   {
@@ -876,8 +893,7 @@ void pceMenu() {
       sprintf(pceCartMenuItem7, "Force ROM size");
     }
     strcpy(menuOptionspceCart[6], pceCartMenuItem7);
-    mainMenu = question_box(F("PCE HuCARD menu"), menuOptionspceCart, 7, 0);
-
+    mainMenu = question_box(adapterSwap == 1 ? F("PCE HuCARD menu(SWAP)") : F("PCE HuCARD menu(NOSWAP)"), menuOptionspceCart, 7, 0);
     // wait for user choice to come back from the question box menu
     switch (mainMenu)
     {
@@ -917,7 +933,7 @@ void pceMenu() {
   {
     // Copy menuOptions out of progmem
     convertPgm(menuOptionspceTC, 2);
-    mainMenu = question_box(F("TG TurboChip menu"), menuOptions, 2, 0);
+    mainMenu = question_box(adapterSwap == 1 ? F("TG TurboChip menu(SWAP)") : F("TG TurboChip menu(NOSWAP)"), menuOptions, 2, 0);
 
     // wait for user choice to come back from the question box menu
     switch (mainMenu)
@@ -939,6 +955,36 @@ void pceMenu() {
   println_Msg(F("Press Button..."));
   display_Update();
   wait();
+}
+
+void adapter_Setting()
+{
+  unsigned char devSelect;
+  byte adapterSwap;
+  EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
+  convertPgm(menuOptionsAdapter, 3);
+  devSelect = question_box(F("ADAPTER TYPE"), menuOptions, 3, 0);
+  switch(devSelect)
+  {
+    case 0:  // Swap Adapter
+      display_Clear();
+      println_Msg(F("Select Swap Adapter"));
+      EEPROM_writeAnything(PCE_ADAPTER, 1);
+      break;
+    case 1:  // No Swap Adapter
+      display_Clear();
+      println_Msg(F("Select NoSwap Adapter"));
+      EEPROM_writeAnything(PCE_ADAPTER, 2);
+      break;
+    case 2:
+      resetArduino();
+      break;
+  }
+  println_Msg(F(""));
+  println_Msg(F("Press Button..."));
+  display_Update();
+  wait();
+  resetArduino();
 }
 
 #endif

@@ -15,10 +15,11 @@
 // EEPROM Index Define
 //******************************************
 #define FOLDER_NUM   0 // FOLDER #
-#define NES_MAPPER   2 // NES MAPPER
-#define NES_PRG_SIZE 3 // NES PRG SIZE
-#define NES_CHR_SIZE 4 // NES CHR SIZE
-#define NES_RAM_SIZE 5 // NES RAM SIZE
+#define PCE_ADAPTER  2 // PCE ADAPTER_SWAPT
+#define NES_MAPPER   3 // NES MAPPER
+#define NES_PRG_SIZE 4 // NES PRG SIZE
+#define NES_CHR_SIZE 5 // NES CHR SIZE
+#define NES_RAM_SIZE 6 // NES RAM SIZE
                        
 //******************************************
 // Hardware Configurations
