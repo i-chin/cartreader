@@ -5,7 +5,7 @@
    an easy to build and easy to modify cartridge dumper.
 
    Date:             15.04.2022
-   Version:          8.3
+   Version:          8.3+
 
    SD lib: https://github.com/greiman/SdFat
    OLED lib: https://github.com/adafruit/Adafruit_SSD1306
@@ -45,7 +45,7 @@
 
 **********************************************************************************/
 
-char ver[5] = "8.3";
+char ver[5] = "8.3+";
 
 /******************************************
    Libraries
@@ -357,8 +357,9 @@ static const char modeItem7[] PROGMEM = "PC Engine/TG16";
 static const char modeItem8[] PROGMEM = "SMS/GG/MIII/SG-1000";
 static const char modeItem9[] PROGMEM = "WonderSwan";
 static const char modeItem10[] PROGMEM = "NeoGeo Pocket";
-static const char modeItem11[] PROGMEM = "About";
-static const char* const modeOptions[] PROGMEM = {modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7, modeItem8, modeItem9, modeItem10, modeItem11};
+static const char modeItem11[] PROGMEM = "Setting Init";
+static const char modeItem12[] PROGMEM = "About";
+static const char* const modeOptions[] PROGMEM = {modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7, modeItem8, modeItem9, modeItem10, modeItem11, modeItem12};
 
 // All included slots
 void mainMenu() {
@@ -378,8 +379,8 @@ void mainMenu() {
     }
     if (currPage == 2) {
       // Copy menuOptions out of progmem
-      convertPgm(modeOptions, 7, 4);
-      modeMenu = question_box(F("OPEN SOURCE CART READER"), menuOptions, 4, 0);
+      convertPgm(modeOptions, 7, 5);
+      modeMenu = question_box(F("OPEN SOURCE CART READER"), menuOptions, 5, 0);
     }
     if (numPages == 0) {
       // Execute choice
@@ -466,6 +467,14 @@ void mainMenu() {
 #endif
 
     case 10:
+      display_Clear();
+      println_Msg(F("Setting Init Ready..."));
+      println_Msg(F("Press Button..."));
+      display_Update();
+      wait();
+      resetEEPROM();
+      resetArduino();
+    case 11:
       aboutScreen();
       break;
   }
@@ -649,7 +658,7 @@ void aboutScreen() {
       display_Update();
       delay(2000);
       foldern = 0;
-      EEPROM_writeAnything(0, foldern);
+      EEPROM_writeAnything(FOLDER_NUM, foldern);
       resetArduino();
     }
 #elif defined(enable_serial)
@@ -709,7 +718,7 @@ void setup() {
   //PORTG |= (1 << 2);
 
   // Read current folder number out of eeprom
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
 
 #ifdef enable_LCD
   display.begin();
@@ -1124,7 +1133,7 @@ byte questionBox_Serial(const __FlashStringHelper* question, char answers[7][20]
       sd.mkdir("IMPORT", true);
 
       // Create and open file on sd card
-      EEPROM_readAnything(0, foldern);
+      EEPROM_readAnything(FOLDER_NUM, foldern);
       sprintf(fileName, "IMPORT/%d.bin", foldern);
       if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
         print_Error(F("Can't create file on SD"), true);
@@ -1144,7 +1153,7 @@ byte questionBox_Serial(const __FlashStringHelper* question, char answers[7][20]
 
       // Write new folder number back to eeprom
       foldern = foldern + 1;
-      EEPROM_writeAnything(0, foldern);
+      EEPROM_writeAnything(FOLDER_NUM, foldern);
 
       print_Msg(F("Imported "));
       print_Msg(fileSize);
@@ -1801,6 +1810,18 @@ unsigned char questionBox_OLED(const __FlashStringHelper * question, char answer
   return choice;
 }
 #endif
+
+/******************************************
+   Eeprom Functions
+ *****************************************/
+void resetEEPROM() {
+  EEPROM_writeAnything(FOLDER_NUM,   0); // FOLDER #
+  EEPROM_writeAnything(NES_MAPPER,   0); // NES MAPPER
+  EEPROM_writeAnything(NES_PRG_SIZE, 0); // NES PRG SIZE
+  EEPROM_writeAnything(NES_CHR_SIZE, 0); // NES CHR SIZE
+  EEPROM_writeAnything(NES_RAM_SIZE, 0); // NES RAM SIZE
+  delay(1000);
+}
 
 /******************************************
   Filebrowser Module

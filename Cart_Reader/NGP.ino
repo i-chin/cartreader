@@ -199,7 +199,7 @@ void readROM_NGP(char *outPathBuf, size_t bufferSize) {
   snprintf(fileName, FILENAME_LENGTH, "%s.ngp", romName);
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   snprintf(folder, sizeof(folder), "NGP/ROM/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -220,7 +220,7 @@ void readROM_NGP(char *outPathBuf, size_t bufferSize) {
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // back to read mode
   dataOut();
@@ -252,7 +252,7 @@ void scanChip_NGP() {
   snprintf(fileName, FILENAME_LENGTH, "%s.txt", romName);
 
   // create a new folder to save report file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   snprintf(folder, sizeof(folder), "NGP/ROM/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -268,7 +268,7 @@ void scanChip_NGP() {
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // write software info to report file
   myFile.println("Game: " + String(romName));

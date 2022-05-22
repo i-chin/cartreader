@@ -274,9 +274,9 @@ void snesMenu() {
         println_Msg(F("This can erase"));
         println_Msg(F("your save games"));
         println_Msg(F(""));
-        println_Msg(F(""));
         println_Msg(F("Press any button to"));
         println_Msg(F("start sram testing"));
+        println_Msg(F(""));
         display_Update();
         wait();
         display_Clear();
@@ -694,10 +694,10 @@ void getCartInfo_SNES() {
     println_Msg(F("Rom header corrupt"));
     println_Msg(F("or missing"));
     println_Msg(F(""));
-    println_Msg(F(""));
     println_Msg(F("Press button for"));
     println_Msg(F("manual configuration"));
     println_Msg(F("or powercycle if SA1"));
+    println_Msg(F(""));
     display_Update();
     wait();
     // Wait() clears errors but in this case we still have an error
@@ -1175,7 +1175,7 @@ boolean compare_checksum() {
   strcat(fileName, ".sfc");
 
   // last used rom folder
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "SNES/ROM/%s/%d", romName, foldern - 1);
 
   char calcsumStr[5];
@@ -1207,7 +1207,7 @@ void readROM_SNES() {
   strcat(fileName, ".sfc");
 
   // create a new folder for the save file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "SNES/ROM/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -1221,7 +1221,7 @@ void readROM_SNES() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -1575,14 +1575,14 @@ void readSRAM () {
   strcat(fileName, ".srm");
 
   // create a new folder for the save file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "SNES/SAVE/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
