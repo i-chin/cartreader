@@ -271,12 +271,12 @@ void gbSmartFlashMenu()
         display_Clear();
         sd.chdir("/");
 
-        EEPROM_readAnything(0, foldern);
+        EEPROM_readAnything(FOLDER_NUM, foldern);
         sprintf(fileName, "GBS%d.bin", foldern);
         sd.mkdir("GB/GBS", true);
         sd.chdir("GB/GBS");
         foldern = foldern + 1;
-        EEPROM_writeAnything(0, foldern);
+        EEPROM_writeAnything(FOLDER_NUM, foldern);
 
         gbSmartReadFlash();
         break;

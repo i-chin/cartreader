@@ -874,7 +874,7 @@ void outputNES() {
 
 void CartStart() {
   sd.chdir();
-  EEPROM_readAnything(0, foldern); // FOLDER #
+  EEPROM_readAnything(FOLDER_NUM, foldern); // FOLDER #
   sprintf(folder, "NES/CART/%d", foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -882,7 +882,7 @@ void CartStart() {
 
 void CartFinish() {
   foldern += 1;
-  EEPROM_writeAnything(0, foldern); // FOLDER #
+  EEPROM_writeAnything(FOLDER_NUM, foldern); // FOLDER #
   sd.chdir();
 }
 
@@ -1175,7 +1175,7 @@ void setMapper() {
 #if defined(enable_OLED)
 chooseMapper:
   // Read stored mapper
-  EEPROM_readAnything(7, newmapper);
+  EEPROM_readAnything(NES_MAPPER, newmapper);
   if (newmapper > 220)
     newmapper = 0;
   // Split into digits
@@ -1404,7 +1404,7 @@ setmapper:
     goto setmapper;
   }
 #endif
-  EEPROM_writeAnything(7, newmapper);
+  EEPROM_writeAnything(NES_MAPPER, newmapper);
   mapper = newmapper;
 }
 
@@ -1529,7 +1529,7 @@ setprg:
   Serial.print(PRG[newprgsize]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(8, newprgsize);
+  EEPROM_writeAnything(NES_PRG_SIZE, newprgsize);
   prgsize = newprgsize;
 }
 
@@ -1639,7 +1639,7 @@ setchr:
   Serial.print(CHR[newchrsize]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(9, newchrsize);
+  EEPROM_writeAnything(NES_CHR_SIZE, newchrsize);
   chrsize = newchrsize;
 }
 
@@ -1882,7 +1882,7 @@ setram:
     Serial.println(F(""));
   }
 #endif
-  EEPROM_writeAnything(10, newramsize);
+  EEPROM_writeAnything(NES_RAM_SIZE, newramsize);
   ramsize = newramsize;
 }
 
@@ -1901,10 +1901,10 @@ void checkMMC6() { // Detect MMC6 Carts - read PRG 0x3E00A ("STARTROPICS")
 }
 
 void checkStatus_NES() {
-  EEPROM_readAnything(7, mapper);
-  EEPROM_readAnything(8, prgsize);
-  EEPROM_readAnything(9, chrsize);
-  EEPROM_readAnything(10, ramsize);
+  EEPROM_readAnything(NES_MAPPER, mapper);
+  EEPROM_readAnything(NES_PRG_SIZE, prgsize);
+  EEPROM_readAnything(NES_CHR_SIZE, chrsize);
+  EEPROM_readAnything(NES_RAM_SIZE, ramsize);
   prg = (int_pow(2, prgsize)) * 16;
   if (chrsize == 0)
     chr = 0; // 0K
@@ -3502,28 +3502,6 @@ void writeRAM() {
 /******************************************
    Eeprom Functions
  *****************************************/
-// EEPROM MAPPING
-// 00-01 FOLDER #
-// 02-05 SNES/GB READER SETTINGS
-// 06 LED - ON/OFF [SNES/GB]
-// 07 MAPPER
-// 08 PRG SIZE
-// 09 CHR SIZE
-// 10 RAM SIZE
-
-void resetEEPROM() {
-  EEPROM_writeAnything(0, 0); // FOLDER #
-  EEPROM_writeAnything(2, 0); // CARTMODE
-  EEPROM_writeAnything(3, 0); // RETRY
-  EEPROM_writeAnything(4, 0); // STATUS
-  EEPROM_writeAnything(5, 0); // UNKNOWNCRC
-  EEPROM_writeAnything(6, 1); // LED (RESET TO ON)
-  EEPROM_writeAnything(7, 0); // MAPPER
-  EEPROM_writeAnything(8, 0); // PRG SIZE
-  EEPROM_writeAnything(9, 0); // CHR SIZE
-  EEPROM_writeAnything(10, 0); // RAM SIZE
-}
-
 void EepromStart_NES() {
   write_prg_byte(0x800D, 0x00); // sda low, scl low
   write_prg_byte(0x800D, 0x60); // sda, scl high

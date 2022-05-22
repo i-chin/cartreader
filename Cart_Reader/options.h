@@ -12,9 +12,14 @@
 # error !!! PLEASE CHOOSE HARDWARE VERSION IN OPTIONS.H !!!
 #endif
 //******************************************
-//
+// EEPROM Index Define
 //******************************************
-
+#define FOLDER_NUM   0 // FOLDER #
+#define NES_MAPPER   2 // NES MAPPER
+#define NES_PRG_SIZE 3 // NES PRG SIZE
+#define NES_CHR_SIZE 4 // NES CHR SIZE
+#define NES_RAM_SIZE 5 // NES RAM SIZE
+                       
 //******************************************
 // Hardware Configurations
 //******************************************

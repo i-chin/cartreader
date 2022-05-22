@@ -299,14 +299,14 @@ void readROM_GBM(word numBanks) {
   display_Update();
 
   // Get name, add extension and convert to char array for sd lib
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(fileName, "GBM%d", foldern);
   strcat(fileName, ".bin");
   sd.mkdir("NP", true);
   sd.chdir("NP");
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -685,14 +685,14 @@ void readMapping_GBM() {
   display_Update();
 
   // Get name, add extension and convert to char array for sd lib
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(fileName, "GBM%d", foldern);
   strcat(fileName, ".map");
   sd.mkdir("NP", true);
   sd.chdir("NP");
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {

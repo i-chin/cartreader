@@ -250,14 +250,14 @@ void sfmFlashMenu() {
         numBanks = 64;
 
         // Get name, add extension and convert to char array for sd lib
-        EEPROM_readAnything(0, foldern);
+        EEPROM_readAnything(FOLDER_NUM, foldern);
         sprintf(fileName, "SFM%d", foldern);
         strcat(fileName, ".bin");
         sd.mkdir("NP", true);
         sd.chdir("NP");
         // write new folder number back to eeprom
         foldern = foldern + 1;
-        EEPROM_writeAnything(0, foldern);
+        EEPROM_writeAnything(FOLDER_NUM, foldern);
 
         // Read flash
         readFlash_SFM();
@@ -869,7 +869,7 @@ void readROM_SFM() {
   strcat(fileName, ".sfc");
 
   // create a new folder for the save file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "NP/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -882,7 +882,7 @@ void readROM_SFM() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -1361,7 +1361,7 @@ void readMapping() {
   controlIn_SFM();
 
   // Get name, add extension and convert to char array for sd lib
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(fileName, "NP%d", foldern);
   strcat(fileName, ".MAP");
   sd.mkdir("NP", true);
@@ -1369,7 +1369,7 @@ void readMapping() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
