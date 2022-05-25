@@ -2,7 +2,7 @@
 // !!! CHOOSE HARDWARE VERSION !!!
 //******************************************
 // Remove // in front of the line with your hardware version
-//#define HW4
+#define HW4
 //#define HW3
 //#define HW2
 //#define HW1
@@ -14,13 +14,19 @@
 //******************************************
 // EEPROM Index Define
 //******************************************
-#define FOLDER_NUM   0 // FOLDER #
-#define PCE_ADAPTER  2 // PCE ADAPTER_SWAPT
-#define NES_MAPPER   3 // NES MAPPER
-#define NES_PRG_SIZE 4 // NES PRG SIZE
-#define NES_CHR_SIZE 5 // NES CHR SIZE
-#define NES_RAM_SIZE 6 // NES RAM SIZE
+#define CONFIG_REV_NUM   0 // Config Rev #
+#define FOLDER_NUM       1 // FOLDER #
+#define PCE_ADAPTER      3 // PCE ADAPTER_SWAPT
+#define NES_MAPPER      10 // NES MAPPER
+#define NES_PRG_SIZE    11 // NES PRG SIZE
+#define NES_CHR_SIZE    12 // NES CHR SIZE
+#define NES_RAM_SIZE    13 // NES RAM SIZE
                        
+//******************************************
+// Config Revision
+//******************************************
+#define ConfigRev 1
+
 //******************************************
 // Hardware Configurations
 //******************************************
