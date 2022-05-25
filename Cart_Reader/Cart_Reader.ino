@@ -623,13 +623,18 @@ void addonsMenu() {
 *****************************************/
 // Info Screen
 void aboutScreen() {
+  char buf[4] = "";
+  byte configRev = 0;
+  EEPROM_readAnything(CONFIG_REV_NUM, configRev);
+  sprintf(buf,"%d",configRev);
   display_Clear();
   println_Msg(F("Cartridge Reader"));
   println_Msg(F("github.com/sanni"));
   print_Msg(F("2022 Version "));
   println_Msg(ver);
   println_Msg(F(""));
-  println_Msg(F(""));
+  print_Msg(F("   Config Rev:"));
+  println_Msg(buf);
   println_Msg(F(""));
   println_Msg(F(""));
   println_Msg(F("Press Button"));
@@ -716,6 +721,14 @@ void setup() {
   // Activate Internal Pullup Resistors
   //PORTD |= (1 << 7);
   //PORTG |= (1 << 2);
+
+  byte configRev = 0;
+  EEPROM_readAnything(CONFIG_REV_NUM, configRev);
+  if(configRev != ConfigRev)
+  {
+    resetEEPROM();
+  }
+
 
   // Read current folder number out of eeprom
   EEPROM_readAnything(FOLDER_NUM, foldern);
@@ -1815,12 +1828,13 @@ unsigned char questionBox_OLED(const __FlashStringHelper * question, char answer
    Eeprom Functions
  *****************************************/
 void resetEEPROM() {
-  EEPROM_writeAnything(FOLDER_NUM,   0); // FOLDER #
-  EEPROM_writeAnything(PCE_ADAPTER,  1); // PCE ADAPTER_SWAPT
-  EEPROM_writeAnything(NES_MAPPER,   0); // NES MAPPER
-  EEPROM_writeAnything(NES_PRG_SIZE, 0); // NES PRG SIZE
-  EEPROM_writeAnything(NES_CHR_SIZE, 0); // NES CHR SIZE
-  EEPROM_writeAnything(NES_RAM_SIZE, 0); // NES RAM SIZE
+  EEPROM_writeAnything(CONFIG_REV_NUM, (byte)ConfigRev); // Config Rev. #
+  EEPROM_writeAnything(FOLDER_NUM,     (int)0); // FOLDER #
+  EEPROM_writeAnything(PCE_ADAPTER,    (byte)1); // PCE ADAPTER_SWAPT
+  EEPROM_writeAnything(NES_MAPPER,     (byte)0); // NES MAPPER
+  EEPROM_writeAnything(NES_PRG_SIZE,   (byte)0); // NES PRG SIZE
+  EEPROM_writeAnything(NES_CHR_SIZE,   (byte)0); // NES CHR SIZE
+  EEPROM_writeAnything(NES_RAM_SIZE,   (byte)0); // NES RAM SIZE
   delay(1000);
 }
 
