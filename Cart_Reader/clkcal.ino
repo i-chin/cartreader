@@ -4,8 +4,6 @@
 
 #ifdef clockgen_calibration
 #include <FreqCount.h>
-#include "snes_clk.h"
-#include "SdFat.h"
 
 /******************************************
    Variables
@@ -201,14 +199,8 @@ void savetofile() {
   display_Update();
   delay(2000);
 
-  if (!myFile.open("/snes_clk.txt", O_WRITE | O_CREAT | O_TRUNC)) {
-    print_Error(F("SD Error"), true);
-  }
-  // Write calibration factor to file
-  myFile.print(cal_factor);
+  EEPROM_writeAnything(CLK_GEN_OFFSET, cal_factor);
 
-  // Close the file:
-  myFile.close();
   println_Msg(F("Done"));
   display_Update();
   delay(1000);

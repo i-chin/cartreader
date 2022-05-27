@@ -17,6 +17,7 @@
 #define CONFIG_REV_NUM   0 // Config Rev #
 #define FOLDER_NUM       1 // FOLDER #
 #define PCE_ADAPTER      3 // PCE ADAPTER_SWAPT
+#define CLK_GEN_OFFSET   4 // CLK GEN ONNSET
 #define NES_MAPPER      10 // NES MAPPER
 #define NES_PRG_SIZE    11 // NES PRG SIZE
 #define NES_CHR_SIZE    12 // NES CHR SIZE

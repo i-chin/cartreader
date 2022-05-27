@@ -4,7 +4,6 @@
 
 #include "options.h"
 #ifdef enable_SNES
-#include "snes_clk.h"
 
 /******************************************
   Defines
