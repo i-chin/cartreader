@@ -357,9 +357,8 @@ static const char modeItem7[] PROGMEM = "PC Engine/TG16";
 static const char modeItem8[] PROGMEM = "SMS/GG/MIII/SG-1000";
 static const char modeItem9[] PROGMEM = "WonderSwan";
 static const char modeItem10[] PROGMEM = "NeoGeo Pocket";
-static const char modeItem11[] PROGMEM = "Setting Init";
-static const char modeItem12[] PROGMEM = "About";
-static const char* const modeOptions[] PROGMEM = {modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7, modeItem8, modeItem9, modeItem10, modeItem11, modeItem12};
+static const char modeItem11[] PROGMEM = "About";
+static const char* const modeOptions[] PROGMEM = {modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7, modeItem8, modeItem9, modeItem10, modeItem11};
 
 // All included slots
 void mainMenu() {
@@ -379,8 +378,8 @@ void mainMenu() {
     }
     if (currPage == 2) {
       // Copy menuOptions out of progmem
-      convertPgm(modeOptions, 7, 5);
-      modeMenu = question_box(F("OPEN SOURCE CART READER"), menuOptions, 5, 0);
+      convertPgm(modeOptions, 7, 4);
+      modeMenu = question_box(F("OPEN SOURCE CART READER"), menuOptions, 4, 0);
     }
     if (numPages == 0) {
       // Execute choice
@@ -467,14 +466,6 @@ void mainMenu() {
 #endif
 
     case 10:
-      display_Clear();
-      println_Msg(F("Setting Init Ready..."));
-      println_Msg(F("Press Button..."));
-      display_Update();
-      wait();
-      resetEEPROM();
-      resetArduino();
-    case 11:
       aboutScreen();
       break;
   }
@@ -623,19 +614,23 @@ void addonsMenu() {
 *****************************************/
 // Info Screen
 void aboutScreen() {
-  char buf[4] = "";
   byte configRev = 0;
+  int32_t cal_offset = 0;
+  char buf[12];
   EEPROM_readAnything(CONFIG_REV_NUM, configRev);
-  sprintf(buf,"%d",configRev);
+  EEPROM_readAnything(CLK_GEN_OFFSET, cal_offset);
   display_Clear();
   println_Msg(F("Cartridge Reader"));
   println_Msg(F("github.com/sanni"));
   print_Msg(F("2022 Version "));
   println_Msg(ver);
   println_Msg(F(""));
-  print_Msg(F("   Config Rev:"));
+  print_Msg(F(" Config Rev:"));
+  sprintf(buf,"%d",configRev);
   println_Msg(buf);
-  println_Msg(F(""));
+  print_Msg(F(" ClkGenOffset:"));
+  sprintf(buf,"%ld",cal_offset);
+  println_Msg(buf);
   println_Msg(F(""));
   println_Msg(F("Press Button"));
   display_Update();
@@ -1829,12 +1824,13 @@ unsigned char questionBox_OLED(const __FlashStringHelper * question, char answer
  *****************************************/
 void resetEEPROM() {
   EEPROM_writeAnything(CONFIG_REV_NUM, (byte)ConfigRev); // Config Rev. #
-  EEPROM_writeAnything(FOLDER_NUM,     (int)0); // FOLDER #
-  EEPROM_writeAnything(PCE_ADAPTER,    (byte)1); // PCE ADAPTER_SWAPT
-  EEPROM_writeAnything(NES_MAPPER,     (byte)0); // NES MAPPER
-  EEPROM_writeAnything(NES_PRG_SIZE,   (byte)0); // NES PRG SIZE
-  EEPROM_writeAnything(NES_CHR_SIZE,   (byte)0); // NES CHR SIZE
-  EEPROM_writeAnything(NES_RAM_SIZE,   (byte)0); // NES RAM SIZE
+  EEPROM_writeAnything(FOLDER_NUM,     (int)0);     // FOLDER #
+  EEPROM_writeAnything(PCE_ADAPTER,    (byte)1);    // PCE ADAPTER_SWAPT
+  EEPROM_writeAnything(CLK_GEN_OFFSET, (int32_t)0); // CLK GEE OFFSET
+  EEPROM_writeAnything(NES_MAPPER,     (byte)0);    // NES MAPPER
+  EEPROM_writeAnything(NES_PRG_SIZE,   (byte)0);    // NES PRG SIZE
+  EEPROM_writeAnything(NES_CHR_SIZE,   (byte)0);    // NES CHR SIZE
+  EEPROM_writeAnything(NES_RAM_SIZE,   (byte)0);    // NES RAM SIZE
   delay(1000);
 }
 

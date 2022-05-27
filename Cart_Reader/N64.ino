@@ -4,7 +4,6 @@
 
 #include "options.h"
 #ifdef enable_N64
-#include "snes_clk.h"
 
 // Include Cart_Reader.ino to allow for calling istablished functions
 #ifdef RTC_installed
