@@ -196,7 +196,7 @@ void n64ControllerMenu() {
       display_Update();
       readMPK();
       println_Msg(F(""));
-      println_Msg(F("Press Button."));
+      println_Msg(F("Press Button..."));
       display_Update();
       wait();
       break;
@@ -214,7 +214,7 @@ void n64ControllerMenu() {
       writeMPK();
       verifyMPK();
       println_Msg(F(""));
-      println_Msg(F("Press Button."));
+      println_Msg(F("Press Button..."));
       display_Update();
       wait();
       break;
@@ -3770,7 +3770,7 @@ void flashRepro_N64() {
     println_Msg(F("Repro Cartridge."));
     println_Msg(F("Attention: Use 3.3V!"));
     println_Msg("");
-    println_Msg(F("Press Button"));
+    println_Msg(F("Press Button..."));
     display_Update();
     wait();
   }
@@ -4741,7 +4741,7 @@ void flashGameshark_N64() {
     println_Msg(F("Gameshark cartridge"));
     println_Msg(F("Attention: Use 3.3V!"));
     println_Msg(F("Power OFF if Unsure!"));
-    println_Msg(F("Press Button"));
+    println_Msg(F("Press Button..."));
     display_Update();
     wait();
 
