@@ -4,7 +4,7 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             12.06.2022
+   Date:             16.06.2022
    Version:          8.5 BETA
 
    SD lib: https://github.com/greiman/SdFat
@@ -308,8 +308,12 @@ void(*resetArduino) (void) = 0;
 // Progressbar
 void draw_progressbar(uint32_t processedsize, uint32_t totalsize);
 
+// used by MD and NES modules
+byte eepbit[8];
+byte eeptemp;
+
 //******************************************
-// Data used by multiple modules
+// CRC32
 //******************************************
 // CRC32 lookup table // 256 entries
 static const uint32_t crc_32_tab[] PROGMEM = { /* CRC polynomial 0xedb88320 */
@@ -358,9 +362,89 @@ static const uint32_t crc_32_tab[] PROGMEM = { /* CRC polynomial 0xedb88320 */
   0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-// used by MD and NES modules
-byte eepbit[8];
-byte eeptemp;
+inline uint32_t updateCRC(uint8_t ch, uint32_t crc) {
+  uint32_t idx = ((crc) ^ (ch)) & 0xff;
+  uint32_t tab_value = pgm_read_dword(crc_32_tab + idx);
+  return tab_value ^ ((crc) >> 8);
+}
+
+// Calculate rom's CRC32 from SD
+uint32_t calculateCRC(char* fileName, char* folder) {
+  if (myFile.open(fileName, O_READ)) {
+    uint32_t oldcrc32 = 0xFFFFFFFF;
+
+    for (unsigned long currByte = 0; currByte < (myFile.fileSize() / 512); currByte++) {
+      myFile.read(sdBuffer, 512);
+      for (int c = 0; c < 512; c++) {
+        oldcrc32 = updateCRC(sdBuffer[c], oldcrc32);
+      }
+    }
+    // Close the file:
+    myFile.close();
+    return ~oldcrc32;
+  }
+  else {
+    print_Error(F("File not found"), true);
+  }
+}
+
+//******************************************
+// no-intro database
+//******************************************
+void compareCRC(char* database) {
+#ifdef no-intro
+  // Calculate CRC32
+  char crcStr[9];
+  sprintf(crcStr, "%08lX", calculateCRC(fileName, folder));
+  // Print checksum
+  print_Msg(F("CRC32: "));
+  print_Msg(crcStr);
+
+  //Search for CRC32 in file
+  char gamename[100];
+  char crc_search[9];
+
+  //go to root
+  sd.chdir();
+  if (myFile.open(database, O_READ)) {
+    //Search for same CRC in list
+    while (myFile.available()) {
+      //Read 2 lines (game name and CRC)
+      get_line(gamename, &myFile, 96);
+      get_line(crc_search, &myFile, 9);
+      skip_line(&myFile); //Skip every 3rd line
+
+      //if checksum search successful, rename the file and end search
+      if (strcmp(crc_search, crcStr) == 0)
+      {
+        // Close the file:
+        myFile.close();
+
+        print_Msg(F(" -> "));
+        println_Msg(gamename);
+
+        // Rename file to no-intro
+        sd.chdir(folder);
+        if (myFile.open(fileName, O_READ)) {
+          myFile.rename(gamename);
+          // Close the file:
+          myFile.close();
+        }
+        break;
+      }
+    }
+    if (strcmp(crc_search, crcStr) != 0)
+    {
+      println_Msg(F(" -> Not found"));
+    }
+  }
+  else {
+    println_Msg(F(" -> database file not found"));
+  }
+#else
+  println_Msg("");
+#endif
+}
 
 /******************************************
   Main menu optimized for rotary encoder
@@ -652,7 +736,7 @@ void aboutScreen() {
   sprintf(buf,"%ld",cal_offset);
   println_Msg(buf);
   println_Msg(F(""));
-  println_Msg(F("Press Button"));
+  println_Msg(F("Press Button..."));
   display_Update();
 
   while (1) {
@@ -809,6 +893,22 @@ void setup() {
   if (!myLog.open("OSCR_LOG.txt", O_RDWR | O_CREAT | O_APPEND)) {
     print_Error(F("SD Error"), true);
   }
+  println_Msg(F(""));
+#if defined(HW1)
+  print_Msg(F("OSCR HW1"));
+#elif defined(HW2)
+  print_Msg(F("OSCR HW2"));
+#elif defined(HW3)
+  print_Msg(F("OSCR HW3"));
+#elif defined(HW4)
+  print_Msg(F("OSCR HW4"));
+#elif defined(HW5)
+  print_Msg(F("OSCR HW5"));
+#elif defined(SERIAL_MONITOR)
+  print_Msg(F("OSCR Serial"));
+#endif
+  print_Msg(F(" V"));
+  println_Msg(ver);
 #endif
 
 #ifdef RTC_installed
@@ -908,7 +1008,87 @@ void wait() {
 #endif
 }
 
-void print_Msg(const __FlashStringHelper *string) {
+#ifdef global_log
+// Copies the last part of the current log file to the dump folder
+void save_log() {
+  // Last found position
+  uint64_t lastPosition = 0;
+
+  // Go to first line of log
+  myLog.rewind();
+
+  // Find location of OSCR string to determine start of current log
+  char tempStr[5];
+  while (myLog.available()) {
+    // Read first 4 chars of line
+    tempStr[0] = myLog.read();
+
+    // Check if it's an empty line
+    if (tempStr[0] == '\r') {
+      // skip \n
+      myLog.read();
+    }
+    else {
+      // Read more lines
+      tempStr[1] = myLog.read();
+      tempStr[2] = myLog.read();
+      tempStr[3] = myLog.read();
+      tempStr[4] = '\0';
+      char str_buf;
+
+      // Skip rest of line
+      while (myLog.available()) {
+        str_buf = myLog.read();
+
+        //break out of loop if CRLF is found
+        if (str_buf == '\r')
+        {
+          myLog.read(); //dispose \n because \r\n
+          break;
+        }
+      }
+
+      // If string is OSCR remember position in file and test if it's the lastest log entry
+      if (strncmp(tempStr, "OSCR", 4) == 0) {
+        // Check if current position is newer as old position
+        if (myLog.position() > lastPosition) {
+          lastPosition = myLog.position();
+        }
+      }
+    }
+  }
+  // Go to position of last log entry
+  myLog.seek(lastPosition - 16);
+
+  // Copy log from there to dump dir
+  sd.chdir(folder);
+  strcpy(fileName, romName);
+  strcat(fileName, ".txt");
+  if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
+    print_Error(F("SD Error"), true);
+  }
+
+  while (myLog.available()) {
+    if (myLog.available() >= 512) {
+      for (word i = 0; i < 512; i++) {
+        sdBuffer[i] = myLog.read();
+      }
+      myFile.write(sdBuffer, 512);
+    }
+    else {
+      word i = 0;
+      for (i = 0; i < myLog.available(); i++) {
+        sdBuffer[i] = myLog.read();
+      }
+      myFile.write(sdBuffer, i);
+    }
+  }
+  // Close the file:
+  myFile.close();
+}
+#endif
+
+void print_Msg(const __FlashStringHelper * string) {
 #ifdef enable_LCD
   display.print(string);
 #endif
@@ -1083,7 +1263,7 @@ void println_Msg(const char myString[]) {
 #endif
 }
 
-void println_Msg(const __FlashStringHelper *string) {
+void println_Msg(const __FlashStringHelper * string) {
 #ifdef enable_LCD
   display.print(string);
   display.setCursor(0, display.ty + 8);
@@ -1095,7 +1275,11 @@ void println_Msg(const __FlashStringHelper *string) {
   Serial.println(string);
 #endif
 #ifdef global_log
-  myLog.println(string);
+  char myBuffer[15];
+  strlcpy_P(myBuffer, (char *)string, 15);
+  if ((strncmp(myBuffer, "Press Button...", 14) != 0) && (strncmp(myBuffer, "Select file", 10) != 0)) {
+    myLog.println(string);
+  }
 #endif
 }
 
@@ -1144,7 +1328,7 @@ void display_Clear() {
 #endif
 }
 
-unsigned char question_box(const __FlashStringHelper* question, char answers[7][20], int num_answers, int default_choice) {
+unsigned char question_box(const __FlashStringHelper * question, char answers[7][20], int num_answers, int default_choice) {
 #ifdef enable_LCD
   return questionBox_LCD(question, answers, num_answers, default_choice);
 #endif
@@ -1203,7 +1387,7 @@ void wait_serial() {
     }*/
 }
 
-byte questionBox_Serial(const __FlashStringHelper* question, char answers[7][20], int num_answers, int default_choice) {
+byte questionBox_Serial(const __FlashStringHelper * question, char answers[7][20], int num_answers, int default_choice) {
   // Print menu to serial monitor
   //Serial.println(question);
   Serial.println("");
@@ -1602,6 +1786,13 @@ unsigned char questionBox_LCD(const __FlashStringHelper * question, char answers
 
   // pass on user choice
   setColor_RGB(0, 0, 0);
+
+#ifdef global_log
+  println_Msg("");
+  print_Msg(F("[+] "));
+  println_Msg(answers[choice]);
+#endif
+
   return choice;
 }
 #endif

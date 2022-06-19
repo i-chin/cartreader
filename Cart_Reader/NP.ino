@@ -276,8 +276,7 @@ void sfmFlashMenu() {
       println_Msg(F("This will erase your"));
       println_Msg(F("NP Cartridge."));
       println_Msg("");
-      println_Msg(F("Press Button"));
-      println_Msg(F("to continue"));
+      println_Msg(F("Press Button..."));
       display_Update();
       wait();
 
@@ -395,8 +394,7 @@ void sfmFlashMenu() {
       println_Msg(F("This will erase your"));
       println_Msg(F("NP Cartridge."));
       println_Msg("");
-      println_Msg(F("Press Button"));
-      println_Msg(F("to continue"));
+      println_Msg(F("Press Button..."));
       display_Update();
       wait();
 
@@ -755,7 +753,7 @@ void getCartInfo_SFM() {
   print_Msg(F("Sram: "));
   print_Msg(sramSize);
   println_Msg(F("Kbit"));
-  println_Msg(F("Press Button"));
+  println_Msg(F("Press Button..."));
   display_Update();
   // Wait for user input
   wait();
@@ -1310,7 +1308,7 @@ void printMapping() {
     for (int c = 0; c < 10; c++) {
       itoa (readBank_SFM(0xC0, currByte + c), buffer, 16);
       for (int i = 0; i < 2 - strlen(buffer); i++) {
-        print_Msg("0");
+        print_Msg(F("0"));
       }
       // Now print the significant bits
       print_Msg(buffer);

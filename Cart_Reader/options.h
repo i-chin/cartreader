@@ -75,17 +75,23 @@
 // Use calibration data from snes_clk.txt
 // #define clockgen_calibration
 
-// Write all info to log.txt in root dir
-// #define global_log
+// Write all info to OSCR_LOG.txt in root dir
+#define global_log
 
 // Use Adafruit Clock Generator
 // #define clockgen_installed
 
 //******************************************
-// GB OPTIONS
+// GB, SMS, MD database lookup
 //******************************************
 // Renames ROM if found in database (slow)
-// #define no-intro
+#define no-intro
+
+//******************************************
+// MD OPTIONS
+//******************************************
+// I don't know
+//#define use_md_conf
 
 //******************************************
 // N64 OPTIONS

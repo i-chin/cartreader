@@ -246,6 +246,9 @@ void nesMenu() {
       delay(2000);
       resetROM();
       CartFinish();
+#ifdef global_log
+      save_log();
+#endif
       break;
 
     // Read single chip
@@ -278,7 +281,7 @@ void nesChipMenu() {
       readPRG();
       resetROM();
       println_Msg(F(""));
-      println_Msg(F("Press button"));
+      println_Msg(F("Press Button..."));
       display_Update();
       wait();
       break;
@@ -289,7 +292,7 @@ void nesChipMenu() {
       readCHR();
       resetROM();
       println_Msg(F(""));
-      println_Msg(F("Press button"));
+      println_Msg(F("Press Button..."));
       display_Update();
       wait();
       break;
@@ -300,7 +303,7 @@ void nesChipMenu() {
       readRAM();
       resetROM();
       println_Msg(F(""));
-      println_Msg(F("Press button"));
+      println_Msg(F("Press Button..."));
       display_Update();
       wait();
       break;
@@ -325,7 +328,7 @@ void nesWriteMenu() {
       writeRAM();
       resetROM();
       println_Msg(F(""));
-      println_Msg(F("Press button"));
+      println_Msg(F("Press Button..."));
       display_Update();
       wait();
       break;
@@ -341,7 +344,7 @@ void nesWriteMenu() {
         println_Msg(F("Error:"));
         println_Msg(F("Can't write to this cartridge"));
         println_Msg(F(""));
-        println_Msg(F("Press button"));
+        println_Msg(F("Press Button..."));
         display_Update();
       }
       wait();
@@ -637,12 +640,6 @@ int int_pow(int base, int exp) { // Power for int
 FsFile crcFile;
 char tempCRC[9];
 
-inline uint32_t updateCRC32(uint8_t ch, uint32_t crc) {
-  uint32_t idx = ((crc) ^ (ch)) & 0xff;
-  uint32_t tab_value = pgm_read_dword(crc_32_tab + idx);
-  return tab_value ^ ((crc) >> 8);
-}
-
 uint32_t crc32(FsFile & file, uint32_t &charcnt) {
   uint32_t oldcrc32 = 0xFFFFFFFF;
   charcnt = 0;
@@ -651,7 +648,7 @@ uint32_t crc32(FsFile & file, uint32_t &charcnt) {
     for (int x = 0; x < 512; x++) {
       uint8_t c = sdBuffer[x];
       charcnt++;
-      oldcrc32 = updateCRC32(c, oldcrc32);
+      oldcrc32 = updateCRC(c, oldcrc32);
     }
   }
   return ~oldcrc32;
@@ -665,7 +662,7 @@ uint32_t crc32EEP(FsFile & file, uint32_t &charcnt) {
     for (int x = 0; x < 128; x++) {
       uint8_t c = sdBuffer[x];
       charcnt++;
-      oldcrc32 = updateCRC32(c, oldcrc32);
+      oldcrc32 = updateCRC(c, oldcrc32);
     }
   }
   return ~oldcrc32;
@@ -899,7 +896,7 @@ unsigned char* getNESHeaderForFileInfo(uint32_t prg_size, uint32_t chr_size, uin
   unsigned char* nes20_header;
   int i;
 
-  if (!sdFile.open("/nes20db.txt", FILE_READ)) {
+  if (!sdFile.open("/nes.txt", FILE_READ)) {
     return NULL;
   } else {
     display_Clear();
@@ -1187,7 +1184,7 @@ chooseMapper:
   for (byte digit = 0; digit < 3; digit++) {
     while (1) {
       display_Clear();
-      println_Msg("Select Mapper:");
+      println_Msg(F("Select Mapper:"));
       display.setCursor(23, 20);
       println_Msg(hundreds);
       display.setCursor(43, 20);

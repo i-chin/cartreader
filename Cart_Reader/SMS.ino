@@ -68,6 +68,10 @@ void _smsMenu() {
       // Change working dir to root
       sd.chdir("/");
       readROM_SMS();
+      compareCRC("sms.txt");
+#ifdef global_log
+      save_log();
+#endif
       break;
 
     case 1:
@@ -526,7 +530,7 @@ void readROM_SMS() {
   strcat(fileName, ".SMS");
 
   // create a new folder
-  EEPROM_readAnything(FOLDER_NUM, foldern);
+  EEPROM_readAnything(0, foldern);
   sprintf(folder, "SMS/ROM/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -552,6 +556,11 @@ void readROM_SMS() {
     // cart with no mapper
     bankSize = cartSize;
   }
+
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = (uint32_t)(cartSize);
+  draw_progressbar(0, totalProgressBar);
 
   for (byte currBank = 0x0; currBank < (cartSize / bankSize); currBank++) {
     // Write current 16KB bank to slot 2 register 0xFFFF
@@ -584,6 +593,10 @@ void readROM_SMS() {
       // }
       myFile.write(sdBuffer, 512);
     }
+
+    // update progress bar
+    processedProgressBar += bankSize;
+    draw_progressbar(processedProgressBar, totalProgressBar);
   }
   // Close the file:
   myFile.close();
@@ -596,7 +609,7 @@ void readSRAM_SMS() {
   strcat(fileName, ".SAV");
 
   // create a new folder
-  EEPROM_readAnything(FOLDER_NUM, foldern);
+  EEPROM_readAnything(0, foldern);
   sprintf(folder, "SMS/SAVE/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
