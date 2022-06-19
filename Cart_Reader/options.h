@@ -12,6 +12,7 @@
 #if !(defined(HW1) || defined(HW2) || defined(HW3) || defined(HW4) || defined(HW5) || defined(SERIAL_MONITOR))
 # error !!! PLEASE CHOOSE HARDWARE VERSION IN OPTIONS.H !!!
 #endif
+
 //******************************************
 // EEPROM Index Define
 //******************************************
@@ -28,6 +29,10 @@
 // Config Revision
 //******************************************
 #define ConfigRev 1
+
+//******************************************
+// Advanced Options
+//******************************************
 
 //******************************************
 // Hardware Configurations
@@ -56,6 +61,8 @@
 
 #if defined(SERIAL_MONITOR)
 #define enable_serial
+#define clockgen_installed
+#define fastcrc
 #endif
 
 //******************************************
@@ -82,9 +89,9 @@
 // #define clockgen_installed
 
 //******************************************
-// GB, SMS, MD database lookup
+// GB, SMS, MD, N64 database lookup
 //******************************************
-// Renames ROM if found in database (slow)
+// Renames ROM if found in database
 #define no-intro
 
 //******************************************
