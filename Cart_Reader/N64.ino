@@ -2311,14 +2311,7 @@ void getCartInfo_N64() {
         myFile.seekSet(myFile.curPosition() + 1);
 
         // Read the next ascii character and subtract 48 to convert to decimal
-        cartSize = myFile.read() - 48;
-        // Remove leading 0 for single digit cart sizes
-        if (cartSize != 0) {
-          cartSize = cartSize * 10 +  myFile.read() - 48;
-        }
-        else {
-          cartSize = myFile.read() - 48;
-        }
+        cartSize = (myFile.read() - '0') * 10 + myFile.read() - '0';
 
         // Skip the , in the file
         myFile.seekSet(myFile.curPosition() + 1);
@@ -2332,7 +2325,7 @@ void getCartInfo_N64() {
       // If no match skip to next entry
       else {
         // skip rest of line
-        myFile.seekSet(myFile.curPosition() + 7);
+        skip_line(&myFile);
         // skip third empty line
         skip_line(&myFile);
       }
@@ -2366,6 +2359,7 @@ void idCart() {
   cartID[1] = sdBuffer[0x3C];
   cartID[2] = sdBuffer[0x3D];
   cartID[3] = sdBuffer[0x3E];
+  cartID[4] = '\0';
 
   // Get rom version
   romVersion = sdBuffer[0x3F];
