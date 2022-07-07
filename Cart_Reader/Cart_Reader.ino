@@ -422,6 +422,23 @@ void draw_progressbar(uint32_t processedsize, uint32_t totalsize);
 byte eepbit[8];
 byte eeptemp;
 
+#ifdef no-intro
+// Array to hold iNES header
+byte iNES_HEADER[16];
+//ID 0-3
+//ROM_size 4
+//VROM_size 5
+//ROM_type 6
+//ROM_type2 7
+//ROM_type3 8
+//Upper_ROM_VROM_size 9
+//RAM_size 10
+//VRAM_size 11
+//TV_system 12
+//VS_hardware 13
+//reserved 14, 15
+#endif
+
 //******************************************
 // CRC32
 //******************************************
@@ -599,9 +616,43 @@ boolean compareCRC(char* database, char* crcString, int offset) {
       //if checksum search successful, rename the file and end search
       if (strcmp(crc_search, crcStr) == 0)
       {
+#ifdef enable_NES
+        if (mode == mode_NES) {
+          // Rewind to iNES Header
+          myFile.seekSet(myFile.curPosition() - 36);
+
+          char iNES_STR[33];
+          // Read iNES header
+          get_line(iNES_STR, &myFile, 33);
+
+          // Convert "4E4553" to (0x4E, 0x45, 0x53)
+          byte iNES_BUF[2];
+          for (byte j = 0; j < 16; j++) {
+            sscanf(iNES_STR + j * 2, "%2X", iNES_BUF);
+            iNES_HEADER[j] = iNES_BUF[0];
+          }
+          //Skip CRLF
+          myFile.seekSet(myFile.curPosition() + 4);
+        }
+#endif
+
         // Close the file:
         myFile.close();
 
+        //Write iNES header
+#ifdef enable_NES
+        if (mode == mode_NES) {
+          // Write iNES header
+          sd.chdir(folder);
+          if (!myFile.open(fileName, O_RDWR)) {
+            print_Error(F("SD Error"), true);
+          }
+          for (byte z = 0; z < 16; z++) {
+            myFile.write(iNES_HEADER[z]);
+          }
+          myFile.close();
+        }
+#endif
         print_Msg(F(" -> "));
         println_Msg(gamename);
 
@@ -691,6 +742,7 @@ void mainMenu() {
 
 #ifdef enable_NES
     case 1:
+      mode = mode_NES;
       display_Clear();
       display_Update();
       setup_NES();
@@ -700,7 +752,6 @@ void mainMenu() {
       checkStatus_NES(0);
 #endif
       nesMenu();
-      mode = mode_NES;
       break;
 #endif
 
@@ -850,6 +901,7 @@ void addonsMenu() {
   {
 #ifdef enable_NES
     case 0:
+      mode = mode_NES;
       display_Clear();
       display_Update();
       setup_NES();
@@ -859,7 +911,6 @@ void addonsMenu() {
       checkStatus_NES(0);
 #endif
       nesMenu();
-      mode = mode_NES;
       break;
 #endif
 
@@ -1460,7 +1511,7 @@ void convertPgm(const char* const pgmOptions[], byte numArrays) {
   }
 }
 
-void print_Error(const __FlashStringHelper *errorMessage, boolean forceReset) {
+void print_Error(const __FlashStringHelper * errorMessage, boolean forceReset) {
   errorLvl = 1;
   setColor_RGB(255, 0, 0);
   println_Msg(errorMessage);
