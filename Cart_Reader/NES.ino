@@ -488,7 +488,7 @@ boolean getMapping() {
           }
 
           // Save Mapper
-          EEPROM_writeAnything(7, mapper);
+          EEPROM_writeAnything(NES_MAPPER, mapper);
 
           // PRG size
           if ((iNES_HEADER[9] & 0x0F) != 0x0F) {
@@ -501,7 +501,7 @@ boolean getMapping() {
           }
           if (prgsize != 0)
             prgsize = (int(log(prgsize) / log(2)));
-          EEPROM_writeAnything(8, prgsize);
+          EEPROM_writeAnything(NES_PRG_SIZE, prgsize);
 
           // CHR size
           if ((iNES_HEADER[9] & 0xF0) != 0xF0) {
@@ -513,13 +513,13 @@ boolean getMapping() {
           }
           if (chrsize != 0)
             chrsize = (int(log(chrsize) / log(2)));
-          EEPROM_writeAnything(9, chrsize);
+          EEPROM_writeAnything(NES_CHR_SIZE, chrsize);
 
           // RAM size
           ramsize = ((iNES_HEADER[10] & 0xF0) ? (64 << ((iNES_HEADER[10] & 0xF0) >> 4)) : 0) / 4096; //*4
           if (ramsize != 0)
             ramsize = (int(log(ramsize) / log(2)));
-          EEPROM_writeAnything(10, ramsize);
+          EEPROM_writeAnything(NES_RAM_SIZE, ramsize);
 
 
           // Get name
@@ -574,7 +574,7 @@ void readRom_NES() {
   strcat(fileName, ".nes");
 
   // create a new folder
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "NES/ROM/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -587,7 +587,7 @@ void readRom_NES() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -1025,7 +1025,7 @@ void CartStart() {
 
 void CartFinish() {
   foldern += 1;
-  EEPROM_writeAnything(0, foldern); // FOLDER #
+  EEPROM_writeAnything(FOLDER_NUM, foldern); // FOLDER #
   sd.chdir();
 }
 #endif

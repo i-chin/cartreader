@@ -528,7 +528,7 @@ void readROM_SMS() {
   strcat(fileName, ".SMS");
 
   // create a new folder
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "SMS/ROM/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -607,7 +607,7 @@ void readSRAM_SMS() {
   strcat(fileName, ".SAV");
 
   // create a new folder
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "SMS/SAVE/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);

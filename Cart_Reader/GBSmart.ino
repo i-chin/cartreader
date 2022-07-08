@@ -68,7 +68,7 @@ boolean compare_checksum_GBS() {
   strcat(fileName, ".GB");
 
   // last used rom folder
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "GB/ROM/%s/%d", romName, foldern - 1);
 
   char calcsumStr[5];
