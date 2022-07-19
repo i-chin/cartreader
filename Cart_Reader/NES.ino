@@ -1017,7 +1017,7 @@ void CreateRAMFileInSD() {
 #ifndef no-intro
 void CartStart() {
   sd.chdir();
-  EEPROM_readAnything(0, foldern); // FOLDER #
+  EEPROM_readAnything(FOLDER_NUM, foldern); // FOLDER #
   sprintf(folder, "NES/CART/%d", foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
