@@ -72,11 +72,13 @@ char ver[5] = "9.2A";
 #define NES_PRG_SIZE    11 // NES PRG SIZE
 #define NES_CHR_SIZE    12 // NES CHR SIZE
 #define NES_RAM_SIZE    13 // NES RAM SIZE
-
+#define COL_ROM_SIZE    20 // COLECOVISION ROM SIZE
+#define INTV_MAPPER     30 // INTELLIVISION MAPPER
+#define INTV_ROM_SIZE   31 // INTELLIVISION ROM SIZE
 //******************************************
 // Config Revision
 //******************************************
-#define ConfigRev 1
+#define ConfigRev 2
 
 //******************************************
 // !!! CHOOSE HARDWARE VERSION !!!
@@ -2816,6 +2818,10 @@ void resetEEPROM() {
   EEPROM_writeAnything(NES_PRG_SIZE,   (byte)0);    // NES PRG SIZE
   EEPROM_writeAnything(NES_CHR_SIZE,   (byte)0);    // NES CHR SIZE
   EEPROM_writeAnything(NES_RAM_SIZE,   (byte)0);    // NES RAM SIZE
+  EEPROM_writeAnything(COL_ROM_SIZE,   (byte)0);    // COLECOVISION ROM SIZE
+  EEPROM_writeAnything(INTV_MAPPER,    (byte)0);    // INTELLIVISION MAPPER
+  EEPROM_writeAnything(INTV_ROM_SIZE,  (byte)0);    // INTELLIVISION ROM SIZE
+
   delay(1000);
 }
 

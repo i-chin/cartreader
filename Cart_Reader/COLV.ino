@@ -175,7 +175,7 @@ void readROM_COL()
   strcat(fileName, ".col");
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   //  sprintf(folder, "COL/ROM/%s/%d", romName, foldern);
   sprintf(folder, "COL/ROM/%d", foldern);
   sd.mkdir(folder, true);
@@ -193,7 +193,7 @@ void readROM_COL()
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // RESET ALL CS PINS HIGH (DISABLE)
   PORTH |= (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6);
@@ -337,16 +337,16 @@ setrom:
   Serial.print(COL[newcolsize]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(8, newcolsize);
+  EEPROM_writeAnything(COL_ROM_SIZE, newcolsize);
   colsize = newcolsize;
 }
 
 void checkStatus_COL()
 {
-  EEPROM_readAnything(8, colsize);
+  EEPROM_readAnything(COL_ROM_SIZE, colsize);
   if (colsize > 5) {
     colsize = 0;
-    EEPROM_writeAnything(8, colsize);
+    EEPROM_writeAnything(COL_ROM_SIZE, colsize);
   }
 
 #if (defined(enable_OLED) || defined(enable_LCD))
@@ -521,7 +521,7 @@ bool getCartListInfo_COL()
         }
         if (b == 3) { // Long Press - Select Cart (hold)
           newcolsize = strtol(colrr, NULL, 10);
-          EEPROM_writeAnything(8, newcolsize);
+          EEPROM_writeAnything(COL_ROM_SIZE, newcolsize);
           cartselected = 1; // SELECTION MADE
 #if (defined(enable_OLED) || defined(enable_LCD))
           println_Msg(F("SELECTION MADE"));

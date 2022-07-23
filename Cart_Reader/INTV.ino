@@ -307,7 +307,7 @@ void readROM_INTV()
   strcat(fileName, ".int");
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "INTV/ROM/%d", foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -324,7 +324,7 @@ void readROM_INTV()
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   switch (intvmapper) {
     case 0: //default mattel up to 32K (8K/16K/24K/32K)
@@ -598,7 +598,7 @@ setmapper:
     goto setmapper;
   }
 #endif
-  EEPROM_writeAnything(7, newintvmapper);
+  EEPROM_writeAnything(INTV_MAPPER, newintvmapper);
   intvmapper = newintvmapper;
 }
 
@@ -719,21 +719,21 @@ setrom:
   Serial.print(INTV[newintvsize]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(8, newintvsize);
+  EEPROM_writeAnything(INTV_ROM_SIZE, newintvsize);
   intvsize = newintvsize;
 }
 
 void checkStatus_INTV()
 {
-  EEPROM_readAnything(7, intvmapper);
-  EEPROM_readAnything(8, intvsize);
+  EEPROM_readAnything(INTV_MAPPER, intvmapper);
+  EEPROM_readAnything(INTV_ROM_SIZE, intvsize);
   if (intvmapper > 9) {
     intvmapper = 0;
-    EEPROM_writeAnything(7, intvmapper);
+    EEPROM_writeAnything(INTV_MAPPER, intvmapper);
   }
   if (intvsize > 4) {
     intvsize = 0;
-    EEPROM_writeAnything(8, intvsize);
+    EEPROM_writeAnything(INTV_ROM_SIZE, intvsize);
   }
 
 #if (defined(enable_OLED) || defined(enable_LCD))
@@ -919,8 +919,8 @@ bool getCartListInfo_INTV()
         if (b == 3) { // Long Press - Select Cart (hold)
           newintvmapper = strtol(intvmm, NULL, 10);
           newintvsize = strtol(intvrr, NULL, 10);
-          EEPROM_writeAnything(7, newintvmapper);
-          EEPROM_writeAnything(8, newintvsize);
+          EEPROM_writeAnything(INTV_MAPPER, newintvmapper);
+          EEPROM_writeAnything(INTV_ROM_SIZE, newintvsize);
           cartselected = 1; // SELECTION MADE
 #if (defined(enable_OLED) || defined(enable_LCD))
           println_Msg(F("SELECTION MADE"));

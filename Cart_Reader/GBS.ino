@@ -808,4 +808,3 @@ uint8_t gbSmartGetResizeParam(uint8_t rom_size, uint8_t sram_size)
 }
 
 #endif
->>>>>>> f5ff7ea902ff2d141979c50f400e444c9147ee1f:Cart_Reader/GBS.ino
