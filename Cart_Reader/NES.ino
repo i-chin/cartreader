@@ -856,10 +856,10 @@ void selectMapping() {
           }
 
           // Save Mapper
-          EEPROM_writeAnything(7, mapper);
-          EEPROM_writeAnything(8, prgsize);
-          EEPROM_writeAnything(9, chrsize);
-          EEPROM_writeAnything(10, ramsize);
+          EEPROM_writeAnything(NES_MAPPER, mapper);
+          EEPROM_writeAnything(NES_PRG_SIZE, prgsize);
+          EEPROM_writeAnything(NES_CHR_SIZE, chrsize);
+          EEPROM_writeAnything(NES_RAM_SIZE, ramsize);
           myFile.close();
           break;
         }
@@ -936,7 +936,7 @@ void readRaw_NES() {
   strcat(fileName, ".bin");
 
   // create a new folder
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "NES/ROM/%s/%d", romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -949,7 +949,7 @@ void readRaw_NES() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
