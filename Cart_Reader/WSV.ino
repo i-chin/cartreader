@@ -193,7 +193,7 @@ void readROM_WSV()
   strcat(fileName, ".sv");
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   //sprintf(folder, "WSV/ROM/%s/%d", romName, foldern);
   sprintf(folder, "WSV/ROM/%d", foldern);
   sd.mkdir(folder, true);
@@ -211,7 +211,7 @@ void readROM_WSV()
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // start reading rom
   dataIn_WSV();
@@ -350,16 +350,16 @@ setrom:
   Serial.print(WSV[newwsvsize]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(8, newwsvsize);
+  EEPROM_writeAnything(WSV_ROM_SIZE, newwsvsize);
   wsvsize = newwsvsize;
 }
 
 void checkStatus_WSV()
 {
-  EEPROM_readAnything(8, wsvsize);
+  EEPROM_readAnything(WSV_ROM_SIZE, wsvsize);
   if (wsvsize > 2) {
     wsvsize = 1; // default 64K
-    EEPROM_writeAnything(8, wsvsize);
+    EEPROM_writeAnything(WSV_ROM_SIZE, wsvsize);
   }
 
 #if (defined(enable_OLED) || defined(enable_LCD))
@@ -548,7 +548,7 @@ void setCart_WSV() {
               wsvsize = 2;
               break;
           }
-          EEPROM_writeAnything(8, wsvsize);
+          EEPROM_writeAnything(WSV_ROM_SIZE, wsvsize);
           myFile.close();
           break;
         }

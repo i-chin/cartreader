@@ -75,6 +75,7 @@ char ver[5] = "9.6";
 #define COL_ROM_SIZE    20 // COLECOVISION ROM SIZE
 #define INTV_MAPPER     30 // INTELLIVISION MAPPER
 #define INTV_ROM_SIZE   31 // INTELLIVISION ROM SIZE
+#define WSV_ROM_SIZE    41 // WATARA SUPERVISION ROM SIZE
 //******************************************
 // Config Revision
 //******************************************
