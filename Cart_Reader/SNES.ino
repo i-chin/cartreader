@@ -955,12 +955,7 @@ boolean checkcart_SNES() {
   // Check RomChips
   romChips = snesHeader[0xFFD6 - headerStart];
 
-  if (romChips == 67) {
-    romSize = 32;
-    numBanks = 64;
-    romType = HI;
-  }
-  else if (romChips == 69) {
+  if (romChips == 69) {
     romSize = 48;
     numBanks = 96;
     romType = HI;
