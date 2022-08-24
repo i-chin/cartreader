@@ -965,6 +965,11 @@ boolean checkcart_SNES() {
     numBanks = 96;
     romType = HI;
   }
+  else if (romChips == 67) {
+    romSize = 32;
+    numBanks = 64;
+    romType = HI;
+  }
   else if (romChips == 243) {
     cx4Type = snesHeader[0xFFC9 - headerStart] & 0xF;
     if (cx4Type == 2) { // X2
@@ -1346,7 +1351,7 @@ void readROM_SNES() {
   }
 
   // Dump SDD1 High-type ROM
-  else if ((romType == HI) && (romChips == 69)) {
+  else if ((romType == HI) && (romChips == 69 || romChips == 67)) {
     println_Msg(F("Dumping SDD1 HiRom"));
     display_Update();
     controlIn_SNES();
