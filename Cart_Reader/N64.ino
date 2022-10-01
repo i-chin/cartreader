@@ -3833,7 +3833,7 @@ redumpsamefolder:
 
     processedProgressBar += 512;
     draw_progressbar(processedProgressBar, totalProgressBar);
-    // write out 1024 bytes to file
+    // write out 512 bytes to file
     myFile.write(sdBuffer, 512);
 
     // Set the address for the next 512 bytes to dump
@@ -3865,7 +3865,7 @@ redumpsamefolder:
 
     processedProgressBar += 512;
     draw_progressbar(processedProgressBar, totalProgressBar);
-    // write out 1024 bytes to file
+    // write out 512 bytes to file
     myFile.write(sdBuffer, 512);
   }
 
