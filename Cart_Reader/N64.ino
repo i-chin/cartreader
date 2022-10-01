@@ -9,7 +9,8 @@
 // These two macros toggle the eepDataPin/ControllerDataPin between input and output
 // External 1K pull-up resistor from eepDataPin to VCC required
 // 0x10 = 00010000 -> Port H Pin 4
-#define N64_HIGH DDRH &= ~0x10
+#define N64_HIGH DDR
+H &= ~0x10
 #define N64_LOW DDRH |= 0x10
 // Read the current state(0/1) of the eepDataPin
 #define N64_QUERY (PINH & 0x10)
@@ -3784,9 +3785,6 @@ redumpsamefolder:
 
   if (compareCRC("n64.txt", 0, 1, 0)) {
 #else
-  // dumping rom fast
-  byte buffer[1024] = { 0 };
-
   // get current time
   unsigned long startTime = millis();
 
@@ -3819,52 +3817,57 @@ redumpsamefolder:
       NOP; NOP; NOP; NOP; NOP;
 
       // data on PINK and PINF is valid now, read into sd card buffer
-      buffer[c] =     PINK; // hiByte
-      buffer[c + 1] = PINF; // loByte
+      sdBuffer[c] =     PINK; // hiByte
+      sdBuffer[c + 1] = PINF; // loByte
 
       // Pull read(PH6) high
       PORTH |= (1 << 6);
 
       // crc32 update
-      idx = ((oldcrc32) ^ (buffer[c]));
+      idx = ((oldcrc32) ^ (sdBuffer[c]));
       tab_value = pgm_read_dword(crc_32_tab + idx);
       oldcrc32 = tab_value ^ ((oldcrc32) >> 8);
-      idx = ((oldcrc32) ^ (buffer[c + 1]));
+      idx = ((oldcrc32) ^ (sdBuffer[c + 1]));
       tab_value = pgm_read_dword(crc_32_tab + idx);
       oldcrc32 = tab_value ^ ((oldcrc32) >> 8);
     }
+
+    processedProgressBar += 512;
+    draw_progressbar(processedProgressBar, totalProgressBar);
+    // write out 1024 bytes to file
+    myFile.write(sdBuffer, 512);
 
     // Set the address for the next 512 bytes to dump
     setAddress_N64(currByte + 512);
     // Wait 62.5ns (safety)
     NOP;
 
-    for (int c = 512; c < 1024; c += 2) {
+    for (int c = 0; c < 512; c += 2) {
       // Pull read(PH6) low
       PORTH &= ~(1 << 6);
       // Wait ~310ns
       NOP; NOP; NOP; NOP; NOP;
 
       // data on PINK and PINF is valid now, read into sd card buffer
-      buffer[c] =     PINK; // hiByte
-      buffer[c + 1] = PINF; // loByte
+      sdBuffer[c] =     PINK; // hiByte
+      sdBuffer[c + 1] = PINF; // loByte
 
       // Pull read(PH6) high
       PORTH |= (1 << 6);
 
       // crc32 update
-      idx = ((oldcrc32) ^ (buffer[c])) & 0xff;
+      idx = ((oldcrc32) ^ (sdBuffer[c])) & 0xff;
       tab_value = pgm_read_dword(crc_32_tab + idx);
       oldcrc32 = tab_value ^ ((oldcrc32) >> 8);
-      idx = ((oldcrc32) ^ (buffer[c + 1])) & 0xff;
+      idx = ((oldcrc32) ^ (sdBuffer[c + 1])) & 0xff;
       tab_value = pgm_read_dword(crc_32_tab + idx);
       oldcrc32 = tab_value ^ ((oldcrc32) >> 8);
     }
 
-    processedProgressBar += 1024;
+    processedProgressBar += 512;
     draw_progressbar(processedProgressBar, totalProgressBar);
     // write out 1024 bytes to file
-    myFile.write(buffer, 1024);
+    myFile.write(sdBuffer, 512);
   }
 
   // Close the file:
