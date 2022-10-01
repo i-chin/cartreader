@@ -9,8 +9,7 @@
 // These two macros toggle the eepDataPin/ControllerDataPin between input and output
 // External 1K pull-up resistor from eepDataPin to VCC required
 // 0x10 = 00010000 -> Port H Pin 4
-#define N64_HIGH DDR
-H &= ~0x10
+#define N64_HIGH DDRH &= ~0x10
 #define N64_LOW DDRH |= 0x10
 // Read the current state(0/1) of the eepDataPin
 #define N64_QUERY (PINH & 0x10)
