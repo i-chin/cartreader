@@ -362,7 +362,7 @@ uint32_t detect_rom_size_PCE(void)
   }
 
   //debug
-  //sprintf(fileName, "%d %d %d %d", detect_128, detect_256, detect_512, detect_768); //using filename global variable as string. Initialzed in below anyways.
+  //sprintf_P(fileName, PSTR("%d %d %d %d"), detect_128, detect_256, detect_512, detect_768); //using filename global variable as string. Initialzed in below anyways.
   //println_Msg(fileName);
 
   //ROM size detection by result
@@ -471,7 +471,7 @@ void crc_search(char *file_p, char *folder_p, uint32_t rom_size, uint32_t crc)
       flag = CHKSUM_ERROR;
       crc = crc ^ 0xFFFFFFFFUL; //Finish CRC calculation and progress bar
       //Display calculated CRC
-      sprintf(crc_file, "%08lX", crc);
+      sprintf_P(crc_file, PSTR("%08lX"), crc);
 
       //Search for same CRC in list
       while (script.available()) {
@@ -491,7 +491,7 @@ void crc_search(char *file_p, char *folder_p, uint32_t rom_size, uint32_t crc)
           print_Msg(gamename);
           //print_Msg(F(".pce"));
           flag = CHKSUM_OK;
-          //strcat(gamename, ".pce");
+          //strcat_P(gamename, PSTR(".pce"));
           rom.rename(gamename);
           break;
         }
@@ -550,12 +550,12 @@ void read_tennokoe_bank_PCE(int bank_index)
   println_Msg(F("RAM bank size: 2KB"));
 
   // Get name, add extension and convert to char array for sd lib
-  sprintf(fileName, "BANKRAM%d.sav", bank_index + 1);
+  sprintf_P(fileName, PSTR("BANKRAM%d.sav"), bank_index + 1);
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
   sd.chdir("/");
-  sprintf(folder, "PCE/ROM/%d", foldern);
+  sprintf_P(folder, PSTR("PCE/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -638,7 +638,7 @@ void write_tennokoe_bank_PCE(int bank_index)
   sd.chdir("/");
   fileBrowser(F("Select RAM file"));
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   display_Clear();
 
   //open file on sd card
@@ -747,13 +747,13 @@ void read_rom_PCE(void)
   println_Msg(F("KB"));
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, "PCEROM");
-  strcat(fileName, ".pce");
+  strcpy_P(fileName, PSTR("PCEROM"));
+  strcat_P(fileName, PSTR(".pce"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
   sd.chdir("/");
-  sprintf(folder, "PCE/ROM/%d", foldern);
+  sprintf_P(folder, PSTR("PCE/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -829,8 +829,8 @@ void pceMenu() {
 
   if (pce_internal_mode == HUCARD || pce_internal_mode == HUCARD_NOSWAP)
   {
-    sprintf(pceCartMenuItem2, "Read RAM Bank %d", tennokoe_bank_index + 1);
-    sprintf(pceCartMenuItem3, "Write RAM Bank %d", tennokoe_bank_index + 1);
+    sprintf_P(pceCartMenuItem2, PSTR("Read RAM Bank %d"), tennokoe_bank_index + 1);
+    sprintf_P(pceCartMenuItem3, PSTR("Write RAM Bank %d"), tennokoe_bank_index + 1);
     strcpy(menuOptionspceCart[0], pceCartMenuItem1);
     strcpy(menuOptionspceCart[1], pceCartMenuItem2);
     strcpy(menuOptionspceCart[2], pceCartMenuItem3);
@@ -838,9 +838,9 @@ void pceMenu() {
     strcpy(menuOptionspceCart[4], pceCartMenuItem5);
     strcpy(menuOptionspceCart[5], pceCartMenuItem6);
     if (pce_force_rom_size > 0) {
-      sprintf(pceCartMenuItem7, "ROM size now %dK", pce_force_rom_size);
+      sprintf_P(pceCartMenuItem7, PSTR("ROM size now %dK"), pce_force_rom_size);
     } else {
-      sprintf(pceCartMenuItem7, "Force ROM size");
+      sprintf_P(pceCartMenuItem7, PSTR("Force ROM size"));
     }
     strcpy(menuOptionspceCart[6], pceCartMenuItem7);
     mainMenu = question_box(adapterSwap == 1 ? F("PCE HuCARD menu(SWAP)") : F("PCE HuCARD menu(NOSWAP)"), menuOptionspceCart, 7, 0);

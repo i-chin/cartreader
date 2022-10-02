@@ -240,7 +240,7 @@ void readSRAM_SV () {
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "SNES/SAVE/BSX/%d", foldern);
+  sprintf_P(folder, PSTR("SNES/SAVE/BSX/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -285,7 +285,7 @@ void writeSRAM_SV() {
   sd.chdir("/");
   fileBrowser(F("Select srm file"));
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   //clear the screen
   display_Clear();
 
@@ -381,7 +381,7 @@ void readROM_SV() {
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "SNES/ROM/%s/%d", "MEMPACK", foldern);
+  sprintf_P(folder, PSTR("SNES/ROM/%s/%d"), PSTR("MEMPACK"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -425,10 +425,10 @@ void writeROM_SV (void) {
   // Get Checksum as string to make sure that BS-X cart is inserted
   dataIn();
   controlIn_SNES();
-  sprintf(checksumStr, "%02X%02X", readBank_SV(0, 65503), readBank_SV(0, 65502));
+  sprintf_P(checksumStr, PSTR("%02X%02X"), readBank_SV(0, 65503), readBank_SV(0, 65502));
 
   //if CRC is not 8B86, BS-X cart is not inserted. Display error and reset
-  if (strcmp("8B86", checksumStr) != 0)
+  if (strcmp_P(PSTR("8B86"), checksumStr) != 0)
   {
     display_Clear();
     print_Error(F("Error: Must use BS-X cart"), true);
@@ -439,7 +439,7 @@ void writeROM_SV (void) {
   sd.chdir("/");
   fileBrowser(F("Select BS file"));
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   display_Clear();
 
   //open file on sd card

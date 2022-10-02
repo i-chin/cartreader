@@ -447,20 +447,20 @@ void getCartInfo_SMS() {
 
   // Fix for "Fantasy Zone (J) (V1.0)" that has not the normal header, but "COPYRIGHT SEGAPRG. BY T.ASAI".
   char headerFZ[29];
-  if (strcmp(romName, "G. BY T.A") != 0) {
+  if (strcmp_P(romName, PSTR("G. BY T.A")) != 0) {
     for (byte i = 0; i < 28; i++) {
       headerFZ[i] = char(readByte_SMS(0x7fe0 + i));
     }
     headerFZ[28] = '\0';
 
-    if (strcmp(headerFZ, "COPYRIGHT SEGAPRG. BY T.ASAI") == 0) {
+    if (strcmp_P(headerFZ, PSTR("COPYRIGHT SEGAPRG. BY T.ASAI")) == 0) {
       strcpy(romName, "TMR SEGA");
       cartSize =  128 * 1024UL;
     }
   }
 
   // SMS header not found
-  if (strcmp(romName, "TMR SEGA") != 0) {
+  if (strcmp_P(romName, PSTR("TMR SEGA")) != 0) {
     // Set cartsize manually
     unsigned char SMSRomMenu;
     // Copy menuOptions out of progmem
@@ -515,7 +515,7 @@ void getCartInfo_SMS() {
     print_Msg(cartSize / 1024);
     println_Msg(F("KB"));
     println_Msg(F(" "));
-    sprintf(romName, "UNKNOWN");
+    sprintf_P(romName, PSTR("UNKNOWN"));
   }
 
   // Header found
@@ -551,19 +551,19 @@ void readROM_SMS() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
   if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
-    strcat(fileName, ".gg");
+    strcat_P(fileName, PSTR(".gg"));
   }
   else {
-    strcat(fileName, ".sms");
+    strcat_P(fileName, PSTR(".sms"));
   }
 
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
   if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
-    sprintf(folder, "GG/ROM/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("GG/ROM/%s/%d"), romName, foldern);
   }
   else {
-    sprintf(folder, "SMS/ROM/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("SMS/ROM/%s/%d"), romName, foldern);
   }
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -641,15 +641,15 @@ void readROM_SMS() {
 void readSRAM_SMS() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".sav");
+  strcat_P(fileName, PSTR(".sav"));
 
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
   if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
-    sprintf(folder, "GG/SAVE/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("GG/SAVE/%s/%d"), romName, foldern);
   }
   else {
-    sprintf(folder, "SMS/SAVE/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("SMS/SAVE/%s/%d"), romName, foldern);
   }
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -699,7 +699,7 @@ void writeSRAM_SMS() {
     fileBrowser(F("Select file"));
 
     sd.chdir();
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
     display_Clear();
     println_Msg(F("Restoring from "));

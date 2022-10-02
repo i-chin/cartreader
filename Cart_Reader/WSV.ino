@@ -190,12 +190,12 @@ uint8_t readByte_WSV(uint32_t addr)
 void readROM_WSV()
 {
   strcpy(fileName, romName);
-  strcat(fileName, ".sv");
+  strcat_P(fileName, PSTR(".sv"));
 
   // create a new folder for storing rom file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  //sprintf(folder, "WSV/ROM/%s/%d", romName, foldern);
-  sprintf(folder, "WSV/ROM/%d", foldern);
+  //sprintf_P(folder, PSTR("WSV/ROM/%s/%d"), romName, foldern);
+  sprintf_P(folder, PSTR("WSV/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -442,9 +442,9 @@ void setCart_WSV() {
 #endif
 
       // Read CRC32 checksum
-      sprintf(checksumStr, "%c", myFile.read());
+      sprintf_P(checksumStr, PSTR("%c"), myFile.read());
       for (byte i = 0; i < 7; i++) {
-        sprintf(tempStr2, "%c", myFile.read());
+        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
         strcat(checksumStr, tempStr2);
       }
 
@@ -452,9 +452,9 @@ void setCart_WSV() {
       myFile.seekSet(myFile.curPosition() + 1);
 
       // Read CRC32 of first 512 bytes
-      sprintf(crc_search, "%c", myFile.read());
+      sprintf_P(crc_search, PSTR("%c"), myFile.read());
       for (byte i = 0; i < 7; i++) {
-        sprintf(tempStr2, "%c", myFile.read());
+        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
         strcat(crc_search, tempStr2);
       }
 

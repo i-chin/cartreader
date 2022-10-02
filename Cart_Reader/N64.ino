@@ -2113,16 +2113,16 @@ void readMPK() {
 
   // Get name, add extension and convert to char array for sd lib
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(fileName, "%d", foldern);
-  strcat(fileName, ".mpk");
+  sprintf_P(fileName, PSTR("%d"), foldern);
+  strcat_P(fileName, PSTR(".mpk"));
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
   EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open crc file on sd card
-  sprintf(filePath, "%d", foldern - 1);
-  strcat(filePath, ".crc");
+  sprintf_P(filePath, PSTR("%d"), foldern - 1);
+  strcat_P(filePath, PSTR(".crc"));
   FsFile crcFile;
   if (!crcFile.open(filePath, O_RDWR | O_CREAT)) {
     print_Error(F("Can't open file on SD"), true);
@@ -2309,7 +2309,7 @@ void validateMPK() {
 
 void writeMPK() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   print_Msg(F("Writing "));
   print_Msg(filePath);
   println_Msg(F("..."));
@@ -2570,9 +2570,9 @@ int strcicmp(char const * a, char const * b)
     // Loop through file
     while (myFile.available()) {
       // Read 8 bytes into String, do it one at a time so byte order doesn't get mixed up
-      sprintf(tempStr1, "%c", myFile.read());
+      sprintf_P(tempStr1, PSTR("%c"), myFile.read());
       for (byte i = 0; i < 7; i++) {
-        sprintf(tempStr2, "%c", myFile.read());
+        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
         strcat(tempStr1, tempStr2);
       }
 
@@ -2582,9 +2582,9 @@ int strcicmp(char const * a, char const * b)
         myFile.seekSet(myFile.curPosition() + 1);
 
         // Read 4 bytes into String, do it one at a time so byte order doesn't get mixed up
-        sprintf(tempStr, "%c", myFile.read());
+        sprintf_P(tempStr, PSTR("%c"), myFile.read());
         for (byte i = 0; i < 3; i++) {
-          sprintf(tempStr2, "%c", myFile.read());
+          sprintf_P(tempStr2, PSTR("%c"), myFile.read());
           strcat(tempStr, tempStr2);
         }
 
@@ -2637,9 +2637,9 @@ void getCartInfo_N64() {
       myFile.seekSet(myFile.curPosition() + 9);
 
       // Read 8 bytes into String, do it one at a time so byte order doesn't get mixed up
-      sprintf(tempStr, "%c", myFile.read());
+      sprintf_P(tempStr, PSTR("%c"), myFile.read());
       for (byte i = 0; i < 7; i++) {
-        sprintf(tempStr2, "%c", myFile.read());
+        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
         strcat(tempStr, tempStr2);
       }
 
@@ -2693,7 +2693,7 @@ void idCart() {
   }
 
   // CRC1
-  sprintf(checksumStr, "%02X%02X%02X%02X", sdBuffer[0x10], sdBuffer[0x11], sdBuffer[0x12], sdBuffer[0x13]);
+  sprintf_P(checksumStr, PSTR("%02X%02X%02X%02X"), sdBuffer[0x10], sdBuffer[0x11], sdBuffer[0x12], sdBuffer[0x13]);
 
   // Get cart id
   cartID[0] = sdBuffer[0x3B];
@@ -2825,7 +2825,7 @@ void writeEeprom_CLK() {
   if ((saveType == 5) || (saveType == 6)) {
 
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     println_Msg(F("Writing..."));
     println_Msg(filePath);
     display_Update();
@@ -2882,11 +2882,11 @@ void readEeprom_CLK() {
 
     // Get name, add extension and convert to char array for sd lib
     strcpy(fileName, romName);
-    strcat(fileName, ".eep");
+    strcat_P(fileName, PSTR(".eep"));
 
     // create a new folder for the save file
     EEPROM_readAnything(FOLDER_NUM, foldern);
-    sprintf(folder, "N64/SAVE/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("N64/SAVE/%s/%d"), romName, foldern);
     sd.mkdir(folder, true);
     sd.chdir(folder);
 
@@ -3072,7 +3072,7 @@ void writeEeprom() {
   if ((saveType == 5) || (saveType == 6)) {
 
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     println_Msg(F("Writing..."));
     println_Msg(filePath);
     display_Update();
@@ -3127,11 +3127,11 @@ void readEeprom() {
   if ((saveType == 5) || (saveType == 6)) {
     // Get name, add extension and convert to char array for sd lib
     strcpy(fileName, romName);
-    strcat(fileName, ".eep");
+    strcat_P(fileName, PSTR(".eep"));
 
     // create a new folder for the save file
     EEPROM_readAnything(FOLDER_NUM, foldern);
-    sprintf(folder, "N64/SAVE/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("N64/SAVE/%s/%d"), romName, foldern);
     sd.mkdir(folder, true);
     sd.chdir(folder);
 
@@ -3264,7 +3264,7 @@ unsigned long verifyEeprom() {
 void writeSram(unsigned long sramSize) {
   if (saveType == 1) {
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     println_Msg(F("Writing..."));
     println_Msg(filePath);
     display_Update();
@@ -3315,10 +3315,10 @@ void readSram(unsigned long sramSize, byte flashramType) {
   strcpy(fileName, romName);
 
   if (saveType == 4) {
-    strcat(fileName, ".fla");
+    strcat_P(fileName, PSTR(".fla"));
   }
   else if (saveType == 1) {
-    strcat(fileName, ".sra");
+    strcat_P(fileName, PSTR(".sra"));
   }
   else {
     print_Error(F("Savetype Error"), true);
@@ -3326,7 +3326,7 @@ void readSram(unsigned long sramSize, byte flashramType) {
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "N64/SAVE/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("N64/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -3451,7 +3451,7 @@ void writeFram(byte flashramType) {
     }
 
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     print_Msg(F("Writing "));
     println_Msg(filePath);
     display_Update();
@@ -3729,12 +3729,12 @@ void getFramType() {
 void readRom_N64() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".Z64");
+  strcat_P(fileName, PSTR(".Z64"));
 
 redumpnewfolder:
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "N64/ROM/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("N64/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -3874,7 +3874,7 @@ redumpsamefolder:
 
   // convert checksum to string
   char crcStr[9];
-  sprintf(crcStr, "%08lX", ~oldcrc32);
+  sprintf_P(crcStr, PSTR("%08lX"), ~oldcrc32);
 
   // Search n64.txt for crc
   if (compareCRC("n64.txt", crcStr, 1, 0)) {
@@ -4048,33 +4048,33 @@ void flashRepro_N64() {
   // If the ID is known continue
   if (cartSize != 0) {
     // Print flashrom name
-    if ((strcmp(flashid, "227E") == 0)  && (strcmp(cartID, "2201") == 0)) {
+    if ((strcmp_P(flashid, PSTR("227E")) == 0)  && (strcmp_P(cartID, PSTR("2201")) == 0)) {
       print_Msg(F("Spansion S29GL256N"));
       if (cartSize == 64)
         println_Msg(F(" x2"));
       else
         println_Msg("");
     }
-    else if ((strcmp(flashid, "227E") == 0)  && (strcmp(cartID, "2101") == 0)) {
+    else if ((strcmp_P(flashid, PSTR("227E")) == 0)  && (strcmp_P(cartID, PSTR("2101")) == 0)) {
       print_Msg(F("Spansion S29GL128N"));
     }
-    else if ((strcmp(flashid, "227E") == 0)  && (strcmp(cartID, "2100") == 0)) {
+    else if ((strcmp_P(flashid, PSTR("227E")) == 0)  && (strcmp_P(cartID, PSTR("2100")) == 0)) {
       print_Msg(F("ST M29W128GL"));
     }
-    else if ((strcmp(flashid, "22C9") == 0) || (strcmp(flashid, "22CB") == 0)) {
+    else if ((strcmp_P(flashid, PSTR("22C9")) == 0) || (strcmp_P(flashid, PSTR("22CB")) == 0)) {
       print_Msg(F("Macronix MX29LV640"));
       if (cartSize == 16)
         println_Msg(F(" x2"));
       else
         println_Msg("");
     }
-    else if (strcmp(flashid, "8816") == 0)
+    else if (strcmp_P(flashid, PSTR("8816")) == 0)
       println_Msg(F("Intel 4400L0ZDQ0"));
-    else if (strcmp(flashid, "7E7E") == 0)
+    else if (strcmp_P(flashid, PSTR("7E7E")) == 0)
       println_Msg(F("Fujitsu MSP55LV100S"));
-    else if ((strcmp(flashid, "227E") == 0) && (strcmp(cartID, "2301") == 0))
+    else if ((strcmp_P(flashid, PSTR("227E")) == 0) && (strcmp_P(cartID, PSTR("2301")) == 0))
       println_Msg(F("Fujitsu MSP55LV512"));
-    else if ((strcmp(flashid, "227E") == 0) && (strcmp(cartID, "3901") == 0))
+    else if ((strcmp_P(flashid, PSTR("227E")) == 0) && (strcmp_P(cartID, PSTR("3901")) == 0))
       println_Msg(F("Intel 512M29EW"));
 
     // Print info
@@ -4110,9 +4110,9 @@ void flashRepro_N64() {
     wait();
 
     // clear IDs
-    sprintf(vendorID, "%s", "CONF");
-    sprintf(flashid, "%s", "CONF");
-    sprintf(cartID, "%s", "CONF");
+    sprintf_P(vendorID, PSTR("%s"), "CONF");
+    sprintf_P(flashid, PSTR("%s"), "CONF");
+    sprintf_P(cartID, PSTR("%s"), "CONF");
 
 
 
@@ -4225,7 +4225,7 @@ void flashRepro_N64() {
   display_Update();
 
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
   // Open file on sd card
   if (myFile.open(filePath, O_READ)) {
@@ -4242,20 +4242,20 @@ void flashRepro_N64() {
     }
 
     // Erase needed sectors
-    if (strcmp(flashid, "227E") == 0) {
+    if (strcmp_P(flashid, PSTR("227E")) == 0) {
       // Spansion S29GL256N or Fujitsu MSP55LV512 with 0x20000 sector size and 32 byte buffer
       eraseSector_N64(0x20000);
     }
-    else if (strcmp(flashid, "7E7E") == 0) {
+    else if (strcmp_P(flashid, PSTR("7E7E")) == 0) {
       // Fujitsu MSP55LV100S
       eraseMSP55LV100_N64();
     }
-    else if ((strcmp(flashid, "8813") == 0) || (strcmp(flashid, "8816") == 0)) {
+    else if ((strcmp_P(flashid, PSTR("8813")) == 0) || (strcmp_P(flashid, PSTR("8816")) == 0)) {
       // Intel 4400L0ZDQ0
       eraseIntel4400_N64();
       resetIntel4400_N64();
     }
-    else if ((strcmp(flashid, "22C9") == 0) || (strcmp(flashid, "22CB") == 0)) {
+    else if ((strcmp_P(flashid, PSTR("22C9")) == 0) || (strcmp_P(flashid, PSTR("22CB")) == 0)) {
       // Macronix MX29LV640, C9 is top boot and CB is bottom boot block
       eraseSector_N64(0x8000);
     }
@@ -4271,27 +4271,27 @@ void flashRepro_N64() {
       println_Msg(filePath);
       display_Update();
 
-      if ((strcmp(cartID, "3901") == 0) && (strcmp(flashid, "227E") == 0)) {
+      if ((strcmp_P(cartID, PSTR("3901")) == 0) && (strcmp_P(flashid, PSTR("227E")) == 0)) {
         // Intel 512M29EW(64MB) with 0x20000 sector size and 128 byte buffer
         writeFlashBuffer_N64(0x20000, 128);
       }
-      else if ((strcmp(cartID, "2100") == 0) && (strcmp(flashid, "227E") == 0)) {
+      else if ((strcmp_P(cartID, PSTR("2100")) == 0) && (strcmp_P(flashid, PSTR("227E")) == 0)) {
         // ST M29W128GH(16MB) with 0x20000 sector size and 64 byte buffer
         writeFlashBuffer_N64(0x20000, 64);
       }
-      else if (strcmp(flashid, "227E") == 0) {
+      else if (strcmp_P(flashid, PSTR("227E")) == 0) {
         // Spansion S29GL128N/S29GL256N or Fujitsu MSP55LV512 with 0x20000 sector size and 32 byte buffer
         writeFlashBuffer_N64(0x20000, 32);
       }
-      else if (strcmp(flashid, "7E7E") == 0) {
+      else if (strcmp_P(flashid, PSTR("7E7E")) == 0) {
         //Fujitsu MSP55LV100S
         writeMSP55LV100_N64(0x20000);
       }
-      else if ((strcmp(flashid, "22C9") == 0) || (strcmp(flashid, "22CB") == 0)) {
+      else if ((strcmp_P(flashid, PSTR("22C9")) == 0) || (strcmp_P(flashid, PSTR("22CB")) == 0)) {
         // Macronix MX29LV640 without buffer and 0x8000 sector size
         writeFlashrom_N64(0x8000);
       }
-      else if ((strcmp(flashid, "8813") == 0) || (strcmp(flashid, "8816") == 0)) {
+      else if ((strcmp_P(flashid, PSTR("8813")) == 0) || (strcmp_P(flashid, PSTR("8816")) == 0)) {
         // Intel 4400L0ZDQ0
         writeIntel4400_N64();
         resetIntel4400_N64();
@@ -4375,15 +4375,15 @@ void idFlashrom_N64() {
 
   // Read 1 byte vendor ID
   setAddress_N64(romBase);
-  sprintf(vendorID, "%02X", readWord_N64());
+  sprintf_P(vendorID, PSTR("%02X"), readWord_N64());
   // Read 2 bytes flashrom ID
-  sprintf(flashid, "%04X", readWord_N64());
+  sprintf_P(flashid, PSTR("%04X"), readWord_N64());
   // Read 2 bytes secondary flashrom ID
   setAddress_N64(romBase + 0x1C);
-  sprintf(cartID, "%04X", ((readWord_N64() << 8)  | (readWord_N64() & 0xFF)));
+  sprintf_P(cartID, PSTR("%04X"), ((readWord_N64() << 8)  | (readWord_N64() & 0xFF)));
 
   // Spansion S29GL256N(32MB/64MB) with either one or two flashrom chips
-  if ((strcmp(cartID, "2201") == 0) && (strcmp(flashid, "227E") == 0)) {
+  if ((strcmp_P(cartID, PSTR("2201")) == 0) && (strcmp_P(flashid, PSTR("227E")) == 0)) {
     cartSize = 32;
 
     // Reset flashrom
@@ -4402,17 +4402,17 @@ void idFlashrom_N64() {
     // Read manufacturer ID
     readWord_N64();
     // Read flashrom ID
-    sprintf(tempID, "%04X", readWord_N64());
+    sprintf_P(tempID, PSTR("%04X"), readWord_N64());
 
     // Check if second flashrom chip is present
-    if (strcmp(tempID, "227E") == 0)  {
+    if (strcmp_P(tempID, PSTR("227E")) == 0)  {
       cartSize = 64;
     }
     resetFlashrom_N64(romBase + 0x2000000);
   }
 
   // Macronix MX29LV640(8MB/16MB) with either one or two flashrom chips
-  else if ((strcmp(flashid, "22C9") == 0) || (strcmp(flashid, "22CB") == 0)) {
+  else if ((strcmp_P(flashid, PSTR("22C9")) == 0) || (strcmp_P(flashid, PSTR("22CB")) == 0)) {
     cartSize = 8;
 
     resetFlashrom_N64(romBase + 0x800000);
@@ -4430,17 +4430,17 @@ void idFlashrom_N64() {
     // Read manufacturer ID
     readWord_N64();
     // Read flashrom ID
-    sprintf(tempID, "%04X", readWord_N64());
+    sprintf_P(tempID, PSTR("%04X"), readWord_N64());
 
     // Check if second flashrom chip is present
-    if ((strcmp(tempID, "22C9") == 0) || (strcmp(tempID, "22CB") == 0)) {
+    if ((strcmp_P(tempID, PSTR("22C9")) == 0) || (strcmp_P(tempID, PSTR("22CB")) == 0)) {
       cartSize = 16;
     }
     resetFlashrom_N64(romBase + 0x800000);
   }
 
   // Intel 4400L0ZDQ0 (64MB)
-  else if (strcmp(flashid, "8816") == 0) {
+  else if (strcmp_P(flashid, PSTR("8816")) == 0) {
     // Found first flashrom chip, set to 32MB
     cartSize = 32;
     resetIntel4400_N64();
@@ -4457,8 +4457,8 @@ void idFlashrom_N64() {
     setAddress_N64(romBase + 0x2000000);
     readWord_N64();
     // Read flashrom ID
-    sprintf(cartID, "%04X", readWord_N64());
-    if (strcmp(cartID, "8813") == 0) {
+    sprintf_P(cartID, PSTR("%04X"), readWord_N64());
+    if (strcmp_P(cartID, PSTR("8813")) == 0) {
       cartSize = 64;
       strncpy(flashid , cartID, 5);
     }
@@ -4468,35 +4468,35 @@ void idFlashrom_N64() {
   }
 
   //Fujitsu MSP55LV512/Spansion S29GL512N (64MB)
-  else if ((strcmp(cartID, "2301") == 0) && (strcmp(flashid, "227E") == 0)) {
+  else if ((strcmp_P(cartID, PSTR("2301")) == 0) && (strcmp_P(flashid, PSTR("227E")) == 0)) {
     cartSize = 64;
     // Reset flashrom
     resetFlashrom_N64(romBase);
   }
 
   // Spansion S29GL128N(16MB) with one flashrom chip
-  else if ((strcmp(cartID, "2101") == 0) && (strcmp(flashid, "227E") == 0)) {
+  else if ((strcmp_P(cartID, PSTR("2101")) == 0) && (strcmp_P(flashid, PSTR("227E")) == 0)) {
     cartSize = 16;
     // Reset flashrom
     resetFlashrom_N64(romBase);
   }
 
   // ST M29W128GL(16MB) with one flashrom chip
-  else if ((strcmp(cartID, "2100") == 0) && (strcmp(flashid, "227E") == 0)) {
+  else if ((strcmp_P(cartID, PSTR("2100")) == 0) && (strcmp_P(flashid, PSTR("227E")) == 0)) {
     cartSize = 16;
     // Reset flashrom
     resetFlashrom_N64(romBase);
   }
 
   // Intel 512M29EW(64MB) with one flashrom chip
-  else if ((strcmp(cartID, "3901") == 0) && (strcmp(flashid, "227E") == 0)) {
+  else if ((strcmp_P(cartID, PSTR("3901")) == 0) && (strcmp_P(flashid, PSTR("227E")) == 0)) {
     cartSize = 64;
     // Reset flashrom
     resetFlashrom_N64(romBase);
   }
 
   // Unknown 227E type
-  else if (strcmp(flashid, "227E") == 0) {
+  else if (strcmp_P(flashid, PSTR("227E")) == 0) {
     cartSize = 0;
     // Reset flashrom
     resetFlashrom_N64(romBase);
@@ -4516,15 +4516,15 @@ void idFlashrom_N64() {
     // Read 1 byte vendor ID
     readWord_N64();
     // Read 2 bytes flashrom ID
-    sprintf(cartID, "%04X", readWord_N64());
+    sprintf_P(cartID, PSTR("%04X"), readWord_N64());
 
-    if (strcmp(cartID, "7E7E") == 0) {
+    if (strcmp_P(cartID, PSTR("7E7E")) == 0) {
       resetMSP55LV100_N64(romBase);
       cartSize = 64;
       strncpy(flashid , cartID, 5);
     }
   }
-  if ((strcmp(flashid, "1240") == 0) && (strcmp(cartID, "1240") == 0)) {
+  if ((strcmp_P(flashid, PSTR("1240")) == 0) && (strcmp_P(cartID, PSTR("1240")) == 0)) {
     print_Error(F("Please reseat cartridge"), true);
   }
 }
@@ -4729,12 +4729,12 @@ void eraseSector_N64(unsigned long sectorSize) {
     blinkLED();
 
     // Spansion S29GL256N(32MB/64MB) with two flashrom chips
-    if ((currSector == 0x2000000) && (strcmp(cartID, "2201") == 0) && (strcmp(flashid, "227E") == 0)) {
+    if ((currSector == 0x2000000) && (strcmp_P(cartID, PSTR("2201")) == 0) && (strcmp_P(flashid, PSTR("227E")) == 0)) {
       // Change to second chip
       flashBase = romBase + 0x2000000;
     }
     // Macronix MX29LV640(8MB/16MB) with two flashrom chips
-    else if ((currSector == 0x800000) && ((strcmp(flashid, "22C9") == 0) || (strcmp(flashid, "22CB") == 0))) {
+    else if ((currSector == 0x800000) && ((strcmp_P(flashid, PSTR("22C9")) == 0) || (strcmp_P(flashid, PSTR("22CB")) == 0))) {
       flashBase = romBase + 0x800000;
     }
 
@@ -4898,7 +4898,7 @@ void writeFlashBuffer_N64(unsigned long sectorSize, byte bufferSize) {
     blinkLED();
 
     // Spansion S29GL256N(32MB/64MB) with two flashrom chips
-    if ((currSector == 0x2000000) && (strcmp(cartID, "2201") == 0)) {
+    if ((currSector == 0x2000000) && (strcmp_P(cartID, PSTR("2201")) == 0)) {
       flashBase = romBase + 0x2000000;
     }
 
@@ -5052,7 +5052,7 @@ void flashGameshark_N64() {
   // !!!! SST 29EE010 may have a 5V requirement for writing however dumping works at 3V. As such it is not !!!!
   // !!!!        advised to write to a cart with this chip until further testing can be completed.         !!!!
 
-  if (strcmp(flashid, "0808") == 0 || strcmp(flashid, "0404") == 0 || strcmp(flashid, "3535") == 0 || strcmp(flashid, "0707") == 0) {
+  if (strcmp_P(flashid, PSTR("0808")) == 0 || strcmp_P(flashid, PSTR("0404")) == 0 || strcmp_P(flashid, PSTR("3535")) == 0 || strcmp_P(flashid, PSTR("0707")) == 0) {
     backupGameshark_N64();
     println_Msg("");
     println_Msg(F("This will erase your"));
@@ -5071,7 +5071,7 @@ void flashGameshark_N64() {
     display_Update();
 
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
     // Open file on sd card
     if (myFile.open(filePath, O_READ)) {
@@ -5150,7 +5150,7 @@ void idGameshark_N64() {
   // Read 1 byte vendor ID
   readWord_N64();
   // Read 2 bytes flashrom ID
-  sprintf(flashid, "%04X", readWord_N64());
+  sprintf_P(flashid, PSTR("%04X"), readWord_N64());
   // Reset flashrom
   resetGameshark_N64();
 }
@@ -5171,8 +5171,8 @@ void resetGameshark_N64() {
 void backupGameshark_N64() {
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(fileName, "GS%d", foldern);
-  strcat(fileName, ".z64");
+  sprintf_P(fileName, PSTR("GS%d"), foldern);
+  strcat_P(fileName, PSTR(".z64"));
   sd.mkdir("N64/ROM/Gameshark", true);
   sd.chdir("N64/ROM/Gameshark");
 
@@ -5285,7 +5285,7 @@ unsigned long verifyGameshark_N64() {
           setAddress_N64(romBase + 0xC00000 + currSector + currSdBuffer + currByte);
           // Compare both
           if (readWord_N64() != currWord) {
-            if ( (strcmp(flashid, "0808") == 0) && (currSector + currSdBuffer + currByte > 0x3F) && (currSector + currSdBuffer + currByte < 0x1080)) {
+            if ( (strcmp_P(flashid, PSTR("0808")) == 0) && (currSector + currSdBuffer + currByte > 0x3F) && (currSector + currSdBuffer + currByte < 0x1080)) {
               // Gameshark maps this area to the bootcode of the plugged in cartridge
             }
             else {

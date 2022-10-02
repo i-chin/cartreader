@@ -164,7 +164,7 @@ void mdLoadConf() {
         //println_Msg(name);
         //print_Msg(F("value: "));
         //println_Msg(value);
-        if (!strcmp("segaSram16bit", name)) {
+        if (!strcmp_P(PSTR("segaSram16bit"), name)) {
           // Retrode compatible setting
           // [segaSram16bit] 1   ; 0=no, 1=yes, 2=y+large
           // 0: Output each byte once. Not supported by most emulators.
@@ -255,7 +255,7 @@ void mdMenu() {
       resetFlash_MD();
       print_Msg(F("Flash ID: "));
       println_Msg(flashid);
-      if (strcmp(flashid, "C2F1") == 0) {
+      if (strcmp_P(flashid, PSTR("C2F1")) == 0) {
         println_Msg(F("MX29F1610 detected"));
         flashSize = 2097152;
       }
@@ -673,7 +673,7 @@ void getCartInfo_MD() {
     }
 
     //Sonic & Knuckles ID:GM MK-1563 -00
-    if (!strcmp("GM MK-1563 -00", id)) {
+    if (!strcmp_P(PSTR("GM MK-1563 -00"), id)) {
 
       // Get labelLockon
       for (byte c = 0; c < 16; c += 2) {
@@ -691,7 +691,7 @@ void getCartInfo_MD() {
       }
 
       // check Lock-on game presence
-      if (!(strcmp("SEGA MEGA DRIVE ", labelLockon) & strcmp("SEGA GENESIS    ", labelLockon))) {
+      if (!(strcmp_P(PSTR("SEGA MEGA DRIVE "), labelLockon) & strcmp_P(PSTR("SEGA GENESIS    "), labelLockon))) {
 
         // Lock-on cart checksum
         chksumLockon = readWord_MD(0x1000C7);
@@ -713,17 +713,17 @@ void getCartInfo_MD() {
           idLockon[i] = char(sdBuffer[i]);
         }
 
-        if (!(strncmp("GM 00001009-0", idLockon, 13) & strncmp("GM 00004049-0", idLockon, 13) )) {
+        if (!(strncmp_P(PSTR("GM 00001009-0"), idLockon, 13) & strncmp_P(PSTR("GM 00004049-0"), idLockon, 13) )) {
           //Sonic1 ID:GM 00001009-0? or GM 00004049-0?
           SnKmode = 2;
-        } else if (!(strcmp("GM 00001051-00", idLockon) & strcmp("GM 00001051-01", idLockon) & strcmp("GM 00001051-02", idLockon))) {
+        } else if (!(strcmp_P(PSTR("GM 00001051-00"), idLockon) & strcmp_P(PSTR("GM 00001051-01"), idLockon) & strcmp_P(PSTR("GM 00001051-02"), idLockon))) {
           //Sonic2 ID:GM 00001051-00 or GM 00001051-01 or GM 00001051-02
           SnKmode = 3;
 
           // Prepare Sonic2 Banks
           writeSSF2Map(0x509878, 1); // 0xA130F1
 
-        } else if (!strcmp("GM MK-1079 -00", idLockon)) {
+        } else if (!strcmp_P(PSTR("GM MK-1079 -00"), idLockon)) {
           //Sonic3 ID:GM MK-1079 -00
           SnKmode = 4;
         } else {
@@ -955,9 +955,9 @@ void getCartInfo_MD() {
     }
 
     switch (SnKmode) {
-      case 2: strcat(romName, "SONIC1"); break;
-      case 3: strcat(romName, "SONIC2"); break;
-      case 4: strcat(romName, "SONIC3"); break;
+      case 2: strcat_P(romName, PSTR("SONIC1")); break;
+      case 3: strcat_P(romName, PSTR("SONIC2")); break;
+      case 4: strcat_P(romName, PSTR("SONIC3")); break;
       case 5: strcat(romName, romNameLockon); break;
     }
 
@@ -968,7 +968,7 @@ void getCartInfo_MD() {
   word realtecCheck2 = readWord_MD(0x3F081);
   if ((realtecCheck1 == 0x5345) && (realtecCheck2 == 0x4741)) {
     realtec = 1;
-    strcpy(romName, "Realtec");
+    strcpy_P(romName, PSTR("Realtec"));
     cartSize = 0x80000;
   }
 
@@ -1094,11 +1094,11 @@ void readROM_MD() {
 
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".BIN");
+  strcat_P(fileName, PSTR(".BIN"));
 
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "MD/ROM/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("MD/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -1306,7 +1306,7 @@ void readROM_MD() {
   else {
     println_Msg(F("Error"));
     char calcsumStr[5];
-    sprintf(calcsumStr, "%04X", calcCKS);
+    sprintf_P(calcsumStr, PSTR("%04X"), calcCKS);
     println_Msg(calcsumStr);
     print_Error(F(""), false);
     display_Update();
@@ -1328,7 +1328,7 @@ void readROM_MD() {
     else {
       print_Msg(F("Checksum2 Error: "));
       char calcsumStr[5];
-      sprintf(calcsumStr, "%04X", calcCKSLockon);
+      sprintf_P(calcsumStr, PSTR("%04X"), calcCKSLockon);
       println_Msg(calcsumStr);
       print_Error(F(""), false);
       display_Update();
@@ -1342,7 +1342,7 @@ void readROM_MD() {
     else {
       print_Msg(F("Checksum3 Error: "));
       char calcsumStr[5];
-      sprintf(calcsumStr, "%04X", calcCKSSonic2);
+      sprintf_P(calcsumStr, PSTR("%04X"), calcCKSSonic2);
       println_Msg(calcsumStr);
       print_Error(F(""), false);
       display_Update();
@@ -1375,7 +1375,7 @@ void writeSram_MD() {
   dataOut_MD();
 
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Writing..."));
   println_Msg(filePath);
   display_Update();
@@ -1432,11 +1432,11 @@ void readSram_MD() {
 
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".srm");
+  strcat_P(fileName, PSTR(".srm"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "MD/SAVE/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("MD/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -1570,7 +1570,7 @@ void resetFlash_MD() {
 
 void write29F1610_MD() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   print_Msg(F("Flashing file "));
   print_Msg(filePath);
   println_Msg(F("..."));
@@ -1639,7 +1639,7 @@ void idFlash_MD() {
   dataIn_MD();
 
   // Read the two id bytes into a string
-  sprintf(flashid, "%02X%02X", readFlash_MD(0) & 0xFF, readFlash_MD(1) & 0xFF);
+  sprintf_P(flashid, PSTR("%02X%02X"), readFlash_MD(0) & 0xFF, readFlash_MD(1) & 0xFF);
 }
 
 byte readStatusReg_MD() {
@@ -2250,12 +2250,12 @@ void readEEP_MD() {
 
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".eep");
+  strcat_P(fileName, PSTR(".eep"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
   sd.chdir();
-  sprintf(folder, "MD/SAVE/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("MD/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -2304,7 +2304,7 @@ void writeEEP_MD() {
   dataOut_MD();
 
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Writing..."));
   println_Msg(filePath);
   display_Update();
@@ -2357,7 +2357,7 @@ void readBram_MD() {
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
   sd.chdir();
-  sprintf(folder, "MD/RAM/%d", foldern);
+  sprintf_P(folder, PSTR("MD/RAM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -2394,7 +2394,7 @@ void writeBram_MD() {
   dataOut_MD();
 
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Writing..."));
   println_Msg(filePath);
   display_Update();
@@ -2449,11 +2449,11 @@ void readRealtec_MD() {
 
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".MD");
+  strcat_P(fileName, PSTR(".MD"));
 
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "MD/ROM/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("MD/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 

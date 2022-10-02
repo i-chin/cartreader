@@ -321,9 +321,9 @@ uint8_t getCartInfo_WS()
   wsGameHasRTC = (sdBuffer[13] & 0x01);
 
   getDeveloperName(sdBuffer[6], vendorID, 5);
-  snprintf(cartID, 5, "%c%02X", (romType ? 'C' : '0'), sdBuffer[8]);
-  snprintf(checksumStr, 5, "%04X", wsGameChecksum);
-  snprintf(romName, 17, "%s%s", vendorID, cartID);
+  snprintf_P(cartID, 5, PSTR("%c%02X"), (romType ? 'C' : '0'), sdBuffer[8]);
+  snprintf_P(checksumStr, 5, PSTR("%04X"), wsGameChecksum);
+  snprintf_P(romName, 17, PSTR("%s%s"), vendorID, cartID);
 
   switch (romSize)
   {
@@ -455,7 +455,7 @@ void getDeveloperName(uint8_t id, char *buf, size_t length)
     case 0xff: devName = PSTR("WWGP"); break; // WWGP series (jss2, dknight)
 
     // if not found, use id
-    default:   snprintf(buf, length, "%02X", id); return;
+    default:   snprintf_P(buf, length, PSTR("%02X"), id); return;
   }
 
   strlcpy_P(buf, devName, length);
@@ -464,17 +464,17 @@ void getDeveloperName(uint8_t id, char *buf, size_t length)
 void readROM_WS(char *outPathBuf, size_t bufferSize)
 {
   // generate fullname of rom file
-  snprintf(fileName, FILENAME_LENGTH, "%s.ws%c", romName, ((romType & 1) ? 'c' : '\0'));
+  snprintf_P(fileName, FILENAME_LENGTH, PSTR("%s.ws%c"), romName, ((romType & 1) ? 'c' : '\0'));
 
   // create a new folder for storing rom file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  snprintf(folder, sizeof(folder), "WS/ROM/%s/%d", romName, foldern);
+  snprintf_P(folder, sizeof(folder), PSTR("WS/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
   // filling output file path to buffer
   if (outPathBuf != NULL && bufferSize > 0)
-    snprintf(outPathBuf, bufferSize, "%s/%s", folder, fileName);
+    snprintf_P(outPathBuf, bufferSize, PSTR("%s/%s"), folder, fileName);
 
   display_Clear();
   print_Msg(F("Saving to "));
@@ -537,11 +537,11 @@ void readROM_WS(char *outPathBuf, size_t bufferSize)
 void readSRAM_WS()
 {
   // generate fullname of rom file
-  snprintf(fileName, FILENAME_LENGTH, "%s.sav", romName);
+  snprintf_P(fileName, FILENAME_LENGTH, PSTR("%s.sav"), romName);
 
   // create a new folder for storing rom file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  snprintf(folder, sizeof(folder), "WS/SAVE/%s/%d", romName, foldern);
+  snprintf_P(folder, sizeof(folder), PSTR("WS/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -651,7 +651,7 @@ void writeSRAM_WS()
   filePath[0] = 0;
   sd.chdir("/");
   fileBrowser(F("Select sav file"));
-  snprintf(filePath, FILEPATH_LENGTH, "%s/%s", filePath, fileName);
+  snprintf_P(filePath, FILEPATH_LENGTH, PSTR("%s/%s"), filePath, fileName);
 
   display_Clear();
   print_Msg(F("Writing "));
@@ -701,11 +701,11 @@ void writeSRAM_WS()
 void readEEPROM_WS()
 {
   // generate fullname of eep file
-  snprintf(fileName, FILENAME_LENGTH, "%s.eep", romName);
+  snprintf_P(fileName, FILENAME_LENGTH, PSTR("%s.eep"), romName);
 
   // create a new folder for storing eep file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  snprintf(folder, sizeof(folder), "WS/SAVE/%s/%d", romName, foldern);
+  snprintf_P(folder, sizeof(folder), PSTR("WS/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -823,7 +823,7 @@ void writeEEPROM_WS()
   filePath[0] = 0;
   sd.chdir("/");
   fileBrowser(F("Select eep file"));
-  snprintf(filePath, FILEPATH_LENGTH, "%s/%s", filePath, fileName);
+  snprintf_P(filePath, FILEPATH_LENGTH, PSTR("%s/%s"), filePath, fileName);
 
   display_Clear();
   print_Msg(F("Writing "));
@@ -895,7 +895,7 @@ void writeWitchOS_WS()
     filePath[0] = 0;
     sd.chdir("/");
     fileBrowser(F("Select fbin file"));
-    snprintf(filePath, FILEPATH_LENGTH, "%s/%s", filePath, fileName);
+    snprintf_P(filePath, FILEPATH_LENGTH, PSTR("%s/%s"), filePath, fileName);
 
     display_Clear();
 
@@ -1051,8 +1051,8 @@ boolean compareChecksum_WS(const char *wsFilePath)
   // don't know why formating string "%04X(%04X)" always output "xxxx(0000)"
   // so split into two snprintf
   char result[11];
-  snprintf(result, 5, "%04X", calLength);
-  snprintf(result + 4, 11 - 4, "(%04X)", checksum);
+  snprintf_P(result, 5, PSTR("%04X"), calLength);
+  snprintf_P(result + 4, 11 - 4, PSTR("(%04X)"), checksum);
   print_Msg(F("Result: "));
   println_Msg(result);
 

@@ -248,8 +248,8 @@ void sfmFlashMenu() {
 
         // Get name, add extension and convert to char array for sd lib
         EEPROM_readAnything(FOLDER_NUM, foldern);
-        sprintf(fileName, "SFM%d", foldern);
-        strcat(fileName, ".bin");
+        sprintf_P(fileName, PSTR("SFM%d"), foldern);
+        strcat_P(fileName, PSTR(".bin"));
         sd.mkdir("NP", true);
         sd.chdir("NP");
         // write new folder number back to eeprom
@@ -286,7 +286,7 @@ void sfmFlashMenu() {
       // Launch file browser
       fileBrowser(F("Select 4MB file"));
       display_Clear();
-      sprintf(filePath, "%s/%s", filePath, fileName);
+      sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
       flashSize = 2097152;
       numBanks = 32;
       println_Msg(F("Writing 1st rom"));
@@ -316,9 +316,9 @@ void sfmFlashMenu() {
         println_Msg(F("OK"));
         display_Update();
         idFlash_SFM(0xC0);
-        if (strcmp(flashid, "c2f3") == 0) {
+        if (strcmp_P(flashid, PSTR("c2f3")) == 0) {
           idFlash_SFM(0xE0);
-          if (strcmp(flashid, "c2f3") == 0) {
+          if (strcmp_P(flashid, PSTR("c2f3")) == 0) {
             // Reset flash
             resetFlash_SFM(0xC0);
             resetFlash_SFM(0xE0);
@@ -358,9 +358,9 @@ void sfmFlashMenu() {
         println_Msg(F("OK"));
         display_Update();
         idFlash_SFM(0xC0);
-        if (strcmp(flashid, "c2f3") == 0) {
+        if (strcmp_P(flashid, PSTR("c2f3")) == 0) {
           idFlash_SFM(0xE0);
-          if (strcmp(flashid, "c2f3") == 0) {
+          if (strcmp_P(flashid, PSTR("c2f3")) == 0) {
             // Reset flash
             resetFlash_SFM(0xC0);
             resetFlash_SFM(0xE0);
@@ -428,7 +428,7 @@ void sfmFlashMenu() {
       // Launch file browser
       fileBrowser(F("Select MAP file"));
       display_Clear();
-      sprintf(filePath, "%s/%s", filePath, fileName);
+      sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
       display_Update();
 
       // Write mapping
@@ -774,10 +774,10 @@ boolean checkcart_SFM() {
     oldcrc32 = updateCRC(snesHeader[c], oldcrc32);
   }
   char crcStr[9];
-  sprintf(crcStr, "%08lX", ~oldcrc32);
+  sprintf_P(crcStr, PSTR("%08lX"), ~oldcrc32);
 
   // Get Checksum as string
-  sprintf(checksumStr, "%02X%02X", readBank_SFM(0, 65503), readBank_SFM(0, 65502));
+  sprintf_P(checksumStr, PSTR("%02X%02X"), readBank_SFM(0, 65503), readBank_SFM(0, 65502));
 
   romType = readBank_SFM(0, 0xFFD5);
   if ((romType >> 5) != 1) {  // Detect invalid romType byte due to too long ROM name (22 chars)
@@ -796,7 +796,7 @@ boolean checkcart_SFM() {
   numBanks = (long(romSize) * 1024 * 1024 / 8) / (32768 + (long(romType) * 32768));
 
   //Check SD card for alt config, pass CRC32 of snesHeader but filter out 0000 and FFFF checksums
-  if (!(strcmp(checksumStr, "0000") == 0) && !(strcmp(checksumStr, "FFFF") == 0)) {
+  if (!(strcmp_P(checksumStr, PSTR("0000")) == 0) && !(strcmp_P(checksumStr, PSTR("FFFF")) == 0)) {
     checkAltConf(crcStr);
   }
 
@@ -856,7 +856,7 @@ boolean checkcart_SFM() {
 
   // Test if checksum is equal to reverse checksum
   if (((word(readBank_SFM(0, 65500)) + (word(readBank_SFM(0, 65501)) * 256)) + (word(readBank_SFM(0, 65502)) + (word(readBank_SFM(0, 65503)) * 256))) == 65535 ) {
-    if (strcmp("0000", checksumStr) == 0) {
+    if (strcmp_P(PSTR("0000"), checksumStr) == 0) {
       return 0;
     }
     else {
@@ -877,11 +877,11 @@ void readROM_SFM() {
 
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".sfc");
+  strcat_P(fileName, PSTR(".sfc"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "NP/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("NP/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -980,7 +980,7 @@ void idFlash_SFM(int startBank) {
     controlIn_SFM();
 
     // Read the two id bytes into a string
-    sprintf(flashid, "%x%x", readBank_SFM(startBank, 0x00), readBank_SFM(startBank, 0x02));
+    sprintf_P(flashid, PSTR("%x%x"), readBank_SFM(startBank, 0x00), readBank_SFM(startBank, 0x02));
   }
   else {
     writeBank_SFM(1, 0x8000 + 0x1555L * 2, 0xaa);
@@ -993,7 +993,7 @@ void idFlash_SFM(int startBank) {
     controlIn_SFM();
 
     // Read the two id bytes into a string
-    sprintf(flashid, "%x%x", readBank_SFM(0, 0x8000), readBank_SFM(0, 0x8000 + 0x02));
+    sprintf_P(flashid, PSTR("%x%x"), readBank_SFM(0, 0x8000), readBank_SFM(0, 0x8000 + 0x02));
   }
 }
 
@@ -1373,8 +1373,8 @@ void readMapping() {
 
   // Get name, add extension and convert to char array for sd lib
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(fileName, "NP%d", foldern);
-  strcat(fileName, ".MAP");
+  sprintf_P(fileName, PSTR("NP%d"), foldern);
+  strcat_P(fileName, PSTR(".MAP"));
   sd.mkdir("NP", true);
   sd.chdir("NP");
 
@@ -1447,7 +1447,7 @@ void eraseMapping(byte startBank) {
   if (unlockHirom()) {
     // Get ID
     idFlash_SFM(startBank);
-    if (strcmp(flashid, "c2f3") == 0) {
+    if (strcmp_P(flashid, PSTR("c2f3")) == 0) {
       resetFlash_SFM(startBank);
 
       // Switch to write
@@ -1559,7 +1559,7 @@ void writeMapping_SFM(byte startBank, uint32_t pos) {
   if (unlockHirom()) {
     // Get ID
     idFlash_SFM(startBank);
-    if (strcmp(flashid, "c2f3") == 0) {
+    if (strcmp_P(flashid, PSTR("c2f3")) == 0) {
       resetFlash_SFM(startBank);
 
       // Switch to write
@@ -1697,7 +1697,7 @@ void write_SFM(int startBank, uint32_t pos) {
   if (unlockHirom()) {
     // Get ID
     idFlash_SFM(startBank);
-    if (strcmp(flashid, "c2f3") == 0) {
+    if (strcmp_P(flashid, PSTR("c2f3")) == 0) {
       print_Msg(F("Flash ID: "));
       println_Msg(flashid);
       display_Update();

@@ -155,20 +155,20 @@ void flashromMenu8() {
           writeFlash29F032();
           break;
         case 2:
-          if (strcmp(flashid, "C2F3") == 0)
+          if (strcmp_P(flashid, PSTR("C2F3")) == 0)
             writeFlash29F1601();
-          else if ((strcmp(flashid, "C2F1") == 0) || (strcmp(flashid, "C2F9") == 0))
+          else if ((strcmp_P(flashid, PSTR("C2F1")) == 0) || (strcmp_P(flashid, PSTR("C2F9")) == 0))
             writeFlash29F1610();
-          else if ((strcmp(flashid, "C2C4") == 0) || (strcmp(flashid, "C249") == 0) ||
-                   (strcmp(flashid, "C2A7") == 0) || (strcmp(flashid, "C2A8") == 0) ||
-                   (strcmp(flashid, "C2C9") == 0) || (strcmp(flashid, "C2CB") == 0))
+          else if ((strcmp_P(flashid, PSTR("C2C4")) == 0) || (strcmp_P(flashid, PSTR("C249")) == 0) ||
+                   (strcmp_P(flashid, PSTR("C2A7")) == 0) || (strcmp_P(flashid, PSTR("C2A8")) == 0) ||
+                   (strcmp_P(flashid, PSTR("C2C9")) == 0) || (strcmp_P(flashid, PSTR("C2CB")) == 0))
             writeFlash29LV640();
-          else if (strcmp(flashid, "017E") == 0) {
+          else if (strcmp_P(flashid, PSTR("017E")) == 0) {
             // sector size, write buffer size
             writeFlash29GL(sectorSize, bufferSize);
           }
-          else if ((strcmp(flashid, "0458") == 0) || (strcmp(flashid, "0158") == 0) ||
-                   (strcmp(flashid, "01AB") == 0))
+          else if ((strcmp_P(flashid, PSTR("0458")) == 0) || (strcmp_P(flashid, PSTR("0158")) == 0) ||
+                   (strcmp_P(flashid, PSTR("01AB")) == 0))
             writeFlash29F800();
 
           break;
@@ -277,10 +277,10 @@ void flashromMenu16() {
       fileBrowser(F("Select file"));
       display_Clear();
       time = millis();
-      if (strcmp(flashid, "C2F3") == 0) {
+      if (strcmp_P(flashid, PSTR("C2F3")) == 0) {
         writeFlash16_29F1601();
       }
-      else if ((strcmp(flashid, "C2C4") == 0) || (strcmp(flashid, "C249") == 0) || (strcmp(flashid, "C2A7") == 0) || (strcmp(flashid, "C2A8") == 0) || (strcmp(flashid, "C2C9") == 0) || (strcmp(flashid, "C2CB") == 0) || (strcmp(flashid, "C2FC") == 0)) {
+      else if ((strcmp_P(flashid, PSTR("C2C4")) == 0) || (strcmp_P(flashid, PSTR("C249")) == 0) || (strcmp_P(flashid, PSTR("C2A7")) == 0) || (strcmp_P(flashid, PSTR("C2A8")) == 0) || (strcmp_P(flashid, PSTR("C2C9")) == 0) || (strcmp_P(flashid, PSTR("C2CB")) == 0) || (strcmp_P(flashid, PSTR("C2FC")) == 0)) {
         writeFlash16_29LV640();
       }
       else {
@@ -369,7 +369,7 @@ void epromMenu() {
       filePath[0] = '\0';
       sd.chdir("/");
       fileBrowser(F("Verify against"));
-      sprintf(filePath, "%s/%s", filePath, fileName);
+      sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
       display_Clear();
       time = millis();
       verify_Eprom();
@@ -415,91 +415,91 @@ idtheflash:
   print_Msg(F("Flash ID: "));
   println_Msg(flashid);
 
-  if (strcmp(flashid, "C2F1") == 0) {
+  if (strcmp_P(flashid, PSTR("C2F1")) == 0) {
     println_Msg(F("MX29F1610 detected"));
     flashSize = 2097152;
     flashromType = 2;
   }
-  else if (strcmp(flashid, "C2F3") == 0) {
+  else if (strcmp_P(flashid, PSTR("C2F3")) == 0) {
     println_Msg(F("MX29F1601 detected"));
     flashSize = 2097152;
     flashromType = 2;
   }
-  else if (strcmp(flashid, "C2F9") == 0) {
+  else if (strcmp_P(flashid, PSTR("C2F9")) == 0) {
     println_Msg(F("MX29L3211 detected"));
     println_Msg(F("ATTENTION 3.3V"));
     flashSize = 4194304;
     flashromType = 2;
   }
-  else if ((strcmp(flashid, "C2C4") == 0) || (strcmp(flashid, "C249") == 0)) {
+  else if ((strcmp_P(flashid, PSTR("C2C4")) == 0) || (strcmp_P(flashid, PSTR("C249")) == 0)) {
     println_Msg(F("MX29LV160 detected"));
     println_Msg(F("ATTENTION 3.3V"));
     flashSize = 2097152;
     flashromType = 2;
   }
-  else if ((strcmp(flashid, "C2A7") == 0) || (strcmp(flashid, "C2A8") == 0)) {
+  else if ((strcmp_P(flashid, PSTR("C2A7")) == 0) || (strcmp_P(flashid, PSTR("C2A8")) == 0)) {
     println_Msg(F("MX29LV320 detected"));
     println_Msg(F("ATTENTION 3.3V"));
     flashSize = 4194304;
     flashromType = 2;
   }
-  else if ((strcmp(flashid, "C2C9") == 0) || (strcmp(flashid, "C2CB") == 0)) {
+  else if ((strcmp_P(flashid, PSTR("C2C9")) == 0) || (strcmp_P(flashid, PSTR("C2CB")) == 0)) {
     println_Msg(F("MX29LV640 detected"));
     println_Msg(F("ATTENTION 3.3V"));
     flashSize = 8388608;
     flashromType = 2;
   }
-  else if (strcmp(flashid, "0141") == 0) {
+  else if (strcmp_P(flashid, PSTR("0141")) == 0) {
     println_Msg(F("AM29F032B detected"));
     flashSize = 4194304;
     flashromType = 1;
   }
-  else if (strcmp(flashid, "01AD") == 0) {
+  else if (strcmp_P(flashid, PSTR("01AD")) == 0) {
     println_Msg(F("AM29F016B detected"));
     flashSize = 2097152;
     flashromType = 1;
   }
-  else if (strcmp(flashid, "20AD") == 0) {
+  else if (strcmp_P(flashid, PSTR("20AD")) == 0) {
     println_Msg(F("AM29F016D detected"));
     flashSize = 2097152;
     flashromType = 1;
   }
-  else if (strcmp(flashid, "04AD") == 0) {
+  else if (strcmp_P(flashid, PSTR("04AD")) == 0) {
     println_Msg(F("AM29F016D detected"));
     flashSize = 2097152;
     flashromType = 1;
   }
-  else if (strcmp(flashid, "04D4") == 0) {
+  else if (strcmp_P(flashid, PSTR("04D4")) == 0) {
     println_Msg(F("MBM29F033C detected"));
     flashSize = 4194304;
     flashromType = 1;
   }
-  else if (strcmp(flashid, "04D5") == 0) {
+  else if (strcmp_P(flashid, PSTR("04D5")) == 0) {
     println_Msg(F("MBM29F080C detected"));
     flashSize = 1048576;
     flashromType = 1;
   }
-  else if (strcmp(flashid, "0458") == 0) {
+  else if (strcmp_P(flashid, PSTR("0458")) == 0) {
     println_Msg(F("MBM29F800BA detected"));
     flashSize = 1048576;
     flashromType = 2;
   }
-  else if (strcmp(flashid, "01AB") == 0) {
+  else if (strcmp_P(flashid, PSTR("01AB")) == 0) {
     println_Msg(F("AM29F400AB detected"));
     flashSize = 131072 * 4;
     flashromType = 2;
   }
-  else if (strcmp(flashid, "0158") == 0) {
+  else if (strcmp_P(flashid, PSTR("0158")) == 0) {
     println_Msg(F("AM29F800BB detected"));
     flashSize = 1048576;
     flashromType = 2;
   }
-  else if (strcmp(flashid, "01A3") == 0) {
+  else if (strcmp_P(flashid, PSTR("01A3")) == 0) {
     println_Msg(F("AM29LV033C detected"));
     flashSize = 131072 * 32;
     flashromType = 1;
   }
-  else if (strcmp(flashid, "017E") == 0) {
+  else if (strcmp_P(flashid, PSTR("017E")) == 0) {
     // S29GL032M
     if (readByte_Flash(28) == 0x1A) {
       println_Msg(F("S29GL032M detected"));
@@ -524,7 +524,7 @@ idtheflash:
     println_Msg(F("ATTENTION 3.3V"));
     flashromType = 2;
   }
-  else if (strcmp(flashid, "B088") == 0) {
+  else if (strcmp_P(flashid, PSTR("B088")) == 0) {
     // LH28F016SUT
     println_Msg(F("LH28F016SUT detected"));
     println_Msg(F("ATTENTION 3/5 setting"));
@@ -533,9 +533,9 @@ idtheflash:
     bufferSize = 256;
     flashromType = 3;
   }
-  else if ((strcmp(flashid, "8916") == 0) ||
-           (strcmp(flashid, "8917") == 0) ||
-           (strcmp(flashid, "8918") == 0)) {
+  else if ((strcmp_P(flashid, PSTR("8916")) == 0) ||
+           (strcmp_P(flashid, PSTR("8917")) == 0) ||
+           (strcmp_P(flashid, PSTR("8918")) == 0)) {
     // E28FXXXJ3A
     print_Msg(F("E28F"));
 
@@ -619,42 +619,42 @@ void id_Flash16() {
   println_Msg("");
   print_Msg(F("Flash ID: "));
   println_Msg(flashid);
-  if (strcmp(flashid, "C2F1") == 0) {
+  if (strcmp_P(flashid, PSTR("C2F1")) == 0) {
     println_Msg(F("MX29F1610 detected"));
     println_Msg("");
     flashSize = 2097152;
     flashromType = 2;
   }
-  else if (strcmp(flashid, "C2F3") == 0) {
+  else if (strcmp_P(flashid, PSTR("C2F3")) == 0) {
     println_Msg(F("MX29F1601 detected"));
     flashSize = 2097152;
     flashromType = 2;
   }
-  else if (strcmp(flashid, "C2F9") == 0) {
+  else if (strcmp_P(flashid, PSTR("C2F9")) == 0) {
     println_Msg(F("MX29L3211 detected"));
     println_Msg(F("ATTENTION 3.3V"));
     flashSize = 4194304;
     flashromType = 2;
   }
-  else if ((strcmp(flashid, "C2C4") == 0) || (strcmp(flashid, "C249") == 0)) {
+  else if ((strcmp_P(flashid, PSTR("C2C4")) == 0) || (strcmp_P(flashid, PSTR("C249")) == 0)) {
     println_Msg(F("MX29LV160 detected"));
     println_Msg(F("ATTENTION 3.3V"));
     flashSize = 2097152;
     flashromType = 2;
   }
-  else if ((strcmp(flashid, "C2A7") == 0) || (strcmp(flashid, "C2A8") == 0)) {
+  else if ((strcmp_P(flashid, PSTR("C2A7")) == 0) || (strcmp_P(flashid, PSTR("C2A8")) == 0)) {
     println_Msg(F("MX29LV320 detected"));
     println_Msg(F("ATTENTION 3.3V"));
     flashSize = 4194304;
     flashromType = 2;
   }
-  else if ((strcmp(flashid, "C2C9") == 0) || (strcmp(flashid, "C2CB") == 0)) {
+  else if ((strcmp_P(flashid, PSTR("C2C9")) == 0) || (strcmp_P(flashid, PSTR("C2CB")) == 0)) {
     println_Msg(F("MX29LV640 detected"));
     println_Msg(F("ATTENTION 3.3V"));
     flashSize = 8388608;
     flashromType = 2;
   }
-  else if (strcmp(flashid, "C2FC") == 0) {
+  else if (strcmp_P(flashid, PSTR("C2FC")) == 0) {
     println_Msg(F("MX26L6420 detected"));
     println_Msg(F("ATTENTION 3.3V"));
     flashSize = 8388608;
@@ -996,7 +996,7 @@ void idFlash29F032() {
   dataIn8();
 
   // Read the two id bytes into a string
-  sprintf(flashid, "%02X%02X", readByte_Flash(0), readByte_Flash(1));
+  sprintf_P(flashid, PSTR("%02X%02X"), readByte_Flash(0), readByte_Flash(1));
 }
 
 void eraseFlash29F032() {
@@ -1029,7 +1029,7 @@ void eraseFlash29F032() {
 
 void writeFlash29F032() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   print_Msg(F("Flashing file "));
   print_Msg(filePath);
   println_Msg(F("..."));
@@ -1171,7 +1171,7 @@ void resetFlash29F1610() {
 
 void writeFlash29F1610() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
@@ -1226,7 +1226,7 @@ void writeFlash29F1610() {
 
 void writeFlash29F1601() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
@@ -1297,7 +1297,7 @@ void idFlash29F1610() {
   dataIn8();
 
   // Read the two id bytes into a string
-  sprintf(flashid, "%02X%02X", readByte_Flash(0), readByte_Flash(2));
+  sprintf_P(flashid, PSTR("%02X%02X"), readByte_Flash(0), readByte_Flash(2));
 }
 
 byte readStatusReg() {
@@ -1370,7 +1370,7 @@ void busyCheck29LV640(unsigned long myAddress, byte myData) {
 
 void writeFlash29LV640() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
@@ -1418,7 +1418,7 @@ void writeFlash29LV640() {
 *****************************************/
 void writeFlash29GL(unsigned long sectorSize, byte bufferSize) {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
@@ -1486,7 +1486,7 @@ void writeFlash29GL(unsigned long sectorSize, byte bufferSize) {
 *****************************************/
 void writeFlash29F800() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
@@ -1541,7 +1541,7 @@ void idFlash28FXXX() {
   dataIn8();
 
   // Read the two id bytes into a string
-  sprintf(flashid, "%02X%02X", readByte_Flash(0), readByte_Flash(1));
+  sprintf_P(flashid, PSTR("%02X%02X"), readByte_Flash(0), readByte_Flash(1));
 }
 
 void resetFlash28FXXX() {
@@ -1577,18 +1577,18 @@ void eraseFlash28FXXX() {
 }
 
 void writeFlash28FXXX() {
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   print_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
 
   // Open file on sd card
   if (myFile.open(filePath, O_READ)) {
-    if ((strcmp(flashid, "B088") == 0))
+    if (strcmp_P(flashid, PSTR("B088")) == 0)
       writeFlashLH28F0XX();
-    else if ((strcmp(flashid, "8916") == 0) ||
-             (strcmp(flashid, "8917") == 0) ||
-             (strcmp(flashid, "8918") == 0)) {
+    else if ((strcmp_P(flashid, PSTR("8916")) == 0) ||
+             (strcmp_P(flashid, PSTR("8917")) == 0) ||
+             (strcmp_P(flashid, PSTR("8918")) == 0)) {
       writeFlashE28FXXXJ3A();
     }
 
@@ -1759,8 +1759,8 @@ void readFlash() {
   EEPROM_readAnything(FOLDER_NUM, foldern);
   sd.mkdir("FLASH", true);
   sd.chdir("FLASH");
-  sprintf(fileName, "FL%d", foldern);
-  strcat(fileName, ".bin");
+  sprintf_P(fileName, PSTR("FL%d"), foldern);
+  strcat_P(fileName, PSTR(".bin"));
   // write new folder number back to eeprom
   foldern = foldern + 1;
   EEPROM_writeAnything(FOLDER_NUM, foldern);
@@ -1834,7 +1834,7 @@ void resetFlash16() {
 
 void writeFlash16() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
@@ -1893,7 +1893,7 @@ void writeFlash16() {
 
 void writeFlash16_29F1601() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
@@ -1968,7 +1968,7 @@ void idFlash16() {
   dataIn16();
 
   // Read the two id bytes into a string
-  sprintf(flashid, "%02X%02X", readWord_Flash(0) & 0xFF, readWord_Flash(1) & 0xFF);
+  sprintf_P(flashid, PSTR("%02X%02X"), readWord_Flash(0) & 0xFF, readWord_Flash(1) & 0xFF);
 }
 
 byte readStatusReg16() {
@@ -2081,8 +2081,8 @@ void readFlash16() {
   EEPROM_readAnything(FOLDER_NUM, foldern);
   sd.mkdir("FLASH", true);
   sd.chdir("FLASH");
-  sprintf(fileName, "FL%d", foldern);
-  strcat(fileName, ".bin");
+  sprintf_P(fileName, PSTR("FL%d"), foldern);
+  strcat_P(fileName, PSTR(".bin"));
   // write new folder number back to eeprom
   foldern = foldern + 1;
   EEPROM_writeAnything(FOLDER_NUM, foldern);
@@ -2139,14 +2139,14 @@ void printFlash16(int numBytes) {
       byte right_byte = ( currWord >> 8 ) & 0xFF;
 
 
-      sprintf (buf, "%x", left_byte);
+      sprintf_P (buf, PSTR("%x"), left_byte);
       for (int i = 0; i < 2 - strlen(buf); i++) {
         print_Msg(F("0"));
       }
       // Now print the significant bits
       print_Msg(buf);
 
-      sprintf (buf, "%x", right_byte);
+      sprintf_P (buf, PSTR("%x"), right_byte);
       for (int i = 0; i < 2 - strlen(buf); i++) {
         print_Msg(F("0"));
       }
@@ -2194,7 +2194,7 @@ void busyCheck16_29LV640(unsigned long myAddress, word myData) {
 
 void writeFlash16_29LV640() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
@@ -2368,8 +2368,8 @@ void read_Eprom() {
   EEPROM_readAnything(FOLDER_NUM, foldern);
   sd.mkdir("FLASH", true);
   sd.chdir("FLASH");
-  sprintf(fileName, "FL%d", foldern);
-  strcat(fileName, ".bin");
+  sprintf_P(fileName, PSTR("FL%d"), foldern);
+  strcat_P(fileName, PSTR(".bin"));
   // write new folder number back to eeprom
   foldern = foldern + 1;
   EEPROM_writeAnything(FOLDER_NUM, foldern);
@@ -2409,7 +2409,7 @@ void read_Eprom() {
 
 void write_Eprom() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Flashing file "));
   println_Msg(filePath);
   display_Update();
@@ -2530,14 +2530,14 @@ void print_Eprom(int numBytes) {
       byte right_byte = ( currWord >> 8 ) & 0xFF;
 
 
-      sprintf (buf, "%x", left_byte);
+      sprintf_P (buf, PSTR("%x"), left_byte);
       for (int i = 0; i < 2 - strlen(buf); i++) {
         print_Msg(F("0"));
       }
       // Now print the significant bits
       print_Msg(buf);
 
-      sprintf (buf, "%x", right_byte);
+      sprintf_P (buf, PSTR("%x"), right_byte);
       for (int i = 0; i < 2 - strlen(buf); i++) {
         print_Msg(F("0"));
       }

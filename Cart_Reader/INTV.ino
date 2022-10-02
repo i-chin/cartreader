@@ -303,11 +303,11 @@ void readSegment_INTV(uint32_t startaddr, uint32_t endaddr)
 void readROM_INTV()
 {
   strcpy(fileName, romName);
-  strcat(fileName, ".int");
+  strcat_P(fileName, PSTR(".int"));
 
   // create a new folder for storing rom file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "INTV/ROM/%d", foldern);
+  sprintf_P(folder, PSTR("INTV/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -819,9 +819,9 @@ void setCart_INTV() {
 #endif
 
       // Read CRC32 checksum
-      sprintf(checksumStr, "%c", myFile.read());
+      sprintf_P(checksumStr, PSTR("%c"), myFile.read());
       for (byte i = 0; i < 7; i++) {
-        sprintf(tempStr2, "%c", myFile.read());
+        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
         strcat(checksumStr, tempStr2);
       }
 
@@ -829,9 +829,9 @@ void setCart_INTV() {
       myFile.seekSet(myFile.curPosition() + 1);
 
       // Read CRC32 of first 512 bytes
-      sprintf(crc_search, "%c", myFile.read());
+      sprintf_P(crc_search, PSTR("%c"), myFile.read());
       for (byte i = 0; i < 7; i++) {
-        sprintf(tempStr2, "%c", myFile.read());
+        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
         strcat(crc_search, tempStr2);
       }
 

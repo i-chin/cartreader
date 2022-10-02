@@ -605,7 +605,7 @@ boolean compareCRC(char* database, char* crcString, boolean renamerom, int offse
     // Calculate CRC32
     print_Msg(F("CRC32... "));
     display_Update();
-    sprintf(crcStr, "%08lX", calculateCRC(fileName, folder, offset));
+    sprintf_P(crcStr, PSTR("%08lX"), calculateCRC(fileName, folder, offset));
   }
   else {
     // Use precalculated crc
@@ -1268,10 +1268,10 @@ void aboutScreen() {
   println_Msg(ver);
   println_Msg(F(""));
   print_Msg(F(" Config Rev:"));
-  sprintf(buf,"%d",configRev);
+  sprintf_P(buf,PSTR("%d"),configRev);
   println_Msg(buf);
   print_Msg(F(" ClkGenOffset:"));
-  sprintf(buf,"%ld",cal_offset);
+  sprintf_P(buf,PSTR("%ld"),cal_offset);
   println_Msg(buf);
   println_Msg(F(""));
   println_Msg(F("Press Button..."));
@@ -1926,7 +1926,7 @@ void save_log() {
       }
 
       // If string is OSCR remember position in file and test if it's the lastest log entry
-      if (strncmp(tempStr, "OSCR", 4) == 0) {
+      if (strncmp_P(tempStr, PSTR("OSCR"), 4) == 0) {
         // Check if current position is newer as old position
         if (myLog.position() > lastPosition) {
           lastPosition = myLog.position();
@@ -1940,7 +1940,7 @@ void save_log() {
   // Copy log from there to dump dir
   sd.chdir(folder);
   strcpy(fileName, romName);
-  strcat(fileName, ".txt");
+  strcat_P(fileName, PSTR(".txt"));
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
     print_Error(F("SD Error"), true);
   }
@@ -2199,7 +2199,7 @@ void println_Msg(const __FlashStringHelper * string) {
 #ifdef global_log
   char myBuffer[15];
   strlcpy_P(myBuffer, (char *)string, 15);
-  if ((strncmp(myBuffer, "Press Button...", 14) != 0) && (strncmp(myBuffer, "Select file", 10) != 0)) {
+  if ((strncmp_P(myBuffer, PSTR("Press Button..."), 14) != 0) && (strncmp_P(myBuffer, PSTR("Select file"), 10) != 0)) {
     myLog.println(string);
   }
 #endif
@@ -2307,7 +2307,7 @@ void wait_serial() {
 
         // Send filesize
         char tempStr[16];
-        sprintf(tempStr, "%d", fileSize);
+        sprintf_P(tempStr, PSTR("%d"), fileSize);
         Serial.write(tempStr);
 
         // Wait for ok
@@ -2358,7 +2358,7 @@ byte questionBox_Serial(const __FlashStringHelper * question, char answers[7][20
 
       // Create and open file on sd card
       EEPROM_readAnything(FOLDER_NUM, foldern);
-      sprintf(fileName, "IMPORT/%d.bin", foldern);
+      sprintf_P(fileName, PSTR("IMPORT/%d.bin"), foldern);
       if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
         print_Error(F("Can't create file on SD"), true);
       }
@@ -3205,7 +3205,7 @@ page:
     // Directory
     else if (myFile.isDir()) {
       if (countFile == ((currPage - 1) * 7 + i)) {
-        snprintf(fileNames[i], FILENAME_LENGTH, "%s%s", "/", nameStr);
+        snprintf_P(fileNames[i], FILENAME_LENGTH, PSTR("/%s"), nameStr);
         i++;
       }
       countFile++;
@@ -3213,7 +3213,7 @@ page:
     // File
     else if (myFile.isFile()) {
       if (countFile == ((currPage - 1) * 7 + i)) {
-        snprintf(fileNames[i], FILENAME_LENGTH, "%s", nameStr);
+        snprintf_P(fileNames[i], FILENAME_LENGTH, PSTR("%s"), nameStr);
         i++;
       }
       countFile++;
@@ -3224,7 +3224,7 @@ page:
 
   for (byte i = 0; i < 8; i++ ) {
     // Copy short string into fileOptions
-    snprintf( answers[i], FILEOPTS_LENGTH, "%s", fileNames[i] );
+    snprintf_P( answers[i], FILEOPTS_LENGTH, PSTR("%s"), fileNames[i] );
   }
 
   // Create menu with title and 1-7 options to choose from

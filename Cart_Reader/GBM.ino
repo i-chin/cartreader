@@ -104,7 +104,7 @@ void gbmMenu() {
       // Launch file browser
       fileBrowser(F("Select 1MB file"));
       display_Clear();
-      sprintf(filePath, "%s/%s", filePath, fileName);
+      sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
       // Write rom
       writeFlash_GBM();
@@ -152,7 +152,7 @@ void gbmMenu() {
       // Launch file browser
       fileBrowser(F("Select MAP file"));
       display_Clear();
-      sprintf(filePath, "%s/%s", filePath, fileName);
+      sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
       display_Update();
 
       // Clear screen
@@ -280,7 +280,7 @@ void printSdBuffer(word startByte, word numBytes) {
     for (byte c = 0; c < 10; c++) {
       // Convert to char array so we don't lose leading zeros
       char currByteStr[2];
-      sprintf(currByteStr, "%02X", sdBuffer[startByte + currByte + c]);
+      sprintf_P(currByteStr, PSTR("%02X"), sdBuffer[startByte + currByte + c]);
       print_Msg(currByteStr);
     }
     // Add a new line every 10 bytes
@@ -295,8 +295,8 @@ void readROM_GBM(word numBanks) {
 
   // Get name, add extension and convert to char array for sd lib
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(fileName, "GBM%d", foldern);
-  strcat(fileName, ".bin");
+  sprintf_P(fileName, PSTR("GBM%d"), foldern);
+  strcat_P(fileName, PSTR(".bin"));
   sd.mkdir("NP", true);
   sd.chdir("NP");
   // write new folder number back to eeprom
@@ -465,8 +465,8 @@ boolean readFlashID_GBM() {
   send_GBM(0x0F, 0x5555, 0x90);
 
   // Read the two id bytes into a string
-  sprintf(flashid, "%02X%02X", readByte_GBM(0), readByte_GBM(1));
-  if (strcmp(flashid, "C289") == 0) {
+  sprintf_P(flashid, PSTR("%02X%02X"), readByte_GBM(0), readByte_GBM(1));
+  if (strcmp_P(flashid, PSTR("C289")) == 0) {
     print_Msg(F("Flash ID: "));
     println_Msg(flashid);
     display_Update();
@@ -681,8 +681,8 @@ void readMapping_GBM() {
 
   // Get name, add extension and convert to char array for sd lib
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(fileName, "GBM%d", foldern);
-  strcat(fileName, ".map");
+  sprintf_P(fileName, PSTR("GBM%d"), foldern);
+  strcat_P(fileName, PSTR(".map"));
   sd.mkdir("NP", true);
   sd.chdir("NP");
   // write new folder number back to eeprom

@@ -410,10 +410,10 @@ void switchBank_PCW(int bank) {
 
 void readROM_PCW() {
   strcpy(fileName, romName);
-  strcat(fileName, ".pcw");
+  strcat_P(fileName, PSTR(".pcw"));
 
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "PCW/ROM/%d", foldern);
+  sprintf_P(folder, PSTR("PCW/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -452,10 +452,10 @@ void readROM_PCW() {
 
 void readMultiROM_PCW() {
   strcpy(fileName, romName);
-  strcat(fileName, ".pcw");
+  strcat_P(fileName, PSTR(".pcw"));
 
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "PCW/ROM/%d", foldern);
+  sprintf_P(folder, PSTR("PCW/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -515,10 +515,10 @@ void readMultiROM_PCW() {
 
 void readSRAM_PCW() { // readSRAM_1A()
   strcpy(fileName, romName);
-  strcat(fileName, ".srm");
+  strcat_P(fileName, PSTR(".srm"));
 
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "PCW/SAVE/%d", foldern);
+  sprintf_P(folder, PSTR("PCW/SAVE/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -547,14 +547,14 @@ void readSRAM_PCW() { // readSRAM_1A()
 
 // SRAM
 void writeSRAM_PCW() {
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Writing..."));
   println_Msg(filePath);
   display_Update();
 
   if (myFile.open(filePath, O_READ)) {
     sd.chdir();
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     display_Clear();
     println_Msg(F("Writing File: "));
     println_Msg(filePath);

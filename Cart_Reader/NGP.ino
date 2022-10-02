@@ -120,14 +120,14 @@ bool getCartInfo_NGP() {
     return false;
 
   // get app ID
-  snprintf(cartID, 5, "%02X%02X", readByte_NGP(0x21), readByte_NGP(0x20));
+  snprintf_P(cartID, 5, PSTR("%02X%02X"), readByte_NGP(0x21), readByte_NGP(0x20));
 
   // force rom size to 32 Mbits for few titles
-  if (strcmp(cartID, "0060") == 0 || strcmp(cartID, "0061") == 0 || strcmp(cartID, "0069") == 0 )
+  if (strcmp_P(cartID, PSTR("0060")) == 0 || strcmp_P(cartID, PSTR("0061")) == 0 || strcmp_P(cartID, PSTR("0069")) == 0 )
     cartSize = 4194304;
 
   // get app version
-  snprintf(ngpRomVersion, 3, "%02X", readByte_NGP(0x22));
+  snprintf_P(ngpRomVersion, 3, PSTR("%02X"), readByte_NGP(0x22));
 
   // get app system compatibility
   ngpSystemType = readByte_NGP(0x23);
@@ -194,17 +194,17 @@ void readROM_NGP(char *outPathBuf, size_t bufferSize) {
   }
 
   // generate fullname of rom file
-  snprintf(fileName, FILENAME_LENGTH, "%s.ngp", romName);
+  snprintf_P(fileName, FILENAME_LENGTH, PSTR("%s.ngp"), romName);
 
   // create a new folder for storing rom file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  snprintf(folder, sizeof(folder), "NGP/ROM/%s/%d", romName, foldern);
+  snprintf_P(folder, sizeof(folder), PSTR("NGP/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
   // filling output file path to buffer
   if (outPathBuf != NULL && bufferSize > 0)
-    snprintf(outPathBuf, bufferSize, "%s/%s", folder, fileName);
+    snprintf_P(outPathBuf, bufferSize, PSTR("%s/%s"), folder, fileName);
 
   display_Clear();
   print_Msg(F("Saving to "));
@@ -250,11 +250,11 @@ void scanChip_NGP() {
   uint32_t block_addr = 0;
 
   // generate name of report file
-  snprintf(fileName, FILENAME_LENGTH, "%s.txt", romName);
+  snprintf_P(fileName, FILENAME_LENGTH, PSTR("%s.txt"), romName);
 
   // create a new folder to save report file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  snprintf(folder, sizeof(folder), "NGP/ROM/%s/%d", romName, foldern);
+  snprintf_P(folder, sizeof(folder), PSTR("NGP/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 

@@ -65,14 +65,14 @@ boolean compare_checksum_GBS() {
   display_Update();
 
   strcpy(fileName, romName);
-  strcat(fileName, ".GB");
+  strcat_P(fileName, PSTR(".GB"));
 
   // last used rom folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "GB/ROM/%s/%d", romName, foldern - 1);
+  sprintf_P(folder, PSTR("GB/ROM/%s/%d"), romName, foldern - 1);
 
   char calcsumStr[5];
-  sprintf(calcsumStr, "%04X", calc_checksum_GB(fileName, folder));
+  sprintf_P(calcsumStr, PSTR("%04X"), calc_checksum_GB(fileName, folder));
 
   if (strcmp(calcsumStr, checksumStr) == 0) {
     print_Msg(F("Result: "));
@@ -299,7 +299,7 @@ void gbSmartFlashMenu()
         sd.chdir("/");
 
         EEPROM_readAnything(FOLDER_NUM, foldern);
-        sprintf(fileName, "GBS%d.bin", foldern);
+        sprintf_P(fileName, PSTR("GBS%d.bin"), foldern);
         sd.mkdir("GB/GBS", true);
         sd.chdir("GB/GBS");
         foldern = foldern + 1;
@@ -326,7 +326,7 @@ void gbSmartFlashMenu()
         sd.chdir("/");
         fileBrowser(F("Select 4MB file"));
 
-        sprintf(filePath, "%s/%s", filePath, fileName);
+        sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
         gbSmartWriteFlash();
         break;
       }

@@ -212,19 +212,19 @@ void gbxMenu() {
                 break;
               }
             }
-            sprintf(filePath, "/GB/SAVE/%s/", fileName);
+            sprintf_P(filePath, PSTR("/GB/SAVE/%s/"), fileName);
             bool saveFound = false;
             if (sd.exists(filePath)) {
               EEPROM_readAnything(FOLDER_NUM, foldern);
               for (int i = foldern; i >= 0; i--) {
-                sprintf(filePath, "/GB/SAVE/%s/%d/%s.SAV", fileName, i, fileName);
+                sprintf_P(filePath, PSTR("/GB/SAVE/%s/%d/%s.SAV"), fileName, i, fileName);
                 if (sd.exists(filePath)) {
                   print_Msg(F("Save number "));
                   print_Msg(i);
                   println_Msg(F(" found."));
                   saveFound = true;
-                  sprintf(filePath, "/GB/SAVE/%s/%d", fileName, i);
-                  sprintf(fileName, "%s.SAV", fileName);
+                  sprintf_P(filePath, PSTR("/GB/SAVE/%s/%d"), fileName, i);
+                  sprintf_P(fileName, PSTR("%s.SAV"), fileName);
                   writeSRAM_GB();
                   unsigned long wrErrors;
                   wrErrors = verifySRAM_GB();
@@ -407,7 +407,7 @@ void setup_GB() {
 
 void showCartInfo_GB() {
   display_Clear();
-  if (strcmp(checksumStr, "00") != 0) {
+  if (strcmp_P(checksumStr, PSTR("00")) != 0) {
     print_Msg(F("Title: "));
     println_Msg(romName);
     if (cartID[0] != 0) {
@@ -500,7 +500,7 @@ void showCartInfo_GB() {
           print_Msg(F("512 Byte"));
         }
         else if (romType == 0x22) {
-          if (strncmp(cartID, "KCEJ", 4) == 0) {
+          if (strncmp_P(cartID, PSTR("KCEJ"), 4) == 0) {
             print_Msg(F("512 Byte"));
           }
           else {
@@ -843,7 +843,7 @@ void getCartInfo_GB() {
   // Get Checksum as string
   eepbit[6] = sdBuffer[0x14E];
   eepbit[7] = sdBuffer[0x14F];
-  sprintf(checksumStr, "%02X%02X", eepbit[6], eepbit[7]);
+  sprintf_P(checksumStr, PSTR("%02X%02X"), eepbit[6], eepbit[7]);
 
   // Get name
   byte myByte = 0;
@@ -884,27 +884,27 @@ void getCartInfo_GB() {
   }
 
   // M161 (Mani 4 in 1)
-  if ((strncmp(romName, "TETRIS SET", 10) == 0) && (sdBuffer[0x14D] == 0x3F)) {
+  if ((strncmp_P(romName, PSTR("TETRIS SET"), 10) == 0) && (sdBuffer[0x14D] == 0x3F)) {
     romType = 0x104;
   }
 
   // MMM01 (Mani 4 in 1)
   if (
-    (strncmp(romName, "BOUKENJIMA2 SET", 15) == 0) && (sdBuffer[0x14D] == 0) ||
-    (strncmp(romName, "BUBBLEBOBBLE SET", 16) == 0) && (sdBuffer[0x14D] == 0xC6) ||
-    (strncmp(romName, "GANBARUGA SET", 13) == 0) && (sdBuffer[0x14D] == 0x90) ||
-    (strncmp(romName, "RTYPE 2 SET", 11) == 0) && (sdBuffer[0x14D] == 0x32)) {
+    (strncmp_P(romName, PSTR("BOUKENJIMA2 SET"), 15) == 0) && (sdBuffer[0x14D] == 0) ||
+    (strncmp_P(romName, PSTR("BUBBLEBOBBLE SET"), 16) == 0) && (sdBuffer[0x14D] == 0xC6) ||
+    (strncmp_P(romName, PSTR("GANBARUGA SET"), 13) == 0) && (sdBuffer[0x14D] == 0x90) ||
+    (strncmp_P(romName, PSTR("RTYPE 2 SET"), 11) == 0) && (sdBuffer[0x14D] == 0x32)) {
     romType = 0x0B;
   }
 
   // MBC1M
   if (
-    (strncmp(romName, "MOMOCOL", 7) == 0) && (sdBuffer[0x14D] == 0x28) ||
-    (strncmp(romName, "BOMCOL", 6) == 0) && (sdBuffer[0x14D] == 0x86) ||
-    (strncmp(romName, "GENCOL", 6) == 0) && (sdBuffer[0x14D] == 0x8A) ||
-    (strncmp(romName, "SUPERCHINESE 123", 16) == 0) && (sdBuffer[0x14D] == 0xE4) ||
-    (strncmp(romName, "MORTALKOMBATI&II", 16) == 0) && (sdBuffer[0x14D] == 0xB9) ||
-    (strncmp(romName, "MORTALKOMBAT DUO", 16) == 0) && (sdBuffer[0x14D] == 0xA7)) {
+    (strncmp_P(romName, PSTR("MOMOCOL"), 7) == 0) && (sdBuffer[0x14D] == 0x28) ||
+    (strncmp_P(romName, PSTR("BOMCOL"), 6) == 0) && (sdBuffer[0x14D] == 0x86) ||
+    (strncmp_P(romName, PSTR("GENCOL"), 6) == 0) && (sdBuffer[0x14D] == 0x8A) ||
+    (strncmp_P(romName, PSTR("SUPERCHINESE 123"), 16) == 0) && (sdBuffer[0x14D] == 0xE4) ||
+    (strncmp_P(romName, PSTR("MORTALKOMBATI&II"), 16) == 0) && (sdBuffer[0x14D] == 0xB9) ||
+    (strncmp_P(romName, PSTR("MORTALKOMBAT DUO"), 16) == 0) && (sdBuffer[0x14D] == 0xA7)) {
     romType += 0x100;
   }
   
@@ -919,11 +919,11 @@ void getCartInfo_GB() {
 void readROM_GB() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".GB");
+  strcat_P(fileName, PSTR(".GB"));
 
   // create a new folder for the rom file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "GB/ROM/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("GB/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -1098,18 +1098,18 @@ unsigned int calc_checksum_GB (char* fileName, char* folder) {
 // Compare checksum
 void compare_checksums_GB() {
   strcpy(fileName, romName);
-  strcat(fileName, ".GB");
+  strcat_P(fileName, PSTR(".GB"));
 
   // last used rom folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "GB/ROM/%s/%d", romName, foldern - 1);
+  sprintf_P(folder, PSTR("GB/ROM/%s/%d"), romName, foldern - 1);
 
-  if (strcmp(folder, "root") != 0)
+  if (strcmp_P(folder, PSTR("root")) != 0)
     sd.chdir(folder);
 
   // Internal ROM checksum
   char calcsumStr[5];
-  sprintf(calcsumStr, "%04X", calc_checksum_GB(fileName, folder));
+  sprintf_P(calcsumStr, PSTR("%04X"), calc_checksum_GB(fileName, folder));
 
   print_Msg(F("Checksum: "));
   print_Msg(calcsumStr);
@@ -1137,11 +1137,11 @@ void readSRAM_GB() {
 
     // Get name, add extension and convert to char array for sd lib
     strcpy(fileName, romName);
-    strcat(fileName, ".sav");
+    strcat_P(fileName, PSTR(".sav"));
 
     // create a new folder for the save file
     EEPROM_readAnything(FOLDER_NUM, foldern);
-    sprintf(folder, "GB/SAVE/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("GB/SAVE/%s/%d"), romName, foldern);
     sd.mkdir(folder, true);
     sd.chdir(folder);
 
@@ -1199,7 +1199,7 @@ void writeSRAM_GB() {
   // Does cartridge have SRAM
   if (lastByte > 0) {
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
     //open file on sd card
     if (myFile.open(filePath, O_READ)) {
@@ -1294,11 +1294,11 @@ unsigned long verifySRAM_GB() {
 void readSRAMFLASH_MBC6_GB() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".sav");
+  strcat_P(fileName, PSTR(".sav"));
 
   // create a new folder for the save file
   EEPROM_readAnything(0, foldern);
-  sprintf(folder, "GB/SAVE/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("GB/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -1388,7 +1388,7 @@ void readSRAMFLASH_MBC6_GB() {
 // Write RAM
 void writeSRAMFLASH_MBC6_GB() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
   //open file on sd card
   if (myFile.open(filePath, O_READ)) {
@@ -1541,7 +1541,7 @@ void writeFlash29F_GB(byte MBC, boolean flashErase) {
   display_Clear();
 
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
   // Open file on sd card
   if (myFile.open(filePath, O_READ)) {
@@ -1598,37 +1598,37 @@ void writeFlash29F_GB(byte MBC, boolean flashErase) {
     writeByte_GB(0x555, 0x90);
 
     // Read the two id bytes into a string
-    sprintf(flashid, "%02X%02X", readByte_GB(0), readByte_GB(1));
+    sprintf_P(flashid, PSTR("%02X%02X"), readByte_GB(0), readByte_GB(1));
 
-    if (strcmp(flashid, "04D4") == 0) {
+    if (strcmp_P(flashid, PSTR("04D4")) == 0) {
       println_Msg(F("MBM29F033C"));
       print_Msg(F("Banks: "));
       print_Msg(romBanks);
       println_Msg(F("/256"));
       display_Update();
     }
-    else if (strcmp(flashid, "0141") == 0) {
+    else if (strcmp_P(flashid, PSTR("0141")) == 0) {
       println_Msg(F("AM29F032B"));
       print_Msg(F("Banks: "));
       print_Msg(romBanks);
       println_Msg(F("/256"));
       display_Update();
     }
-    else if (strcmp(flashid, "01AD") == 0) {
+    else if (strcmp_P(flashid, PSTR("01AD")) == 0) {
       println_Msg(F("AM29F016B"));
       print_Msg(F("Banks: "));
       print_Msg(romBanks);
       println_Msg(F("/128"));
       display_Update();
     }
-    else if (strcmp(flashid, "04AD") == 0) {
+    else if (strcmp_P(flashid, PSTR("04AD")) == 0) {
       println_Msg(F("AM29F016D"));
       print_Msg(F("Banks: "));
       print_Msg(romBanks);
       println_Msg(F("/128"));
       display_Update();
     }
-    else if (strcmp(flashid, "01D5") == 0) {
+    else if (strcmp_P(flashid, PSTR("01D5")) == 0) {
       println_Msg(F("AM29F080B"));
       print_Msg(F("Banks: "));
       print_Msg(romBanks);
@@ -1920,32 +1920,32 @@ void identifyCFI_GB() {
   // Try x8 mode first
   char cfiQRYx8[7];
   char cfiQRYx16[7];
-  sprintf(cfiQRYx8, "%02X%02X%02X", readByte_GB(0x20), readByte_GB(0x22), readByte_GB(0x24));
-  sprintf(cfiQRYx16, "%02X%02X%02X", readByte_GB(0x10), readByte_GB(0x11), readByte_GB(0x12)); // some devices use x8-style CFI Query command even though they are in x16 command mode
-  if (strcmp(cfiQRYx8, "515259") == 0) { // QRY in x8 mode
+  sprintf_P(cfiQRYx8, PSTR("%02X%02X%02X"), readByte_GB(0x20), readByte_GB(0x22), readByte_GB(0x24));
+  sprintf_P(cfiQRYx16, PSTR("%02X%02X%02X"), readByte_GB(0x10), readByte_GB(0x11), readByte_GB(0x12)); // some devices use x8-style CFI Query command even though they are in x16 command mode
+  if (strcmp_P(cfiQRYx8, PSTR("515259")) == 0) { // QRY in x8 mode
     println_Msg(F("Normal CFI x8 Mode"));
     flashX16Mode = false;
     flashSwitchLastBits = false;
-  } else if (strcmp(cfiQRYx8, "52515A") == 0) { // QRY in x8 mode with switched last bit
+  } else if (strcmp_P(cfiQRYx8, PSTR("52515A")) == 0) { // QRY in x8 mode with switched last bit
     println_Msg(F("Switched CFI x8 Mode"));
     flashX16Mode = false;
     flashSwitchLastBits = true;
-  } else if (strcmp(cfiQRYx16, "515259") == 0) { // QRY in x16 mode
+  } else if (strcmp_P(cfiQRYx16, PSTR("515259")) == 0) { // QRY in x16 mode
     println_Msg(F("Normal CFI x16 Mode"));
     flashX16Mode = true;
     flashSwitchLastBits = false;
-  } else if (strcmp(cfiQRYx16, "52515A") == 0) { // QRY in x16 mode with switched last bit
+  } else if (strcmp_P(cfiQRYx16, PSTR("52515A")) == 0) { // QRY in x16 mode with switched last bit
     println_Msg(F("Switched CFI x16 Mode"));
     flashX16Mode = true;
     flashSwitchLastBits = true;
   } else {
     startCFIMode(true); // Try x16 mode next
-    sprintf(cfiQRYx16, "%02X%02X%02X", readByte_GB(0x10), readByte_GB(0x11), readByte_GB(0x12));
-    if (strcmp(cfiQRYx16, "515259") == 0) { // QRY in x16 mode
+    sprintf_P(cfiQRYx16, PSTR("%02X%02X%02X"), readByte_GB(0x10), readByte_GB(0x11), readByte_GB(0x12));
+    if (strcmp_P(cfiQRYx16, PSTR("515259")) == 0) { // QRY in x16 mode
       println_Msg(F("Normal CFI x16 Mode"));
       flashX16Mode = true;
       flashSwitchLastBits = false;
-    } else if (strcmp(cfiQRYx16, "52515A") == 0) { // QRY in x16 mode with switched last bit
+    } else if (strcmp_P(cfiQRYx16, PSTR("52515A")) == 0) { // QRY in x16 mode with switched last bit
       println_Msg(F("Switched CFI x16 Mode"));
       flashX16Mode = true;
       flashSwitchLastBits = true;
@@ -1969,7 +1969,7 @@ void identifyCFI_GB() {
 // identifyFlash_GB() needs to be run before this!
 bool writeCFI_GB() {
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
   // Open file on sd card
   if (myFile.open(filePath, O_READ)) {

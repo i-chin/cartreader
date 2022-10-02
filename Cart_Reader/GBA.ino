@@ -355,16 +355,16 @@ void gbaMenu() {
           println_Msg(flashid);
           println_Msg(F(""));
           println_Msg(F("FLASH Type: "));
-          if (strcmp(flashid, "1F3D") == 0) {
+          if (strcmp_P(flashid, PSTR("1F3D")) == 0) {
             println_Msg(F("Atmel AT29LV512"));
           }
-          else if (strcmp(flashid, "BFD4") == 0) {
+          else if (strcmp_P(flashid, PSTR("BFD4")) == 0) {
             println_Msg(F("SST 39VF512"));
           }
-          else if (strcmp(flashid, "C21C") == 0) {
+          else if (strcmp_P(flashid, PSTR("C21C")) == 0) {
             println_Msg(F("Macronix MX29L512"));
           }
-          else if (strcmp(flashid, "321B") == 0) {
+          else if (strcmp_P(flashid, PSTR("321B")) == 0) {
             println_Msg(F("Panasonic MN63F805MNP"));
           }
           else {
@@ -378,7 +378,7 @@ void gbaMenu() {
           display_Clear();
           display_Update();
 
-          if (strcmp(flashid, "1F3D") == 0) { // Atmel
+          if (strcmp_P(flashid, PSTR("1F3D")) == 0) { // Atmel
             writeFLASH_GBA(1, 65536, 0, 1);
             verifyFLASH_GBA(65536, 0);
           } else {
@@ -405,10 +405,10 @@ void gbaMenu() {
           println_Msg(flashid);
           println_Msg(F(""));
           println_Msg(F("Flashrom Type: "));
-          if (strcmp(flashid, "C209") == 0) {
+          if (strcmp_P(flashid, PSTR("C209")) == 0) {
             println_Msg(F("Macronix MX29L010"));
           }
-          else if (strcmp(flashid, "6213") == 0) {
+          else if (strcmp_P(flashid, PSTR("6213")) == 0) {
             println_Msg(F("SANYO LE26FV10N1TS"));
           }
           else {
@@ -850,9 +850,9 @@ void getCartInfo_GBA() {
         myFile.seekSet(myFile.curPosition() + 9);
 
         // Read 4 bytes into String, do it one at a time so byte order doesn't get mixed up
-        sprintf(tempStr, "%c", myFile.read());
+        sprintf_P(tempStr, PSTR("%c"), myFile.read());
         for (byte i = 0; i < 3; i++) {
-          sprintf(tempStr2, "%c", myFile.read());
+          sprintf_P(tempStr2, PSTR("%c"), myFile.read());
           strcat(tempStr, tempStr2);
         }
 
@@ -891,9 +891,9 @@ void getCartInfo_GBA() {
             myFile.seekSet(myFile.curPosition() + 9);
 
             // Read 4 bytes into String, do it one at a time so byte order doesn't get mixed up
-            sprintf(tempStr, "%c", myFile.read());
+            sprintf_P(tempStr, PSTR("%c"), myFile.read());
             for (byte i = 0; i < 3; i++) {
-              sprintf(tempStr2, "%c", myFile.read());
+              sprintf_P(tempStr2, PSTR("%c"), myFile.read());
               strcat(tempStr, tempStr2);
             }
 
@@ -1024,7 +1024,7 @@ void getCartInfo_GBA() {
     romVersion = sdBuffer[0xBC];
 
     // Get Checksum as string
-    sprintf(checksumStr, "%02X", sdBuffer[0xBD]);
+    sprintf_P(checksumStr, PSTR("%02X"), sdBuffer[0xBD]);
 
     // Calculate Checksum
     int calcChecksum = 0x00;
@@ -1033,7 +1033,7 @@ void getCartInfo_GBA() {
     }
     calcChecksum = (calcChecksum - 0x19) & 0xFF;
     // Turn into string
-    sprintf(calcChecksumStr, "%02X", calcChecksum);
+    sprintf_P(calcChecksumStr, PSTR("%02X"), calcChecksum);
 
     // Compare checksum
     if (strcmp(calcChecksumStr, checksumStr) != 0) {
@@ -1107,11 +1107,11 @@ void getCartInfo_GBA() {
 void readROM_GBA() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".gba");
+  strcat_P(fileName, PSTR(".gba"));
 
   // create a new folder for the rom file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "GBA/ROM/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("GBA/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -1165,11 +1165,11 @@ boolean compare_checksum_GBA () {
   display_Update();
 
   strcpy(fileName, romName);
-  strcat(fileName, ".gba");
+  strcat_P(fileName, PSTR(".gba"));
 
   // last used rom folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "GBA/ROM/%s/%d", romName, foldern - 1);
+  sprintf_P(folder, PSTR("GBA/ROM/%s/%d"), romName, foldern - 1);
   sd.chdir(folder);
 
   // If file exists
@@ -1186,7 +1186,7 @@ boolean compare_checksum_GBA () {
     calcChecksum = (calcChecksum - 0x19) & 0xFF;
 
     // Turn into string
-    sprintf(calcChecksumStr, "%02X", calcChecksum);
+    sprintf_P(calcChecksumStr, PSTR("%02X"), calcChecksum);
     print_Msg(calcChecksumStr);
 
     if (strcmp(calcChecksumStr, checksumStr) == 0) {
@@ -1216,11 +1216,11 @@ void readSRAM_GBA(boolean browseFile, unsigned long sramSize, uint32_t pos) {
   if (browseFile) {
     // Get name, add extension and convert to char array for sd lib
     strcpy(fileName, romName);
-    strcat(fileName, ".srm");
+    strcat_P(fileName, PSTR(".srm"));
 
     // create a new folder for the save file
     EEPROM_readAnything(FOLDER_NUM, foldern);
-    sprintf(folder, "GBA/SAVE/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("GBA/SAVE/%s/%d"), romName, foldern);
     sd.mkdir(folder, true);
     sd.chdir(folder);
 
@@ -1266,7 +1266,7 @@ void writeSRAM_GBA(boolean browseFile, unsigned long sramSize, uint32_t pos) {
     sd.chdir("/");
     fileBrowser(F("Select srm file"));
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     display_Clear();
   }
 
@@ -1347,11 +1347,11 @@ void readFRAM_GBA (unsigned long framSize) {
 
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".srm");
+  strcat_P(fileName, PSTR(".srm"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "GBA/SAVE/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("GBA/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -1421,11 +1421,11 @@ void writeFRAM_GBA (boolean browseFile, unsigned long framSize) {
     sd.chdir("/");
     fileBrowser(F("Select srm file"));
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     display_Clear();
   }
   else
-    sprintf(filePath, "%s", fileName);
+    sprintf_P(filePath, PSTR("%s"), fileName);
 
   //open file on sd card
   if (myFile.open(filePath, O_READ)) {
@@ -1561,7 +1561,7 @@ void idFlash_GBA() {
   __asm__("nop\n\t""nop\n\t""nop\n\t");
 
   // Read the two id bytes into a string
-  sprintf(flashid, "%02X%02X", readByteFlash_GBA(0), readByteFlash_GBA(1));
+  sprintf_P(flashid, PSTR("%02X%02X"), readByteFlash_GBA(0), readByteFlash_GBA(1));
 
   // Set CS_FLASH(PH0) high
   PORTH |= (1 << 0);
@@ -1750,12 +1750,12 @@ void readFLASH_GBA (boolean browseFile, unsigned long flashSize, uint32_t pos) {
   if (browseFile) {
     // Get name, add extension and convert to char array for sd lib
     strcpy(fileName, romName);
-    strcat(fileName, ".fla");
+    strcat_P(fileName, PSTR(".fla"));
 
     // create a new folder for the save file
     EEPROM_readAnything(FOLDER_NUM, foldern);
 
-    sprintf(folder, "GBA/SAVE/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("GBA/SAVE/%s/%d"), romName, foldern);
     sd.mkdir(folder, true);
     sd.chdir(folder);
 
@@ -1831,7 +1831,7 @@ void writeFLASH_GBA (boolean browseFile, unsigned long flashSize, uint32_t pos, 
     sd.chdir("/");
     fileBrowser(F("Select fla file"));
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     display_Clear();
   }
 
@@ -1960,7 +1960,7 @@ void writeEeprom_GBA(word eepSize) {
   sd.chdir("/");
   fileBrowser(F("Select eep file"));
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   display_Clear();
 
   print_Msg(F("Writing EEPROM..."));
@@ -1996,12 +1996,12 @@ void writeEeprom_GBA(word eepSize) {
 void readEeprom_GBA(word eepSize) {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".eep");
+  strcat_P(fileName, PSTR(".eep"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
 
-  sprintf(folder, "GBA/SAVE/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("GBA/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -2301,10 +2301,10 @@ void idFlashrom_GBA() {
   __asm__("nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t");
 
   // Read flashrom ID
-  sprintf(flashid, "%02X%02X", ((readWord_GBA(0x2) >> 8) & 0xFF), (readWord_GBA(0x4) & 0xFF));
+  sprintf_P(flashid, PSTR("%02X%02X"), ((readWord_GBA(0x2) >> 8) & 0xFF), (readWord_GBA(0x4) & 0xFF));
 
   // Intel Strataflash
-  if (strcmp(flashid, "8802") == 0 || (strcmp(flashid, "8816") == 0)) {
+  if (strcmp_P(flashid, PSTR("8802")) == 0 || (strcmp_P(flashid, PSTR("8816")) == 0)) {
     cartSize = 0x2000000;
   }
   else {
@@ -2315,10 +2315,10 @@ void idFlashrom_GBA() {
     __asm__("nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t""nop\n\t");
 
     // Read flashrom ID
-    sprintf(flashid, "%02X%02X", ((readWord_GAB(0x2) >> 8) & 0xFF), (readWord_GAB(0x2) & 0xFF));
+    sprintf_P(flashid, PSTR("%02X%02X"), ((readWord_GAB(0x2) >> 8) & 0xFF), (readWord_GAB(0x2) & 0xFF));
 
     // MX29GL128E or MSP55LV128
-    if (strcmp(flashid, "227E") == 0) {
+    if (strcmp_P(flashid, PSTR("227E")) == 0) {
       // MX is 0xC2 and MSP is 0x4 or 0x1
       romType = (readWord_GAB(0x0) & 0xFF);
       cartSize = 0x1000000;
@@ -2740,14 +2740,14 @@ void flashRepro_GBA() {
   // Check flashrom ID's
   idFlashrom_GBA();
 
-  if ((strcmp(flashid, "8802") == 0) || (strcmp(flashid, "8816") == 0) || (strcmp(flashid, "227E") == 0)) {
+  if ((strcmp_P(flashid, PSTR("8802")) == 0) || (strcmp_P(flashid, PSTR("8816")) == 0) || (strcmp_P(flashid, PSTR("227E")) == 0)) {
     print_Msg(F("ID: "));
     print_Msg(flashid);
     print_Msg(F(" Size: "));
     print_Msg(cartSize / 0x100000);
     println_Msg(F("MB"));
     // MX29GL128E or MSP55LV128(N)
-    if (strcmp(flashid, "227E") == 0) {
+    if (strcmp_P(flashid, PSTR("227E")) == 0) {
       // MX is 0xC2 and MSP55LV128 is 0x4 and MSP55LV128N 0x1
       if (romType == 0xC2) {
         println_Msg(F("Macronix MX29GL128E"));
@@ -2768,11 +2768,11 @@ void flashRepro_GBA() {
       }
     }
     // Intel 4000L0YBQ0
-    else if (strcmp(flashid, "8802") == 0) {
+    else if (strcmp_P(flashid, PSTR("8802")) == 0) {
       println_Msg(F("Intel 4000L0YBQ0"));
     }
     // Intel 4400L0ZDQ0
-    else if (strcmp(flashid, "8816") == 0) {
+    else if (strcmp_P(flashid, PSTR("8816")) == 0) {
       println_Msg(F("Intel 4400L0ZDQ0"));
     }
     println_Msg("");
@@ -2792,7 +2792,7 @@ void flashRepro_GBA() {
     display_Update();
 
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
     // Open file on sd card
     if (myFile.open(filePath, O_READ)) {
@@ -2804,19 +2804,19 @@ void flashRepro_GBA() {
       display_Update();
 
       // Erase needed sectors
-      if (strcmp(flashid, "8802") == 0) {
+      if (strcmp_P(flashid, PSTR("8802")) == 0) {
         println_Msg(F("Erasing..."));
         display_Update();
         eraseIntel4000_GBA();
         resetIntel_GBA(0x200000);
       }
-      else if (strcmp(flashid, "8816") == 0) {
+      else if (strcmp_P(flashid, PSTR("8816")) == 0) {
         println_Msg(F("Erasing..."));
         display_Update();
         eraseIntel4400_GBA();
         resetIntel_GBA(0x200000);
       }
-      else if (strcmp(flashid, "227E") == 0) {
+      else if (strcmp_P(flashid, PSTR("227E")) == 0) {
         //if (sectorCheckMX29GL128E_GBA()) {
         //print_Error(F("Sector Protected"), true);
         //}
@@ -2845,10 +2845,10 @@ void flashRepro_GBA() {
       print_Msg(F("Writing "));
       println_Msg(filePath);
       display_Update();
-      if ((strcmp(flashid, "8802") == 0) || (strcmp(flashid, "8816") == 0)) {
+      if ((strcmp_P(flashid, PSTR("8802")) == 0) || (strcmp_P(flashid, PSTR("8816")) == 0)) {
         writeIntel4000_GBA();
       }
-      else if (strcmp(flashid, "227E") == 0) {
+      else if (strcmp_P(flashid, PSTR("227E")) == 0) {
         if ((romType == 0xC2) || (romType == 0x89) || (romType == 0x20)) {
           //MX29GL128E (0xC2)
           //PC28F256M29 (0x89)
@@ -2866,7 +2866,7 @@ void flashRepro_GBA() {
       // Verify
       print_Msg(F("Verifying..."));
       display_Update();
-      if (strcmp(flashid, "8802") == 0) {
+      if (strcmp_P(flashid, PSTR("8802")) == 0) {
         // Don't know the correct size so just take some guesses
         resetIntel_GBA(0x8000);
         delay(1000);
@@ -2875,12 +2875,12 @@ void flashRepro_GBA() {
         resetIntel_GBA(0x200000);
         delay(1000);
       }
-      else if (strcmp(flashid, "8816") == 0) {
+      else if (strcmp_P(flashid, PSTR("8816")) == 0) {
         resetIntel_GBA(0x200000);
         delay(1000);
       }
 
-      else if (strcmp(flashid, "227E") == 0) {
+      else if (strcmp_P(flashid, PSTR("227E")) == 0) {
         resetMX29GL128E_GBA();
         delay(1000);
       }

@@ -382,10 +382,10 @@ void readROM_VB() {
   dataIn_VB();
 
   strcpy(fileName, romName);
-  strcat(fileName, ".vb");
+  strcat_P(fileName, PSTR(".vb"));
 
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "VBOY/ROM/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("VBOY/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -456,7 +456,7 @@ void readROM_VB() {
 void writeSRAM_VB() {
   dataOut_VB();
 
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   println_Msg(F("Writing..."));
   println_Msg(filePath);
   display_Update();
@@ -480,10 +480,10 @@ void readSRAM_VB() {
   dataIn_VB();
 
   strcpy(fileName, romName);
-  strcat(fileName, ".srm");
+  strcat_P(fileName, PSTR(".srm"));
 
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "VBOY/SAVE/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("VBOY/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 

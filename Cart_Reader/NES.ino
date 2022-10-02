@@ -444,7 +444,7 @@ boolean getMapping() {
   char crcStr[9];
   char tempStr2[2];
   char iNES_STR[33];
-  sprintf(crcStr, "%08lX", ~oldcrc32);
+  sprintf_P(crcStr, PSTR("%08lX"), ~oldcrc32);
 
   print_Msg(F("for "));
   print_Msg(crcStr);
@@ -452,7 +452,7 @@ boolean getMapping() {
   display_Update();
 
   // Filter out 0xFF checksum
-  if (strcmp(crcStr, "BD7BC39F") == 0) {
+  if (strcmp_P(crcStr, PSTR("BD7BC39F")) == 0) {
     delay(500);
     println_Msg(F(""));
     println_Msg(F("No data found at 0x8000"));
@@ -479,9 +479,9 @@ boolean getMapping() {
         get_line(gamename, &myFile, 96);
 
         // Read CRC32 checksum
-        sprintf(checksumStr, "%c", myFile.read());
+        sprintf_P(checksumStr, PSTR("%c"), myFile.read());
         for (byte i = 0; i < 7; i++) {
-          sprintf(tempStr2, "%c", myFile.read());
+          sprintf_P(tempStr2, PSTR("%c"), myFile.read());
           strcat(checksumStr, tempStr2);
         }
 
@@ -489,9 +489,9 @@ boolean getMapping() {
         myFile.seekSet(myFile.curPosition() + 1);
 
         // Read CRC32 of first 512 bytes
-        sprintf(crc_search, "%c", myFile.read());
+        sprintf_P(crc_search, PSTR("%c"), myFile.read());
         for (byte i = 0; i < 7; i++) {
-          sprintf(tempStr2, "%c", myFile.read());
+          sprintf_P(tempStr2, PSTR("%c"), myFile.read());
           strcat(crc_search, tempStr2);
         }
 
@@ -538,9 +538,9 @@ boolean getMapping() {
 #endif
 
             // Read CRC32 checksum
-            sprintf(checksumStr, "%c", myFile.read());
+            sprintf_P(checksumStr, PSTR("%c"), myFile.read());
             for (byte i = 0; i < 7; i++) {
-              sprintf(tempStr2, "%c", myFile.read());
+              sprintf_P(tempStr2, PSTR("%c"), myFile.read());
               strcat(checksumStr, tempStr2);
             }
 
@@ -548,9 +548,9 @@ boolean getMapping() {
             myFile.seekSet(myFile.curPosition() + 1);
 
             // Read CRC32 of first 512 bytes
-            sprintf(crc_search, "%c", myFile.read());
+            sprintf_P(crc_search, PSTR("%c"), myFile.read());
             for (byte i = 0; i < 7; i++) {
-              sprintf(tempStr2, "%c", myFile.read());
+              sprintf_P(tempStr2, PSTR("%c"), myFile.read());
               strcat(crc_search, tempStr2);
             }
 
@@ -824,9 +824,9 @@ void selectMapping() {
 #endif
 
       // Read CRC32 checksum
-      sprintf(checksumStr, "%c", myFile.read());
+      sprintf_P(checksumStr, PSTR("%c"), myFile.read());
       for (byte i = 0; i < 7; i++) {
-        sprintf(tempStr2, "%c", myFile.read());
+        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
         strcat(checksumStr, tempStr2);
       }
 
@@ -834,9 +834,9 @@ void selectMapping() {
       myFile.seekSet(myFile.curPosition() + 1);
 
       // Read CRC32 of first 512 bytes
-      sprintf(crc_search, "%c", myFile.read());
+      sprintf_P(crc_search, PSTR("%c"), myFile.read());
       for (byte i = 0; i < 7; i++) {
-        sprintf(tempStr2, "%c", myFile.read());
+        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
         strcat(crc_search, tempStr2);
       }
 
@@ -1027,11 +1027,11 @@ void selectMapping() {
 void readRom_NES() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".nes");
+  strcat_P(fileName, PSTR(".nes"));
 
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "NES/ROM/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("NES/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -1086,11 +1086,11 @@ void readRom_NES() {
 void readRaw_NES() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".bin");
+  strcat_P(fileName, PSTR(".bin"));
 
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "NES/ROM/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("NES/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -1426,7 +1426,7 @@ void calcCRC(char* checkFile, unsigned long filesize, uint32_t* crcCopy, unsigne
   else
     crc = crc32(crcFile, filesize);
   crcFile.close();
-  sprintf(tempCRC, "%08lX", crc);
+  sprintf_P(tempCRC, PSTR("%08lX"), crc);
 
   if (crcCopy != NULL) {
     *crcCopy = crc;
@@ -1442,23 +1442,23 @@ void calcCRC(char* checkFile, unsigned long filesize, uint32_t* crcCopy, unsigne
  *****************************************/
 void CreateROMFolderInSD() {
   sd.chdir();
-  sprintf(folder, "NES/ROM");
+  sprintf_P(folder, PSTR("NES/ROM"));
   sd.mkdir(folder, true);
   sd.chdir(folder);
 }
 
 void CreatePRGFileInSD() {
-  strcpy(fileName, "PRG");
-  strcat(fileName, ".bin");
+  strcpy_P(fileName, PSTR("PRG"));
+  strcat_P(fileName, PSTR(".bin"));
   for (byte i = 0; i < 100; i++) {
     if (!sd.exists(fileName)) {
       myFile = sd.open(fileName, O_RDWR | O_CREAT);
       break;
     }
-    sprintf(fileCount, "%02d", i);
-    strcpy(fileName, "PRG.");
+    sprintf_P(fileCount, PSTR("%02d"), i);
+    strcpy_P(fileName, PSTR("PRG."));
     strcat(fileName, fileCount);
-    strcat(fileName, ".bin");
+    strcat_P(fileName, PSTR(".bin"));
   }
   if (!myFile) {
     LED_RED_ON;
@@ -1473,17 +1473,17 @@ void CreatePRGFileInSD() {
 }
 
 void CreateCHRFileInSD() {
-  strcpy(fileName, "CHR");
-  strcat(fileName, ".bin");
+  strcpy_P(fileName, PSTR("CHR"));
+  strcat_P(fileName, PSTR(".bin"));
   for (byte i = 0; i < 100; i++) {
     if (!sd.exists(fileName)) {
       myFile = sd.open(fileName, O_RDWR | O_CREAT);
       break;
     }
-    sprintf(fileCount, "%02d", i);
-    strcpy(fileName, "CHR.");
+    sprintf_P(fileCount, PSTR("%02d"), i);
+    strcpy_P(fileName, PSTR("CHR."));
     strcat(fileName, fileCount);
-    strcat(fileName, ".bin");
+    strcat_P(fileName, PSTR(".bin"));
   }
   if (!myFile) {
     LED_RED_ON;
@@ -1498,17 +1498,17 @@ void CreateCHRFileInSD() {
 }
 
 void CreateRAMFileInSD() {
-  strcpy(fileName, "RAM");
-  strcat(fileName, ".bin");
+  strcpy_P(fileName, PSTR("RAM"));
+  strcat_P(fileName, PSTR(".bin"));
   for (byte i = 0; i < 100; i++) {
     if (!sd.exists(fileName)) {
       myFile = sd.open(fileName, O_RDWR | O_CREAT);
       break;
     }
-    sprintf(fileCount, "%02d", i);
-    strcpy(fileName, "RAM.");
+    sprintf_P(fileCount, PSTR("%02d"), i);
+    strcpy_P(fileName, PSTR("RAM."));
     strcat(fileName, fileCount);
-    strcat(fileName, ".bin");
+    strcat_P(fileName, PSTR(".bin"));
   }
   if (!myFile) {
     LED_RED_ON;
@@ -1526,7 +1526,7 @@ void CreateRAMFileInSD() {
 void CartStart() {
   sd.chdir();
   EEPROM_readAnything(FOLDER_NUM, foldern); // FOLDER #
-  sprintf(folder, "NES/CART/%d", foldern);
+  sprintf_P(folder, PSTR("NES/CART/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 }
@@ -4179,7 +4179,7 @@ void writeRAM() {
     word base = 0x6000;
 
     sd.chdir();
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
     display_Clear();
     println_Msg(F("Writing File: "));
@@ -4596,14 +4596,14 @@ void NESmaker_ID() { // Read Flash ID
   write_prg_byte(0x9555, 0x90); // Software ID Entry
   unsigned char ID1 = read_prg_byte(0x8000);
   unsigned char ID2 = read_prg_byte(0x8001);
-  sprintf(flashid, "%02X%02X", ID1, ID2);
+  sprintf_P(flashid, PSTR("%02X%02X"), ID1, ID2);
   write_prg_byte(0xC000, 0x01);
   write_prg_byte(0x9555, 0xAA);
   write_prg_byte(0xC000, 0x00);
   write_prg_byte(0xAAAA, 0x55);
   write_prg_byte(0xC000, 0x01);
   write_prg_byte(0x9555, 0xF0); // Software ID Exit
-  if (strcmp(flashid, "BFB7") == 0) // SST 39SF040
+  if (strcmp_P(flashid, PSTR("BFB7")) == 0) // SST 39SF040
     flashfound = 1;
 }
 
@@ -4669,7 +4669,7 @@ void writeFLASH() {
     word base = 0x8000;
 
     sd.chdir();
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
     LED_RED_ON;
     display_Clear();

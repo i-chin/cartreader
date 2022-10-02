@@ -934,10 +934,10 @@ boolean checkcart_SNES() {
     oldcrc32 = updateCRC(snesHeader[c], oldcrc32);
   }
   char crcStr[9];
-  sprintf(crcStr, "%08lX", ~oldcrc32);
+  sprintf_P(crcStr, PSTR("%08lX"), ~oldcrc32);
 
   // Get Checksum as string
-  sprintf(checksumStr, "%02X%02X", snesHeader[0xFFDF - headerStart], snesHeader[0xFFDE - headerStart]);
+  sprintf_P(checksumStr, PSTR("%02X%02X"), snesHeader[0xFFDF - headerStart], snesHeader[0xFFDE - headerStart]);
 
   romType = snesHeader[0xFFD5 - headerStart];
   if ((romType >> 5) != 1) {  // Detect invalid romType byte due to too long ROM name (22 chars)
@@ -1004,7 +1004,7 @@ boolean checkcart_SNES() {
   }
 
   //Check SD card for alt config, pass CRC32 of snesHeader but filter out 0000 and FFFF checksums
-  if (!(strcmp(checksumStr, "0000") == 0) && !(strcmp(checksumStr, "FFFF") == 0)) {
+  if (!(strcmp_P(checksumStr, PSTR("0000")) == 0) && !(strcmp_P(checksumStr, PSTR("FFFF")) == 0)) {
     checkAltConf(crcStr);
   }
 
@@ -1064,7 +1064,7 @@ boolean checkcart_SNES() {
       sramSizeExp = snesHeader[0x7FBD - headerStart];
     }
     else {
-      if (strncmp(romName, "STARFOX2", 8) == 0) {
+      if (strncmp_P(romName, PSTR("STARFOX2"), 8) == 0) {
         sramSizeExp = 6;
       }
       else {
@@ -1097,7 +1097,7 @@ boolean checkcart_SNES() {
 
   // Test if checksum is equal to reverse checksum
   if (((word(snesHeader[0xFFDC - headerStart]) + (word(snesHeader[0xFFDD - headerStart]) * 256)) + (word(snesHeader[0xFFDE - headerStart]) + (word(snesHeader[0xFFDF - headerStart]) * 256))) == 65535 ) {
-    if (strcmp("0000", checksumStr) == 0) {
+    if (strcmp_P(PSTR("0000"), checksumStr) == 0) {
       return 0;
     }
     else {
@@ -1118,7 +1118,7 @@ unsigned int calc_checksum (char* fileName, char* folder) {
   unsigned long i = 0;
   unsigned long j = 0;
 
-  if (strcmp(folder, "root") != 0)
+  if (strcmp_P(folder, PSTR("root")) != 0)
     sd.chdir(folder);
 
   // If file exists
@@ -1244,14 +1244,14 @@ boolean compare_checksum() {
   display_Update();
 
   strcpy(fileName, romName);
-  strcat(fileName, ".sfc");
+  strcat_P(fileName, PSTR(".sfc"));
 
   // last used rom folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "SNES/ROM/%s/%d", romName, foldern - 1);
+  sprintf_P(folder, PSTR("SNES/ROM/%s/%d"), romName, foldern - 1);
 
   char calcsumStr[5];
-  sprintf(calcsumStr, "%04X", calc_checksum(fileName, folder));
+  sprintf_P(calcsumStr, PSTR("%04X"), calc_checksum(fileName, folder));
   print_Msg(calcsumStr);
   
   if (strcmp(calcsumStr, checksumStr) == 0) {
@@ -1276,11 +1276,11 @@ void readROM_SNES() {
 
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".sfc");
+  strcat_P(fileName, PSTR(".sfc"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "SNES/ROM/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("SNES/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -1301,7 +1301,7 @@ void readROM_SNES() {
   }
 
   //Dump Derby Stallion '96 (Japan) Actual Size is 24Mb
-  if ((romType == LO) && (numBanks == 128) && (strcmp("CC86", checksumStr) == 0)) {
+  if ((romType == LO) && (numBanks == 128) && (strcmp_P(PSTR("CC86"), checksumStr) == 0)) {
     // Read Banks 0x00-0x3F for the 1st/2nd MB
     for (int currBank = 0; currBank < 64; currBank++) {
       // Dump the bytes to SD 512B at a time
@@ -1471,11 +1471,11 @@ void writeSRAM (boolean browseFile) {
     sd.chdir("/");
     fileBrowser(F("Select srm file"));
     // Create filepath
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     display_Clear();
   }
   else
-    sprintf(filePath, "%s", fileName);
+    sprintf_P(filePath, PSTR("%s"), fileName);
 
   //open file on sd card
   if (myFile.open(filePath, O_READ)) {
@@ -1644,11 +1644,11 @@ void readSRAM () {
 
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
-  strcat(fileName, ".srm");
+  strcat_P(fileName, PSTR(".srm"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "SNES/SAVE/%s/%d", romName, foldern);
+  sprintf_P(folder, PSTR("SNES/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
