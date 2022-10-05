@@ -202,6 +202,7 @@ FsFile myDir;
 FsFile myFile;
 #ifdef global_log
 FsFile myLog;
+boolean dont_log = false;
 #endif
 
 // AVR Eeprom
@@ -709,6 +710,11 @@ boolean compareCRC(char* database, char* crcString, boolean renamerom, int offse
 }
 
 byte starting_letter() {
+#ifdef global_log
+  // Disable log to prevent unnecessary logging
+  dont_log = true;
+#endif
+
 #if (defined(enable_LCD) || defined(enable_OLED))
   byte selection = 0;
   byte line = 0;
@@ -804,6 +810,11 @@ byte starting_letter() {
   // Read the incoming byte:
   byte incomingByte = Serial.read();
   return incomingByte;
+#endif
+
+#ifdef global_log
+  // Enable log again
+  dont_log = false;
 #endif
 }
 
@@ -1976,7 +1987,7 @@ void print_Msg(const __FlashStringHelper * string) {
   Serial.print(string);
 #endif
 #ifdef global_log
-  myLog.print(string);
+  if (!dont_log)myLog.print(string);
 #endif
 }
 
@@ -2009,7 +2020,7 @@ void print_Msg(const char myString[]) {
   Serial.print(myString);
 #endif
 #ifdef global_log
-  myLog.print(myString);
+  if (!dont_log)myLog.print(myString);
 #endif
 }
 
@@ -2024,7 +2035,7 @@ void print_Msg(long unsigned int message) {
   Serial.print(message);
 #endif
 #ifdef global_log
-  myLog.print(message);
+  if (!dont_log)myLog.print(message);
 #endif
 }
 
@@ -2039,7 +2050,7 @@ void print_Msg(byte message, int outputFormat) {
   Serial.print(message, outputFormat);
 #endif
 #ifdef global_log
-  myLog.print(message, outputFormat);
+  if (!dont_log)myLog.print(message, outputFormat);
 #endif
 }
 
@@ -2054,7 +2065,7 @@ void print_Msg(word message, int outputFormat) {
   Serial.print(message, outputFormat);
 #endif
 #ifdef global_log
-  myLog.print(message, outputFormat);
+  if (!dont_log)myLog.print(message, outputFormat);
 #endif
 }
 
@@ -2069,7 +2080,7 @@ void print_Msg(int message, int outputFormat) {
   Serial.print(message, outputFormat);
 #endif
 #ifdef global_log
-  myLog.print(message, outputFormat);
+  if (!dont_log)myLog.print(message, outputFormat);
 #endif
 }
 
@@ -2084,7 +2095,7 @@ void print_Msg(long unsigned int message, int outputFormat) {
   Serial.print(message, outputFormat);
 #endif
 #ifdef global_log
-  myLog.print(message, outputFormat);
+  if (!dont_log)myLog.print(message, outputFormat);
 #endif
 }
 
@@ -2099,7 +2110,7 @@ void print_Msg(String string) {
   Serial.print(string);
 #endif
 #ifdef global_log
-  myLog.print(string);
+  if (!dont_log)myLog.print(string);
 #endif
 }
 
@@ -2131,7 +2142,7 @@ void println_Msg(String string) {
   Serial.println(string);
 #endif
 #ifdef global_log
-  myLog.println(string);
+  if (!dont_log)myLog.println(string);
 #endif
 }
 
@@ -2147,7 +2158,7 @@ void println_Msg(byte message, int outputFormat) {
   Serial.println(message, outputFormat);
 #endif
 #ifdef global_log
-  myLog.println(message, outputFormat);
+  if (!dont_log)myLog.println(message, outputFormat);
 #endif
 }
 
@@ -2181,7 +2192,7 @@ void println_Msg(const char myString[]) {
   Serial.println(myString);
 #endif
 #ifdef global_log
-  myLog.println(myString);
+  if (!dont_log)myLog.println(myString);
 #endif
 }
 
@@ -2200,7 +2211,7 @@ void println_Msg(const __FlashStringHelper * string) {
   char myBuffer[15];
   strlcpy_P(myBuffer, (char *)string, 15);
   if ((strncmp_P(myBuffer, PSTR("Press Button..."), 14) != 0) && (strncmp_P(myBuffer, PSTR("Select file"), 10) != 0)) {
-    myLog.println(string);
+    if (!dont_log)myLog.println(string);
   }
 #endif
 }
@@ -2217,7 +2228,7 @@ void println_Msg(long unsigned int message) {
   Serial.println(message);
 #endif
 #ifdef global_log
-  myLog.println(message);
+  if (!dont_log)myLog.println(message);
 #endif
 }
 
@@ -2232,7 +2243,7 @@ void display_Update() {
   delay(100);
 #endif
 #ifdef global_log
-  myLog.flush();
+  if (!dont_log)myLog.flush();
 #endif
 }
 
@@ -2246,7 +2257,7 @@ void display_Clear() {
   display.setCursor(0, 0);
 #endif
 #ifdef global_log
-  myLog.println("");
+  if (!dont_log)myLog.println("");
 #endif
 }
 

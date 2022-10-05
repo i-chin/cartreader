@@ -227,6 +227,11 @@ void nesMenu() {
   switch (answer) {
     // Change Mapper
     case 0:
+      romName[0] = 'C';
+      romName[1] = 'A';
+      romName[2] = 'R';
+      romName[3] = 'T';
+      romName[4] = '\0';
       setMapper();
       checkMapperSize();
       setPRGSize();
@@ -426,6 +431,27 @@ uint32_t uppow2(uint32_t n) {
   return n;
 }
 
+void printPRG() {
+  display_Clear();
+  println_Msg(F("Printing PRG at 0x8000"));
+
+  char myBuffer[3];
+
+  for (word currLine = 0; currLine < 512; currLine += 16) {
+    for (byte currByte = 0; currByte < 16; currByte++) {
+      itoa (read_prg_byte(0x8000 + currLine + currByte), myBuffer, 16);
+      for (word i = 0; i < 2 - strlen(myBuffer); i++) {
+        print_Msg(F("0"));
+      }
+      // Now print the significant bits
+      print_Msg(myBuffer);
+      print_Msg(" ");
+    }
+    println_Msg("");
+  }
+  display_Update();
+}
+
 boolean getMapping() {
   display_Clear();
   println_Msg(F("Searching database"));
@@ -463,6 +489,7 @@ boolean getMapping() {
     romName[1] = 'A';
     romName[2] = 'R';
     romName[3] = 'T';
+    romName[4] = '\0';
     return 0;
   }
   else {
@@ -623,6 +650,10 @@ boolean getMapping() {
                 ram = 1; // 1K
             }
 
+#ifdef global_log
+            // Disable log to prevent unnecessary logging
+            dont_log = true;
+#endif
             println_Msg(gamename);
             print_Msg(F("MAPPER:   "));
             println_Msg(mapper);
@@ -668,6 +699,10 @@ boolean getMapping() {
 #endif
             display_Update();
 
+#ifdef global_log
+            // Enable log again
+            dont_log = false;
+#endif
             int b = 0;
             while (1) {
               // Check button input
@@ -720,6 +755,7 @@ boolean getMapping() {
                   romName[1] = 'A';
                   romName[2] = 'R';
                   romName[3] = 'T';
+                  romName[4] = '\0';
                 }
 
                 // Save Mapper
@@ -742,10 +778,12 @@ boolean getMapping() {
         println_Msg(F("Using manual selection"));
         display_Update();
         delay(1000);
+        printPRG();
         romName[0] = 'C';
         romName[1] = 'A';
         romName[2] = 'R';
         romName[3] = 'T';
+        romName[4] = '\0';
         return 0;
       }
     }
@@ -770,6 +808,12 @@ void selectMapping() {
 
   // Open database
   if (myFile.open("nes.txt", O_READ)) {
+
+#ifdef global_log
+    // Disable log to prevent unnecessary logging
+    dont_log = true;
+#endif
+
     // Skip ahead to selected starting letter
     if ((myLetter > 0) && (myLetter <= 26)) {
       while (myFile.available()) {
@@ -1006,6 +1050,7 @@ void selectMapping() {
             romName[1] = 'A';
             romName[2] = 'R';
             romName[3] = 'T';
+            romName[4] = '\0';
           }
 
           // Save Mapper
@@ -1018,6 +1063,10 @@ void selectMapping() {
         }
       }
     }
+#ifdef global_log
+    // Enable log again
+    dont_log = false;
+#endif
   }
   else {
     print_Error(F("Database file not found"), true);
@@ -1972,6 +2021,11 @@ unsigned char* getNES20HeaderBytesFromDatabaseRow(const char* crctest) {
    Config Functions
  *****************************************/
 void setMapper() {
+#ifdef global_log
+  // Disable log to prevent unnecessary logging
+  dont_log = true;
+#endif
+
   // OLED
 #if defined(enable_OLED)
 chooseMapper:
@@ -2207,6 +2261,11 @@ setmapper:
 #endif
   EEPROM_writeAnything(NES_MAPPER, newmapper);
   mapper = newmapper;
+
+#ifdef global_log
+  // Enable log again
+  dont_log = false;
+#endif
 }
 
 void checkMapperSize() {
@@ -2226,6 +2285,11 @@ void checkMapperSize() {
 }
 
 void setPRGSize() {
+#ifdef global_log
+  // Disable log to prevent unnecessary logging
+  dont_log = true;
+#endif
+
 #if (defined(enable_LCD) || defined(enable_OLED))
   display_Clear();
   if (prglo == prghi)
@@ -2332,9 +2396,19 @@ setprg:
 #endif
   EEPROM_writeAnything(NES_PRG_SIZE, newprgsize);
   prgsize = newprgsize;
+
+#ifdef global_log
+  // Enable log again
+  dont_log = false;
+#endif
 }
 
 void setCHRSize() {
+#ifdef global_log
+  // Disable log to prevent unnecessary logging
+  dont_log = true;
+#endif
+
 #if (defined(enable_LCD) || defined(enable_OLED))
   display_Clear();
   if (chrlo == chrhi)
@@ -2442,9 +2516,19 @@ setchr:
 #endif
   EEPROM_writeAnything(NES_CHR_SIZE, newchrsize);
   chrsize = newchrsize;
+
+#ifdef global_log
+  // Enable log again
+  dont_log = false;
+#endif
 }
 
 void setRAMSize() {
+#ifdef global_log
+  // Disable log to prevent unnecessary logging
+  dont_log = true;
+#endif
+
 #if (defined(enable_LCD) || defined(enable_OLED))
   display_Clear();
   if (ramlo == ramhi)
@@ -2685,6 +2769,11 @@ setram:
 #endif
   EEPROM_writeAnything(NES_RAM_SIZE, newramsize);
   ramsize = newramsize;
+
+#ifdef global_log
+  // Enable log again
+  dont_log = false;
+#endif
 }
 
 // MMC6 Detection
@@ -3039,9 +3128,9 @@ void readPRG(boolean readrom) {
         banks = int_pow(2, prgsize);
         for (int i = 0; i < banks; i++) { // 256K/512K
           if (flashfound)
-            write_prg_byte(0xC000+i, i); // Flashable
+            write_prg_byte(0xC000 + i, i); // Flashable
           else
-            write_prg_byte(0x8000+i, i); // Non-Flashable
+            write_prg_byte(0x8000 + i, i); // Non-Flashable
           for (word address = 0x0; address < 0x4000; address += 512) { // 16K Banks ($8000-$BFFF)
             dumpPRG(base, address);
           }
@@ -3275,7 +3364,7 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-      
+
       case 93:
         banks = int_pow(2, prgsize);
         for (int i = 0; i < banks; i++) {
@@ -3286,7 +3375,7 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-        
+
       case 94:
         banks = int_pow(2, prgsize);
         for (int i = 0; i < banks; i++) { // 128K
