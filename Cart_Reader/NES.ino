@@ -483,7 +483,7 @@ boolean getMapping() {
   for (int c = 0; c < 512; c++) {
     oldcrc32 = updateCRC(sdBuffer[c], oldcrc32);
   }
-  sprintf(crcStrMMC3, "%08lX", ~oldcrc32);
+  sprintf_P(crcStrMMC3, PSTR("%08lX"), ~oldcrc32);
 
   print_Msg(F("for "));
   print_Msg(crcStr);
