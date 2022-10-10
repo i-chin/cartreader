@@ -90,7 +90,7 @@ void setup_WSV()
   PORTJ |= (1 << 0); // TIME(PJ0)
 
   checkStatus_WSV();
-  strcpy(romName, "SUPERVISION");
+  strcpy_P(romName, PSTR("SUPERVISION"));
 
   mode = mode_WSV;
 }
@@ -435,11 +435,7 @@ void setCart_WSV() {
       display_Clear();
 
       // Read game name
-#if defined(enable_OLED)
-      get_line(gamename, &myFile, 42);
-#else
       get_line(gamename, &myFile, 96);
-#endif
 
       // Read CRC32 checksum
       sprintf_P(checksumStr, PSTR("%c"), myFile.read());

@@ -236,7 +236,7 @@ void readSRAM_SV () {
   controlIn_SNES();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, "BSX.srm");
+  strcpy_P(fileName, PSTR("BSX.srm"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
@@ -377,7 +377,7 @@ void readROM_SV() {
   controlIn_SNES();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, "MEMPACK.bs");
+  strcpy_P(fileName, PSTR("MEMPACK.bs"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);

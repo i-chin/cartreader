@@ -934,7 +934,7 @@ void getCartInfo_MD() {
   if (SnKmode >= 2) {
 
     //Change romName
-    strcpy(romName, "SnK_");
+    strcpy_P(romName, PSTR("SnK_"));
 
     for (byte c = 0; c < 48; c += 2) {
       // split word
@@ -2352,7 +2352,7 @@ void readBram_MD() {
   dataIn_MD();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, "Cart.brm");
+  strcpy_P(fileName, PSTR("Cart.brm"));
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);

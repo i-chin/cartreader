@@ -808,7 +808,7 @@ void getCartInfo_GBA() {
   if (logoChecksum != 0x4B1B) {
     display_Clear();
     print_Error(F("CARTRIDGE ERROR"), false);
-    strcpy(romName, "ERROR");
+    strcpy_P(romName, PSTR("ERROR"));
     println_Msg(F(""));
     println_Msg(F(""));
     println_Msg(F(""));
@@ -886,11 +886,7 @@ void getCartInfo_GBA() {
             display_Clear();
 
             // Read game name
-#if defined(enable_OLED)
-            get_line(gamename, &myFile, 42);
-#else
             get_line(gamename, &myFile, 96);
-#endif
 
             // Skip over the CRC checksum
             myFile.seekSet(myFile.curPosition() + 9);

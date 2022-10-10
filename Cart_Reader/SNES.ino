@@ -29,8 +29,8 @@ boolean altconf = 0;
   Menu
 *****************************************/
 // SNES/Nintendo Power SF Memory start menu
-static const char snsMenuItem1[] PROGMEM = "Super Nintendo";
-static const char snsMenuItem2[] PROGMEM = "NPower SF Memory";
+static const char snsMenuItem1[] PROGMEM = "SNES/SFC cartridge";
+static const char snsMenuItem2[] PROGMEM = "SF Memory Cassette";
 static const char snsMenuItem3[] PROGMEM = "Satellaview BS-X";
 static const char snsMenuItem4[] PROGMEM = "Flash repro";
 #ifdef clockgen_calibration
@@ -355,21 +355,21 @@ void confMenuManual() {
       romType = LO;
       numBanks = 128;
       sramSize = 256;
-      strcpy(romName, "LoROM");
+      strcpy_P(romName, PSTR("LoROM"));
       break;
 
     case 2:
       romType = HI;
       numBanks = 64;
       sramSize = 64;
-      strcpy(romName, "HiROM");
+      strcpy_P(romName, PSTR("HiROM"));
       break;
 
     case 3:
       romType = EX;
       numBanks = 96;
       sramSize = 256;
-      strcpy(romName, "ExROM");
+      strcpy_P(romName, PSTR("ExROM"));
       break;
 
     case 4:

@@ -130,7 +130,7 @@ void setup_INTV()
   PORTJ |= (1 << 0); // TIME(PJ0)
 
   checkStatus_INTV();
-  strcpy(romName, "INTV");
+  strcpy_P(romName, PSTR("INTV"));
 
   mode = mode_INTV;
 }
@@ -812,11 +812,7 @@ void setCart_INTV() {
       display_Clear();
 
       // Read game name
-#if defined(enable_OLED)
-      get_line(gamename, &myFile, 42);
-#else
       get_line(gamename, &myFile, 96);
-#endif
 
       // Read CRC32 checksum
       sprintf_P(checksumStr, PSTR("%c"), myFile.read());

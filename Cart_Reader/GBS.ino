@@ -261,7 +261,7 @@ gb_smart_load_more_games:
     for (; i < numGames; i++)
       strncpy(menuOptionsGBSmartGames[i], gbSmartGames[i].title, 16);
 
-    strncpy(menuOptionsGBSmartGames[i], "...", 16);
+    strncpy_P(menuOptionsGBSmartGames[i], PSTR("..."), 16);
     gameSubMenu = question_box(F("Select Game"), menuOptionsGBSmartGames, i + 1, 0);
 
     if (gameSubMenu >= i)
