@@ -3409,8 +3409,8 @@ redumpsamefolder:
       NOP;
 
       // data on PINK and PINF is valid now, read into sd card buffer
-      buffer[c] = PINK;      // hiByte
-      buffer[c + 1] = PINF;  // loByte
+      sdBuffer[c] = PINK;      // hiByte
+      sdBuffer[c + 1] = PINF;  // loByte
 
       // Pull read(PH6) high
       PORTH |= (1 << 6);
@@ -3445,8 +3445,8 @@ redumpsamefolder:
       NOP;
 
       // data on PINK and PINF is valid now, read into sd card buffer
-      buffer[c] = PINK;      // hiByte
-      buffer[c + 1] = PINF;  // loByte
+      sdBuffer[c] = PINK;      // hiByte
+      sdBuffer[c + 1] = PINF;  // loByte
 
       // Pull read(PH6) high
       PORTH |= (1 << 6);
