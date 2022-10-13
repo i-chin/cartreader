@@ -4509,28 +4509,6 @@ void writeRAM() {
 /******************************************
    Eeprom Functions
  *****************************************/
-// EEPROM MAPPING
-// 00-01 FOLDER #
-// 02-05 SNES/GB READER SETTINGS
-// 06 LED - ON/OFF [SNES/GB]
-// 07 MAPPER
-// 08 PRG SIZE
-// 09 CHR SIZE
-// 10 RAM SIZE
-
-void resetEEPROM() {
-  EEPROM_writeAnything(0, 0);   // FOLDER #
-  EEPROM_writeAnything(2, 0);   // CARTMODE
-  EEPROM_writeAnything(3, 0);   // RETRY
-  EEPROM_writeAnything(4, 0);   // STATUS
-  EEPROM_writeAnything(5, 0);   // UNKNOWNCRC
-  EEPROM_writeAnything(6, 1);   // LED (RESET TO ON)
-  EEPROM_writeAnything(7, 0);   // MAPPER
-  EEPROM_writeAnything(8, 0);   // PRG SIZE
-  EEPROM_writeAnything(9, 0);   // CHR SIZE
-  EEPROM_writeAnything(10, 0);  // RAM SIZE
-}
-
 void EepromStart_NES() {
   write_prg_byte(0x800D, 0x00);  // sda low, scl low
   write_prg_byte(0x800D, 0x60);  // sda, scl high
