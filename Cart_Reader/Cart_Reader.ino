@@ -4,8 +4,8 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             09.10.2022
-   Version:          10.2
+   Date:             13.10.2022
+   Version:          10.3
 
    SD lib: https://github.com/greiman/SdFat
    LCD lib: https://github.com/olikraus/u8g2
@@ -15,7 +15,7 @@
    RTC lib: https://github.com/adafruit/RTClib
    Frequency lib: https://github.com/PaulStoffregen/FreqCount
 
-   Compiled with Arduino 1.8.19
+   Compiled with Arduino IDE 2.0.0
 
    Thanks to:
    MichlK - ROM Reader for Super Nintendo
@@ -56,7 +56,7 @@
 
 **********************************************************************************/
 
-char ver[5] = "10.2";
+char ver[5] = "10.3";
 
 // EEPROM Index Define
 //******************************************
@@ -89,7 +89,7 @@ char ver[5] = "10.2";
 // #define SERIAL_MONITOR
 
 #if !(defined(HW1) || defined(HW2) || defined(HW3) || defined(HW4) || defined(HW5) || defined(SERIAL_MONITOR))
-# error !!! PLEASE CHOOSE HARDWARE VERSION !!!
+#error !!! PLEASE CHOOSE HARDWARE VERSION !!!
 #endif
 
 //******************************************
@@ -121,7 +121,7 @@ char ver[5] = "10.2";
 #if (defined(HW4) || defined(HW5))
 #define enable_LCD
 #define enable_neopixel
-#define background_color 100,0,0 //Green, Red, Blue
+#define background_color 100, 0, 0  //Green, Red, Blue
 #define enable_rotary
 // #define rotate_counter_clockwise
 #define clockgen_installed
@@ -160,7 +160,7 @@ char ver[5] = "10.2";
 #define global_log
 
 // Renames ROM if found in database
-#define no-intro
+#define nointro
 
 // Ignores errors that normally force a reset if button 2 is pressed
 // #define debug_mode
@@ -205,10 +205,10 @@ boolean dont_log = false;
 // AVR Eeprom
 #include <EEPROM.h>
 // forward declarations for "T" (for non Arduino IDE)
-template <class T> int EEPROM_writeAnything(int ee, const T& value);
-template <class T> int EEPROM_readAnything(int ee, T& value);
+template<class T> int EEPROM_writeAnything(int ee, const T& value);
+template<class T> int EEPROM_readAnything(int ee, T& value);
 
-template <class T> int EEPROM_writeAnything(int ee, const T& value) {
+template<class T> int EEPROM_writeAnything(int ee, const T& value) {
   const byte* p = (const byte*)(const void*)&value;
   unsigned int i;
   for (i = 0; i < sizeof(value); i++)
@@ -216,7 +216,7 @@ template <class T> int EEPROM_writeAnything(int ee, const T& value) {
   return i;
 }
 
-template <class T> int EEPROM_readAnything(int ee, T& value) {
+template<class T> int EEPROM_readAnything(int ee, T& value) {
   byte* p = (byte*)(void*)&value;
   unsigned int i;
   for (i = 0; i < sizeof(value); i++)
@@ -227,7 +227,7 @@ template <class T> int EEPROM_readAnything(int ee, T& value) {
 // Graphic SPI LCD
 #ifdef enable_LCD
 #include <U8g2lib.h>
-U8G2_ST7567_OS12864_F_4W_HW_SPI display(U8G2_R2, /* cs=*/ 12, /* dc=*/ 11, /* reset=*/ 10);
+U8G2_ST7567_OS12864_F_4W_HW_SPI display(U8G2_R2, /* cs=*/12, /* dc=*/11, /* reset=*/10);
 #endif
 
 // Rotary Encoder
@@ -263,7 +263,7 @@ typedef enum COLOR_T {
 // Graphic I2C OLED
 #ifdef enable_OLED
 #include <U8g2lib.h>
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C display(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C display(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
 #endif
 
 // Adafruit Clock Generator
@@ -316,50 +316,50 @@ bool i2c_found;
 #define mode_PCW 27
 
 // optimization-safe nop delay
-#define NOP __asm__ __volatile__ ("nop\n\t")
+#define NOP __asm__ __volatile__("nop\n\t")
 
 // Button timing
-#define debounce 20 // ms debounce period to prevent flickering when pressing or releasing the button
-#define DCgap 250 // max ms between clicks for a double click event
-#define holdTime 2000 // ms hold period: how long to wait for press+hold event
-#define longHoldTime 5000 // ms long hold period: how long to wait for press+hold event
+#define debounce 20        // ms debounce period to prevent flickering when pressing or releasing the button
+#define DCgap 250          // max ms between clicks for a double click event
+#define holdTime 2000      // ms hold period: how long to wait for press+hold event
+#define longHoldTime 5000  // ms long hold period: how long to wait for press+hold event
 
 /******************************************
    Variables
  *****************************************/
 #ifdef enable_rotary
 // Button debounce
-boolean buttonState = HIGH;             // the current reading from the input pin
-boolean lastButtonState = HIGH;   // the previous reading from the input pin
+boolean buttonState = HIGH;          // the current reading from the input pin
+boolean lastButtonState = HIGH;      // the previous reading from the input pin
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
 #endif
 
 #ifdef enable_OLED
 // Button 1
-boolean buttonVal1 = HIGH; // value read from button
-boolean buttonLast1 = HIGH; // buffered value of the button's previous state
-boolean DCwaiting1 = false; // whether we're waiting for a double click (down)
-boolean DConUp1 = false; // whether to register a double click on next release, or whether to wait and click
-boolean singleOK1 = true; // whether it's OK to do a single click
-long downTime1 = -1; // time the button was pressed down
-long upTime1 = -1; // time the button was released
-boolean ignoreUp1 = false; // whether to ignore the button release because the click+hold was triggered
-boolean waitForUp1 = false; // when held, whether to wait for the up event
-boolean holdEventPast1 = false; // whether or not the hold event happened already
-boolean longholdEventPast1 = false;// whether or not the long hold event happened already
+boolean buttonVal1 = HIGH;           // value read from button
+boolean buttonLast1 = HIGH;          // buffered value of the button's previous state
+boolean DCwaiting1 = false;          // whether we're waiting for a double click (down)
+boolean DConUp1 = false;             // whether to register a double click on next release, or whether to wait and click
+boolean singleOK1 = true;            // whether it's OK to do a single click
+long downTime1 = -1;                 // time the button was pressed down
+long upTime1 = -1;                   // time the button was released
+boolean ignoreUp1 = false;           // whether to ignore the button release because the click+hold was triggered
+boolean waitForUp1 = false;          // when held, whether to wait for the up event
+boolean holdEventPast1 = false;      // whether or not the hold event happened already
+boolean longholdEventPast1 = false;  // whether or not the long hold event happened already
 // Button 2
-boolean buttonVal2 = HIGH; // value read from button
-boolean buttonLast2 = HIGH; // buffered value of the button's previous state
-boolean DCwaiting2 = false; // whether we're waiting for a double click (down)
-boolean DConUp2 = false; // whether to register a double click on next release, or whether to wait and click
-boolean singleOK2 = true; // whether it's OK to do a single click
-long downTime2 = -1; // time the button was pressed down
-long upTime2 = -1; // time the button was released
-boolean ignoreUp2 = false; // whether to ignore the button release because the click+hold was triggered
-boolean waitForUp2 = false; // when held, whether to wait for the up event
-boolean holdEventPast2 = false; // whether or not the hold event happened already
-boolean longholdEventPast2 = false;// whether or not the long hold event happened already
+boolean buttonVal2 = HIGH;           // value read from button
+boolean buttonLast2 = HIGH;          // buffered value of the button's previous state
+boolean DCwaiting2 = false;          // whether we're waiting for a double click (down)
+boolean DConUp2 = false;             // whether to register a double click on next release, or whether to wait and click
+boolean singleOK2 = true;            // whether it's OK to do a single click
+long downTime2 = -1;                 // time the button was pressed down
+long upTime2 = -1;                   // time the button was released
+boolean ignoreUp2 = false;           // whether to ignore the button release because the click+hold was triggered
+boolean waitForUp2 = false;          // when held, whether to wait for the up event
+boolean holdEventPast2 = false;      // whether or not the hold event happened already
+boolean longholdEventPast2 = false;  // whether or not the long hold event happened already
 #endif
 
 #ifdef enable_serial
@@ -423,7 +423,7 @@ byte sdBuffer[512];
 
 // soft reset Arduino: jumps to 0
 // using the watchdog timer would be more elegant but some Mega2560 bootloaders are buggy with it
-void(*resetArduino) (void) = 0;
+void (*resetArduino)(void) = 0;
 
 // Progressbar
 void draw_progressbar(uint32_t processedsize, uint32_t totalsize);
@@ -432,7 +432,7 @@ void draw_progressbar(uint32_t processedsize, uint32_t totalsize);
 byte eepbit[8];
 byte eeptemp;
 
-#ifdef no-intro
+#ifdef nointro
 // Array to hold iNES header
 byte iNES_HEADER[16];
 //ID 0-3
@@ -454,49 +454,49 @@ byte iNES_HEADER[16];
 //******************************************
 // CRC32 lookup table // 256 entries
 static const uint32_t crc_32_tab[] PROGMEM = { /* CRC polynomial 0xedb88320 */
-  0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
-  0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
-  0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
-  0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
-  0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9,
-  0xfa0f3d63, 0x8d080df5, 0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172,
-  0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b, 0x35b5a8fa, 0x42b2986c,
-  0xdbbbc9d6, 0xacbcf940, 0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
-  0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423,
-  0xcfba9599, 0xb8bda50f, 0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924,
-  0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d, 0x76dc4190, 0x01db7106,
-  0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
-  0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d,
-  0x91646c97, 0xe6635c01, 0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e,
-  0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457, 0x65b0d9c6, 0x12b7e950,
-  0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
-  0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7,
-  0xa4d1c46d, 0xd3d6f4fb, 0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0,
-  0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9, 0x5005713c, 0x270241aa,
-  0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
-  0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81,
-  0xb7bd5c3b, 0xc0ba6cad, 0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a,
-  0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683, 0xe3630b12, 0x94643b84,
-  0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
-  0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb,
-  0x196c3671, 0x6e6b06e7, 0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc,
-  0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5, 0xd6d6a3e8, 0xa1d1937e,
-  0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
-  0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55,
-  0x316e8eef, 0x4669be79, 0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236,
-  0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f, 0xc5ba3bbe, 0xb2bd0b28,
-  0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
-  0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f,
-  0x72076785, 0x05005713, 0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38,
-  0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21, 0x86d3d2d4, 0xf1d4e242,
-  0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
-  0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69,
-  0x616bffd3, 0x166ccf45, 0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2,
-  0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db, 0xaed16a4a, 0xd9d65adc,
-  0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
-  0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693,
-  0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
-  0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
+                                               0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
+                                               0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
+                                               0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
+                                               0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
+                                               0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9,
+                                               0xfa0f3d63, 0x8d080df5, 0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172,
+                                               0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b, 0x35b5a8fa, 0x42b2986c,
+                                               0xdbbbc9d6, 0xacbcf940, 0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
+                                               0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423,
+                                               0xcfba9599, 0xb8bda50f, 0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924,
+                                               0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d, 0x76dc4190, 0x01db7106,
+                                               0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
+                                               0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d,
+                                               0x91646c97, 0xe6635c01, 0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e,
+                                               0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457, 0x65b0d9c6, 0x12b7e950,
+                                               0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
+                                               0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7,
+                                               0xa4d1c46d, 0xd3d6f4fb, 0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0,
+                                               0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9, 0x5005713c, 0x270241aa,
+                                               0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
+                                               0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81,
+                                               0xb7bd5c3b, 0xc0ba6cad, 0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a,
+                                               0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683, 0xe3630b12, 0x94643b84,
+                                               0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
+                                               0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb,
+                                               0x196c3671, 0x6e6b06e7, 0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc,
+                                               0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5, 0xd6d6a3e8, 0xa1d1937e,
+                                               0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
+                                               0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55,
+                                               0x316e8eef, 0x4669be79, 0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236,
+                                               0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f, 0xc5ba3bbe, 0xb2bd0b28,
+                                               0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
+                                               0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f,
+                                               0x72076785, 0x05005713, 0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38,
+                                               0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21, 0x86d3d2d4, 0xf1d4e242,
+                                               0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
+                                               0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69,
+                                               0x616bffd3, 0x166ccf45, 0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2,
+                                               0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db, 0xaed16a4a, 0xd9d65adc,
+                                               0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
+                                               0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693,
+                                               0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
+                                               0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
 inline uint32_t updateCRC(uint8_t ch, uint32_t crc) {
@@ -525,8 +525,7 @@ uint32_t calculateCRC(char* fileName, char* folder, int offset) {
     // Close the file:
     myFile.close();
     return ~oldcrc32;
-  }
-  else {
+  } else {
     display_Clear();
     print_Msg(F("File "));
     //print_Msg(folder);
@@ -540,39 +539,33 @@ uint32_t calculateCRC(char* fileName, char* folder, int offset) {
 // Functions for CRC32 database
 //******************************************
 //Skip line
-void skip_line(FsFile* readfile)
-{
+void skip_line(FsFile* readfile) {
   int i = 0;
   char str_buf;
 
-  while (readfile->available())
-  {
+  while (readfile->available()) {
     //Read 1 byte from file
     str_buf = readfile->read();
 
     //if end of file or newline found, execute command
-    if (str_buf == '\r')
-    {
-      readfile->read(); //dispose \n because \r\n
+    if (str_buf == '\r') {
+      readfile->read();  //dispose \n because \r\n
       break;
     }
     i++;
-  }//End while
+  }  //End while
 }
 
 //Get line from file
-void get_line(char* str_buf, FsFile* readfile, uint8_t maxi)
-{
+void get_line(char* str_buf, FsFile* readfile, uint8_t maxi) {
   // Status LED on
   statusLED(true);
 
   int i = 0;
 
-  while (readfile->available())
-  {
+  while (readfile->available()) {
     //If line size is more than maximum array, limit it.
-    if (i >= maxi)
-    {
+    if (i >= maxi) {
       i = maxi - 1;
     }
 
@@ -580,19 +573,18 @@ void get_line(char* str_buf, FsFile* readfile, uint8_t maxi)
     str_buf[i] = readfile->read();
 
     //if end of file or newline found, execute command
-    if (str_buf[i] == '\r')
-    {
+    if (str_buf[i] == '\r') {
       str_buf[i] = '\0';
-      readfile->read(); //dispose \n because \r\n
+      readfile->read();  //dispose \n because \r\n
       break;
     }
     i++;
-  }//End while
+  }  //End while
 }
 
 // Calculate CRC32 if needed and compare it to CRC read from database
 boolean compareCRC(char* database, char* crcString, boolean renamerom, int offset) {
-#ifdef no-intro
+#ifdef nointro
   char crcStr[9];
   if (crcString == 0) {
     //go to root
@@ -601,8 +593,7 @@ boolean compareCRC(char* database, char* crcString, boolean renamerom, int offse
     print_Msg(F("CRC32... "));
     display_Update();
     sprintf_P(crcStr, PSTR("%08lX"), calculateCRC(fileName, folder, offset));
-  }
-  else {
+  } else {
     // Use precalculated crc
     print_Msg(F("CRC32... "));
     display_Update();
@@ -624,11 +615,10 @@ boolean compareCRC(char* database, char* crcString, boolean renamerom, int offse
       //Read 2 lines (game name and CRC)
       get_line(gamename, &myFile, 96);
       get_line(crc_search, &myFile, 9);
-      skip_line(&myFile); //Skip every 3rd line
+      skip_line(&myFile);  //Skip every 3rd line
 
       //if checksum search successful, rename the file and end search
-      if (strcmp(crc_search, crcStr) == 0)
-      {
+      if (strcmp(crc_search, crcStr) == 0) {
 #ifdef enable_NES
         if ((mode == mode_NES) && (offset != 0)) {
           // Rewind to iNES Header
@@ -672,7 +662,7 @@ boolean compareCRC(char* database, char* crcString, boolean renamerom, int offse
         if (renamerom) {
           println_Msg(gamename);
 
-          // Rename file to no-intro
+          // Rename file to nointro
           sd.chdir(folder);
           delay(100);
           if (myFile.open(fileName, O_READ)) {
@@ -680,21 +670,18 @@ boolean compareCRC(char* database, char* crcString, boolean renamerom, int offse
             // Close the file:
             myFile.close();
           }
-        }
-        else {
+        } else {
           println_Msg("OK");
         }
         return 1;
         break;
       }
     }
-    if (strcmp(crc_search, crcStr) != 0)
-    {
+    if (strcmp(crc_search, crcStr) != 0) {
       println_Msg(F(" -> Not found"));
       return 0;
     }
-  }
-  else {
+  } else {
     println_Msg(F(" -> Error"));
     println_Msg(F("Database missing"));
     return 0;
@@ -731,16 +718,14 @@ byte starting_letter() {
 
   while (1) {
     int b = checkButton();
-    if (b == 2) { // Previous
+    if (b == 2) {  // Previous
       if ((selection == 0) && (line > 0)) {
         line--;
         selection = 6;
-      }
-      else if ((selection == 0) && (line == 0)) {
+      } else if ((selection == 0) && (line == 0)) {
         line = 3;
         selection = 6;
-      }
-      else if (selection > 0) {
+      } else if (selection > 0) {
         selection--;
       }
       display.setDrawColor(0);
@@ -754,16 +739,14 @@ byte starting_letter() {
 
     }
 
-    else if (b == 1) { // Next
+    else if (b == 1) {  // Next
       if ((selection == 6) && (line < 3)) {
         line++;
         selection = 0;
-      }
-      else if ((selection == 6) && (line == 3)) {
+      } else if ((selection == 6) && (line == 3)) {
         line = 0;
         selection = 0;
-      }
-      else if (selection < 6) {
+      } else if (selection < 6) {
         selection++;
       }
       display.setDrawColor(0);
@@ -776,7 +759,7 @@ byte starting_letter() {
       display_Update();
     }
 
-    else if (b == 3) { // Long Press - Execute
+    else if (b == 3) {  // Long Press - Execute
       if ((selection + line * 7) != 27) {
         display_Clear();
         println_Msg(F("Please wait..."));
@@ -823,7 +806,7 @@ static const char modeItem13[] PROGMEM = "Watara Supervision";
 static const char modeItem14[] PROGMEM = "Pocket Challenge W";
 static const char modeItem15[] PROGMEM = "Flashrom Programmer";
 static const char modeItem16[] PROGMEM = "About";
-static const char* const modeOptions[] PROGMEM = {modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7, modeItem8, modeItem9, modeItem10, modeItem11, modeItem12, modeItem13, modeItem14, modeItem15, modeItem16};
+static const char* const modeOptions[] PROGMEM = { modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7, modeItem8, modeItem9, modeItem10, modeItem11, modeItem12, modeItem13, modeItem14, modeItem15, modeItem16 };
 
 // All included slots
 void mainMenu() {
@@ -862,8 +845,7 @@ void mainMenu() {
   currPage = 1;
 
   // wait for user choice to come back from the question box menu
-  switch (modeMenu)
-  {
+  switch (modeMenu) {
 #ifdef enable_GBX
     case 0:
       gbxMenu();
@@ -876,7 +858,7 @@ void mainMenu() {
       display_Clear();
       display_Update();
       setup_NES();
-#ifdef no-intro
+#ifdef nointro
       if (getMapping() == 0) {
         selectMapping();
       }
@@ -1011,14 +993,14 @@ static const char modeItem4[] PROGMEM = "Nintendo 64(3V EEP)";
 static const char modeItem5[] PROGMEM = "Game Boy";
 static const char modeItem6[] PROGMEM = "About";
 static const char modeItem7[] PROGMEM = "Reset";
-static const char* const modeOptions[] PROGMEM = {modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7};
+static const char* const modeOptions[] PROGMEM = { modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7 };
 
 // Add-ons submenu
 static const char addonsItem1[] PROGMEM = "Consoles";
 static const char addonsItem2[] PROGMEM = "Handhelds";
 static const char addonsItem3[] PROGMEM = "Flashrom Programmer";
 static const char addonsItem4[] PROGMEM = "Reset";
-static const char* const addonsOptions[] PROGMEM = {addonsItem1, addonsItem2, addonsItem3, addonsItem4};
+static const char* const addonsOptions[] PROGMEM = { addonsItem1, addonsItem2, addonsItem3, addonsItem4 };
 
 // Consoles submenu
 static const char consolesItem1[] PROGMEM = "NES/Famicom";
@@ -1027,7 +1009,7 @@ static const char consolesItem3[] PROGMEM = "SMS/GG/MIII/SG-1000";
 static const char consolesItem4[] PROGMEM = "Intellivision";
 static const char consolesItem5[] PROGMEM = "Colecovision";
 static const char consolesItem6[] PROGMEM = "Reset";
-static const char* const consolesOptions[] PROGMEM = {consolesItem1, consolesItem2, consolesItem3, consolesItem4, consolesItem5, consolesItem6};
+static const char* const consolesOptions[] PROGMEM = { consolesItem1, consolesItem2, consolesItem3, consolesItem4, consolesItem5, consolesItem6 };
 
 // Handhelds submenu
 static const char handheldsItem1[] PROGMEM = "Virtual Boy";
@@ -1036,7 +1018,7 @@ static const char handheldsItem3[] PROGMEM = "NeoGeo Pocket";
 static const char handheldsItem4[] PROGMEM = "Watara Supervision";
 static const char handheldsItem5[] PROGMEM = "Pocket Challenge W";
 static const char handheldsItem6[] PROGMEM = "Reset";
-static const char* const handheldsOptions[] PROGMEM = {handheldsItem1, handheldsItem2, handheldsItem3, handheldsItem4, handheldsItem5, handheldsItem6};
+static const char* const handheldsOptions[] PROGMEM = { handheldsItem1, handheldsItem2, handheldsItem3, handheldsItem4, handheldsItem5, handheldsItem6 };
 
 // All included slots
 void mainMenu() {
@@ -1047,8 +1029,7 @@ void mainMenu() {
   modeMenu = question_box(F("OPENSOURCE CARTREADER"), menuOptions, 7, 0);
 
   // wait for user choice to come back from the question box menu
-  switch (modeMenu)
-  {
+  switch (modeMenu) {
     case 0:
       addonMenu();
       break;
@@ -1096,8 +1077,7 @@ void addonMenu() {
   addonsMenu = question_box(F("Type"), menuOptions, 4, 0);
 
   // wait for user choice to come back from the question box menu
-  switch (addonsMenu)
-  {
+  switch (addonsMenu) {
     // Consoles
     case 0:
       consoleMenu();
@@ -1135,15 +1115,14 @@ void consoleMenu() {
   consolesMenu = question_box(F("Choose Adapter"), menuOptions, 6, 0);
 
   // wait for user choice to come back from the question box menu
-  switch (consolesMenu)
-  {
+  switch (consolesMenu) {
 #ifdef enable_NES
     case 0:
       mode = mode_NES;
       display_Clear();
       display_Update();
       setup_NES();
-#ifdef no-intro
+#ifdef nointro
       if (getMapping() == 0) {
         selectMapping();
       }
@@ -1200,8 +1179,7 @@ void handheldMenu() {
   handheldsMenu = question_box(F("Choose Adapter"), menuOptions, 6, 0);
 
   // wait for user choice to come back from the question box menu
-  switch (handheldsMenu)
-  {
+  switch (handheldsMenu) {
 #ifdef enable_VBOY
     case 0:
       setup_VBOY();
@@ -1339,8 +1317,7 @@ void draw_progressbar(uint32_t processed, uint32_t total) {
       if (i == (19)) {
         //If end of progress bar, finish progress bar by drawing "]"
         println_Msg(F("]"));
-      }
-      else {
+      } else {
         print_Msg(F("*"));
       }
     }
@@ -1360,7 +1337,7 @@ RTC_DS3231 rtc;
 // Start Time
 void RTCStart() {
   // Start RTC
-  if (! rtc.begin()) {
+  if (!rtc.begin()) {
     abort();
   }
 
@@ -1413,7 +1390,7 @@ int32_t cal_factor = 0;
 int32_t old_cal = 0;
 int32_t cal_offset = 100;
 
-void clkcal()   {
+void clkcal() {
   // Adafruit Clock Generator
   // last number is the clock correction factor which is custom for each clock generator
   cal_factor = readClockOffset();
@@ -1452,8 +1429,7 @@ void clkcal()   {
   // Frequency Counter
   delay(500);
   FreqCount.begin(1000);
-  while (1)
-  {
+  while (1) {
     if (old_cal != cal_factor) {
       display_Clear();
       println_Msg(F(""));
@@ -1472,8 +1448,7 @@ void clkcal()   {
       clockgen.set_freq(307200000ULL, SI5351_CLK2);
       old_cal = cal_factor;
       delay(500);
-    }
-    else {
+    } else {
       clockgen.update_status();
       while (clockgen.dev_status.SYS_INIT == 1) {
       }
@@ -1521,15 +1496,13 @@ void clkcal()   {
       // if the cart readers input buttons is double clicked
       if (a == 2) {
         cal_offset /= 10ULL;
-        if (cal_offset < 1)
-        {
+        if (cal_offset < 1) {
           cal_offset = 100000000ULL;
         }
       }
       if (b == 2) {
         cal_offset *= 10ULL;
-        if (cal_offset > 100000000ULL)
-        {
+        if (cal_offset > 100000000ULL) {
           cal_offset = 1;
         }
       }
@@ -1545,7 +1518,7 @@ void clkcal()   {
       //Handle inputs for either rotary encoder or single button interface.
       int a = checkButton();
 
-      if (a == 1) { //clockwise rotation or single click
+      if (a == 1) {  //clockwise rotation or single click
         old_cal = cal_factor;
         cal_factor += cal_offset;
       }
@@ -1555,15 +1528,14 @@ void clkcal()   {
         cal_factor -= cal_offset;
       }
 
-      if (a == 3) { //button short hold
+      if (a == 3) {  //button short hold
         cal_offset *= 10ULL;
-        if (cal_offset > 100000000ULL)
-        {
+        if (cal_offset > 100000000ULL) {
           cal_offset = 1;
         }
       }
 
-      if (a == 4) { //button long hold
+      if (a == 4) {  //button long hold
         savetofile();
       }
 #endif
@@ -1571,8 +1543,7 @@ void clkcal()   {
   }
 }
 
-void print_right(int32_t number)
-{
+void print_right(int32_t number) {
   int32_t abs_number = number;
   if (abs_number < 0)
     abs_number *= -1;
@@ -1581,8 +1552,7 @@ void print_right(int32_t number)
 
   if (abs_number == 0)
     abs_number = 1;
-  while (abs_number < 100000000ULL)
-  {
+  while (abs_number < 100000000ULL) {
     print_Msg(F(" "));
     abs_number *= 10ULL;
   }
@@ -1647,9 +1617,16 @@ int32_t readClockOffset() {
 
 int32_t initializeClockOffset() {
 #ifdef clockgen_calibration
-    int32_t clock_offset = readClockOffset();
-    if (clock_offset > INT32_MIN) {
-        i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, clock_offset);
+  FsFile clock_file;
+  const char zero_char_arr[] = { '0' };
+  int32_t clock_offset = readClockOffset();
+  if (clock_offset > INT32_MIN) {
+    i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, clock_offset);
+  } else {
+    i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, 0);
+    if (clock_file.open("/snes_clk.txt", O_WRITE | O_CREAT | O_TRUNC)) {
+      clock_file.write(zero_char_arr, 1);
+      clock_file.close();
     }
     else {
         i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, 0);
@@ -1722,9 +1699,9 @@ void setup() {
   digitalWrite(10, 1);
 #endif
   // Configure 4 Pin RGB LED pins as output
-  DDRB |= (1 << DDB6); // Red LED (pin 12)
-  DDRB |= (1 << DDB5); // Green LED (pin 11)
-  DDRB |= (1 << DDB4); // Blue LED (pin 10)
+  DDRB |= (1 << DDB6);  // Red LED (pin 12)
+  DDRB |= (1 << DDB5);  // Green LED (pin 11)
+  DDRB |= (1 << DDB4);  // Blue LED (pin 10)
 #endif
 #endif
 
@@ -1845,7 +1822,7 @@ void convertPgm(const char* const pgmOptions[], byte numArrays) {
   }
 }
 
-void print_Error(const __FlashStringHelper * errorMessage, boolean forceReset) {
+void print_Error(const __FlashStringHelper* errorMessage, boolean forceReset) {
   errorLvl = 1;
   setColor_RGB(255, 0, 0);
   println_Msg(errorMessage);
@@ -1858,8 +1835,7 @@ void print_Error(const __FlashStringHelper * errorMessage, boolean forceReset) {
     wait();
     if (ignoreError == 0) {
       resetArduino();
-    }
-    else {
+    } else {
       ignoreError = 0;
       display_Clear();
       println_Msg(F(""));
@@ -1876,9 +1852,9 @@ void wait() {
   statusLED(false);
 #if defined(enable_LCD)
   wait_btn();
-#elif defined (enable_OLED)
+#elif defined(enable_OLED)
   wait_btn();
-#elif defined (enable_serial)
+#elif defined(enable_serial)
   wait_serial();
 #endif
 }
@@ -1902,8 +1878,7 @@ void save_log() {
     if (tempStr[0] == '\r') {
       // skip \n
       myLog.read();
-    }
-    else {
+    } else {
       // Read more lines
       tempStr[1] = myLog.read();
       tempStr[2] = myLog.read();
@@ -1916,9 +1891,8 @@ void save_log() {
         str_buf = myLog.read();
 
         //break out of loop if CRLF is found
-        if (str_buf == '\r')
-        {
-          myLog.read(); //dispose \n because \r\n
+        if (str_buf == '\r') {
+          myLog.read();  //dispose \n because \r\n
           break;
         }
       }
@@ -1949,8 +1923,7 @@ void save_log() {
         sdBuffer[i] = myLog.read();
       }
       myFile.write(sdBuffer, 512);
-    }
-    else {
+    } else {
       word i = 0;
       for (i = 0; i < myLog.available(); i++) {
         sdBuffer[i] = myLog.read();
@@ -1964,12 +1937,12 @@ void save_log() {
 #endif
 
 #ifdef global_log
-void println_Log(const __FlashStringHelper * string) {
+void println_Log(const __FlashStringHelper* string) {
   myLog.println(string);
 }
 #endif
 
-void print_Msg(const __FlashStringHelper * string) {
+void print_Msg(const __FlashStringHelper* string) {
 #if (defined(enable_LCD) || defined(enable_OLED))
   display.print(string);
 #endif
@@ -1977,7 +1950,7 @@ void print_Msg(const __FlashStringHelper * string) {
   Serial.print(string);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.print(string);
+  if (!dont_log) myLog.print(string);
 #endif
 }
 
@@ -1998,8 +1971,7 @@ void print_Msg(const char myString[]) {
       display.print(myString[strPos]);
       strPos++;
     }
-  }
-  else {
+  } else {
     display.print(myString);
   }
 #endif
@@ -2007,7 +1979,7 @@ void print_Msg(const char myString[]) {
   Serial.print(myString);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.print(myString);
+  if (!dont_log) myLog.print(myString);
 #endif
 }
 
@@ -2019,7 +1991,7 @@ void print_Msg(long unsigned int message) {
   Serial.print(message);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.print(message);
+  if (!dont_log) myLog.print(message);
 #endif
 }
 
@@ -2031,7 +2003,7 @@ void print_Msg(byte message, int outputFormat) {
   Serial.print(message, outputFormat);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.print(message, outputFormat);
+  if (!dont_log) myLog.print(message, outputFormat);
 #endif
 }
 
@@ -2043,7 +2015,7 @@ void print_Msg(word message, int outputFormat) {
   Serial.print(message, outputFormat);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.print(message, outputFormat);
+  if (!dont_log) myLog.print(message, outputFormat);
 #endif
 }
 
@@ -2055,7 +2027,7 @@ void print_Msg(int message, int outputFormat) {
   Serial.print(message, outputFormat);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.print(message, outputFormat);
+  if (!dont_log) myLog.print(message, outputFormat);
 #endif
 }
 
@@ -2067,7 +2039,7 @@ void print_Msg(long unsigned int message, int outputFormat) {
   Serial.print(message, outputFormat);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.print(message, outputFormat);
+  if (!dont_log) myLog.print(message, outputFormat);
 #endif
 }
 
@@ -2079,7 +2051,7 @@ void print_Msg(String string) {
   Serial.print(string);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.print(string);
+  if (!dont_log) myLog.print(string);
 #endif
 }
 
@@ -2089,15 +2061,15 @@ void print_Msg_PaddedHexByte(byte message) {
 }
 
 void print_Msg_PaddedHex16(word message) {
-  print_Msg_PaddedHexByte((message >>  8) & 0xFF);
-  print_Msg_PaddedHexByte((message >>  0) & 0xFF);
+  print_Msg_PaddedHexByte((message >> 8) & 0xFF);
+  print_Msg_PaddedHexByte((message >> 0) & 0xFF);
 }
 
 void print_Msg_PaddedHex32(unsigned long message) {
   print_Msg_PaddedHexByte((message >> 24) & 0xFF);
   print_Msg_PaddedHexByte((message >> 16) & 0xFF);
-  print_Msg_PaddedHexByte((message >>  8) & 0xFF);
-  print_Msg_PaddedHexByte((message >>  0) & 0xFF);
+  print_Msg_PaddedHexByte((message >> 8) & 0xFF);
+  print_Msg_PaddedHexByte((message >> 0) & 0xFF);
 }
 void println_Msg(String string) {
 #if (defined(enable_LCD) || defined(enable_OLED))
@@ -2108,7 +2080,7 @@ void println_Msg(String string) {
   Serial.println(string);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.println(string);
+  if (!dont_log) myLog.println(string);
 #endif
 }
 
@@ -2121,7 +2093,7 @@ void println_Msg(byte message, int outputFormat) {
   Serial.println(message, outputFormat);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.println(message, outputFormat);
+  if (!dont_log) myLog.println(message, outputFormat);
 #endif
 }
 
@@ -2142,8 +2114,7 @@ void println_Msg(const char myString[]) {
       display.print(myString[strPos]);
       strPos++;
     }
-  }
-  else {
+  } else {
     display.print(myString);
   }
   display.setCursor(0, display.ty + 8);
@@ -2152,11 +2123,11 @@ void println_Msg(const char myString[]) {
   Serial.println(myString);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.println(myString);
+  if (!dont_log) myLog.println(myString);
 #endif
 }
 
-void println_Msg(const __FlashStringHelper * string) {
+void println_Msg(const __FlashStringHelper* string) {
 #if (defined(enable_LCD) || defined(enable_OLED))
   display.print(string);
   display.setCursor(0, display.ty + 8);
@@ -2166,9 +2137,9 @@ void println_Msg(const __FlashStringHelper * string) {
 #endif
 #ifdef global_log
   char myBuffer[15];
-  strlcpy_P(myBuffer, (char *)string, 15);
+  strlcpy_P(myBuffer, (char*)string, 15);
   if ((strncmp_P(myBuffer, PSTR("Press Button..."), 14) != 0) && (strncmp_P(myBuffer, PSTR("Select file"), 10) != 0)) {
-    if (!dont_log)myLog.println(string);
+    if (!dont_log) myLog.println(string);
   }
 #endif
 }
@@ -2182,7 +2153,7 @@ void println_Msg(long unsigned int message) {
   Serial.println(message);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.println(message);
+  if (!dont_log) myLog.println(message);
 #endif
 }
 
@@ -2194,7 +2165,7 @@ void display_Update() {
   delay(100);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.flush();
+  if (!dont_log) myLog.flush();
 #endif
 }
 
@@ -2204,7 +2175,7 @@ void display_Clear() {
   display.setCursor(0, 8);
 #endif
 #ifdef global_log
-  if (!dont_log)myLog.println("");
+  if (!dont_log) myLog.println("");
 #endif
 }
 
@@ -2267,7 +2238,7 @@ void statusLED(boolean on) {
     PORTD |= (1 << 7);
   else
     PORTD &= ~(1 << 7);
-  /*
+    /*
     #elif defined(enable_OLED)
     if (!on)
       PORTB |= (1 << 4);
@@ -2296,7 +2267,7 @@ void statusLED(boolean on) {
 /******************************************
   Menu system
 *****************************************/
-unsigned char question_box(const __FlashStringHelper * question, char answers[7][20], int num_answers, int default_choice) {
+unsigned char question_box(const __FlashStringHelper* question, char answers[7][20], int num_answers, int default_choice) {
 #if (defined(enable_LCD) || defined(enable_OLED))
   return questionBox_Display(question, answers, num_answers, default_choice);
 #endif
@@ -2307,7 +2278,7 @@ unsigned char question_box(const __FlashStringHelper * question, char answers[7]
 
 #if defined(enable_serial)
 // Serial Monitor
-byte questionBox_Serial(const __FlashStringHelper * question, char answers[7][20], int num_answers, int default_choice) {
+byte questionBox_Serial(const __FlashStringHelper* question, char answers[7][20], int num_answers, int default_choice) {
   // Print menu to serial monitor
   //Serial.println(question);
   Serial.println("");
@@ -2370,8 +2341,7 @@ byte questionBox_Serial(const __FlashStringHelper * question, char answers[7][20
       if (currPage > 1) {
         lastPage = currPage;
         currPage--;
-      }
-      else {
+      } else {
         root = 1;
       }
     }
@@ -2395,7 +2365,7 @@ byte questionBox_Serial(const __FlashStringHelper * question, char answers[7][20
 // OLED & LCD
 #if (defined(enable_LCD) || defined(enable_OLED))
 // Display a question box with selectable answers. Make sure default choice is in (0, num_answers]
-unsigned char questionBox_Display(const __FlashStringHelper * question, char answers[7][20], int num_answers, int default_choice) {
+unsigned char questionBox_Display(const __FlashStringHelper* question, char answers[7][20], int num_answers, int default_choice) {
   //clear the screen
   display.clearDisplay();
   display.updateDisplay();
@@ -2435,24 +2405,23 @@ unsigned char questionBox_Display(const __FlashStringHelper * question, char ans
         if (currentColor < 7) {
           currentColor++;
           if (currentColor == 1) {
-            currentColor = 2; // skip red as that signifies an error to the user
+            currentColor = 2;  // skip red as that signifies an error to the user
           }
-        }
-        else {
+        } else {
           currentColor = 0;
         }
       }
       rgbLed(currentColor);
     }
 
-    /* Check Button
-      1 click
-      2 doubleClick
-      3 hold
+    /* Check Button/rotary encoder
+      1 click/clockwise rotation
+      2 doubleClick/counter clockwise rotation
+      3 hold/press
       4 longHold */
     int b = checkButton();
 
-    // go one up in the menu if button is pressed twice
+    // if button is pressed twice or rotary encoder turned left/counter clockwise
     if (b == 2) {
       idleTime = millis();
 
@@ -2462,22 +2431,27 @@ unsigned char questionBox_Display(const __FlashStringHelper * question, char ans
       display.setDrawColor(1);
       display.updateDisplay();
 
+      // If cursor on top list entry
       if (choice == 0) {
+        // On 2nd, 3rd, ... page go back one page
         if (currPage > 1) {
           lastPage = currPage;
           currPage--;
           break;
         }
-        else if (filebrowse == 1) {
+        // In file browser go to root dir
+        else if ((filebrowse == 1) && (root != 1)) {
           root = 1;
           break;
         }
+        // Else go to bottom of list as a shortcut
+        else {
+          choice = num_answers - 1;
+        }
       }
-      else if (choice > 0) {
-        choice--;
-      }
+      // If not top entry go up/back one entry
       else {
-        choice = num_answers - 1;
+        choice--;
       }
 
       // draw selection box
@@ -2498,12 +2472,11 @@ unsigned char questionBox_Display(const __FlashStringHelper * question, char ans
       display.setDrawColor(1);
       display.updateDisplay();
 
-      if ((choice == num_answers - 1 ) && (numPages > currPage)) {
+      if ((choice == num_answers - 1) && (numPages > currPage)) {
         lastPage = currPage;
         currPage++;
         break;
-      }
-      else
+      } else
         choice = (choice + 1) % num_answers;
 
       // draw selection box
@@ -2514,7 +2487,7 @@ unsigned char questionBox_Display(const __FlashStringHelper * question, char ans
       rgbLed(choice);
     }
 
-    // if the Cart Dumpers button is hold continiously leave the menu
+    // if the Cart Readers button is hold continiously leave the menu
     // so the currently highlighted action can be executed
 
     if (b == 3) {
@@ -2654,7 +2627,7 @@ int checkButton1() {
     }
   }
   // Test for normal click event: DCgap expired
-  if ( buttonVal1 == HIGH && (millis() - upTime1) >= DCgap && DCwaiting1 == true && DConUp1 == false && singleOK1 == true) {
+  if (buttonVal1 == HIGH && (millis() - upTime1) >= DCgap && DCwaiting1 == true && DConUp1 == false && singleOK1 == true) {
     event = 1;
     DCwaiting1 = false;
   }
@@ -2714,7 +2687,7 @@ int checkButton2() {
     }
   }
   // Test for normal click event: DCgap expired
-  if ( buttonVal2 == HIGH && (millis() - upTime2) >= DCgap && DCwaiting2 == true && DConUp2 == false && singleOK2 == true) {
+  if (buttonVal2 == HIGH && (millis() - upTime2) >= DCgap && DCwaiting2 == true && DConUp2 == false && singleOK2 == true) {
     event = 1;
     DCwaiting2 = false;
   }
@@ -2748,8 +2721,7 @@ void wait_btn() {
   if (errorLvl == 0)
     rgbLed(green_color);
 
-  while (1)
-  {
+  while (1) {
     // get input button
     int b = checkButton();
 
@@ -2799,16 +2771,13 @@ int checkButton() {
     if (rotaryDir == 1) {
       rotaryPos = newPos;
       return 1;
-    }
-    else if (rotaryDir == -1) {
+    } else if (rotaryDir == -1) {
       rotaryPos = newPos;
       return 2;
-    }
-    else {
+    } else {
       return 0;
     }
-  }
-  else if (reading == buttonState) {
+  } else if (reading == buttonState) {
     return 0;
   }
   // Check if button has changed
@@ -2824,7 +2793,8 @@ int checkButton() {
         if (buttonState == 0) {
           unsigned long pushTime = millis();
           // Wait until button was let go again
-          while ((PING & (1 << PING2)) >> PING2 == 0);
+          while ((PING & (1 << PING2)) >> PING2 == 0)
+            ;
           lastButtonState = reading;
 
           // If the hold time was over 10 seconds, super long press for resetting eeprom in about screen
@@ -2836,13 +2806,11 @@ int checkButton() {
             return 3;
           }
         }
-      }
-      else {
+      } else {
         lastButtonState = reading;
         return 0;
       }
-    }
-    else {
+    } else {
       lastButtonState = reading;
       return 0;
     }
@@ -2855,8 +2823,7 @@ void wait_btn() {
   if (errorLvl == 0)
     rgbLed(green_color);
 
-  while (1)
-  {
+  while (1) {
     // get input button
     int b = checkButton();
 
@@ -2895,8 +2862,7 @@ void wait_encoder() {
   if (errorLvl == 0)
     rgbLed(green_color);
 
-  while (1)
-  {
+  while (1) {
     // Get rotary encoder
     encoder.tick();
     int newPos = encoder.getPosition();
@@ -2941,7 +2907,7 @@ void resetEEPROM() {
 /******************************************
   Filebrowser Module
 *****************************************/
-void fileBrowser(const __FlashStringHelper * browserTitle) {
+void fileBrowser(const __FlashStringHelper* browserTitle) {
   char fileNames[7][FILENAME_LENGTH];
   int currFile;
   filebrowse = 1;
@@ -3065,7 +3031,7 @@ page:
   }
   myDir.close();
 
-  for (byte i = 0; i < 8; i++ ) {
+  for (byte i = 0; i < 8; i++) {
     // Copy short string into fileOptions
     snprintf_P( answers[i], FILEOPTS_LENGTH, PSTR("%s"), fileNames[i] );
   }
@@ -3091,8 +3057,7 @@ page:
   }
 
   // wait for user choice to come back from the question box menu
-  switch (answer)
-  {
+  switch (answer) {
     case 0:
       strncpy(fileName, fileNames[0], FILENAME_LENGTH - 1);
       break;
@@ -3136,8 +3101,7 @@ page:
     sd.chdir(dirName);
     // Start browser in new directory again
     goto browserstart;
-  }
-  else {
+  } else {
     // Afer everything is done change SD working directory back to root
     sd.chdir("/");
   }
@@ -3151,12 +3115,12 @@ void loop() {
 #ifdef enable_N64
   if (mode == mode_N64_Controller) {
     n64ControllerMenu();
-  }
-  else if (mode == mode_N64_Cart) {
+  } else if (mode == mode_N64_Cart) {
     n64CartMenu();
   }
 #else
-  if (1 == 0) { }
+  if (1 == 0) {
+  }
 #endif
 #ifdef enable_SNES
   else if (mode == mode_SNES) {
@@ -3170,8 +3134,7 @@ void loop() {
 #ifdef enable_FLASH16
   else if (mode == mode_FLASH16) {
     flashromMenu16();
-  }
-  else if (mode == mode_EPROM) {
+  } else if (mode == mode_EPROM) {
     epromMenu();
   }
 #endif
@@ -3184,8 +3147,7 @@ void loop() {
 #ifdef enable_GBX
   else if (mode == mode_GB) {
     gbMenu();
-  }
-  else if (mode == mode_GBA) {
+  } else if (mode == mode_GBA) {
     gbaMenu();
   }
 #endif
@@ -3237,11 +3199,9 @@ void loop() {
 #ifdef enable_GBX
   else if (mode == mode_GB_GBSmart) {
     gbSmartMenu();
-  }
-  else if (mode == mode_GB_GBSmart_Flash) {
+  } else if (mode == mode_GB_GBSmart_Flash) {
     gbSmartFlashMenu();
-  }
-  else if (mode == mode_GB_GBSmart_Game) {
+  } else if (mode == mode_GB_GBSmart_Game) {
     gbSmartGameOptions();
   }
 #endif
