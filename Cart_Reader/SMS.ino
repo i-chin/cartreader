@@ -465,15 +465,9 @@ void getCartInfo_SMS() {
     }
     headerFZ[28] = '\0';
 
-<<<<<<< HEAD
     if (strcmp_P(headerFZ, PSTR("COPYRIGHT SEGAPRG. BY T.ASAI")) == 0) {
       strcpy_P(romName, PSTR("TMR SEGA"));
       cartSize =  128 * 1024UL;
-=======
-    if (strcmp(headerFZ, "COPYRIGHT SEGAPRG. BY T.ASAI") == 0) {
-      strcpy(romName, "TMR SEGA");
-      cartSize = 128 * 1024UL;
->>>>>>> 3bf6004e7958c99580f052e09fd0dc9c8104c62c
     }
   }
 
@@ -567,31 +561,17 @@ void readROM_SMS() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
   if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
-<<<<<<< HEAD
     strcat_P(fileName, PSTR(".gg"));
-  }
-  else {
-    strcat_P(fileName, PSTR(".sms"));
-=======
-    strcat(fileName, ".gg");
   } else {
-    strcat(fileName, ".sms");
->>>>>>> 3bf6004e7958c99580f052e09fd0dc9c8104c62c
+    strcat_P(fileName, PSTR(".sms"));
   }
 
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
   if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
-<<<<<<< HEAD
     sprintf_P(folder, PSTR("GG/ROM/%s/%d"), romName, foldern);
-  }
-  else {
-    sprintf_P(folder, PSTR("SMS/ROM/%s/%d"), romName, foldern);
-=======
-    sprintf(folder, "GG/ROM/%s/%d", romName, foldern);
   } else {
-    sprintf(folder, "SMS/ROM/%s/%d", romName, foldern);
->>>>>>> 3bf6004e7958c99580f052e09fd0dc9c8104c62c
+    sprintf_P(folder, PSTR("SMS/ROM/%s/%d"), romName, foldern);
   }
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -674,16 +654,9 @@ void readSRAM_SMS() {
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
   if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
-<<<<<<< HEAD
     sprintf_P(folder, PSTR("GG/SAVE/%s/%d"), romName, foldern);
-  }
-  else {
-    sprintf_P(folder, PSTR("SMS/SAVE/%s/%d"), romName, foldern);
-=======
-    sprintf(folder, "GG/SAVE/%s/%d", romName, foldern);
   } else {
-    sprintf(folder, "SMS/SAVE/%s/%d", romName, foldern);
->>>>>>> 3bf6004e7958c99580f052e09fd0dc9c8104c62c
+    sprintf_P(folder, PSTR("SMS/SAVE/%s/%d"), romName, foldern);
   }
   sd.mkdir(folder, true);
   sd.chdir(folder);
