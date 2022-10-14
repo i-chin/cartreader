@@ -1624,18 +1624,13 @@ int32_t initializeClockOffset() {
     i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, clock_offset);
   } else {
     i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, 0);
-    if (clock_file.open("/snes_clk.txt", O_WRITE | O_CREAT | O_TRUNC)) {
-      clock_file.write(zero_char_arr, 1);
-      clock_file.close();
-    } else {
-      i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, 0);
-      EEPROM_writeAnything(CLK_GEN_OFFSET, clock_offset);
-    }
-    return clock_offset;
+    EEPROM_writeAnything(CLK_GEN_OFFSET, clock_offset);
+  }
+  return clock_offset;
 #else
-    // last number is the clock correction factor which is custom for each clock generator
-    i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, 0);
-    return 0;
+  // last number is the clock correction factor which is custom for each clock generator
+  i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, 0);
+  return 0;
 #endif
 }
 
