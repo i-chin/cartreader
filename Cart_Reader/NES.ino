@@ -289,11 +289,7 @@ void nesMenu() {
 
     // Change Mapper
     case 4:
-      romName[0] = 'C';
-      romName[1] = 'A';
-      romName[2] = 'R';
-      romName[3] = 'T';
-      romName[4] = '\0';
+      strcpy_P(romName, PSTR("CART"));
       setMapper();
       checkMapperSize();
       setPRGSize();
@@ -508,11 +504,7 @@ boolean getMapping() {
     println_Msg(F("Using manual selection"));
     display_Update();
     delay(500);
-    romName[0] = 'C';
-    romName[1] = 'A';
-    romName[2] = 'R';
-    romName[3] = 'T';
-    romName[4] = '\0';
+    strcpy_P(romName, PSTR("CART"));
     return 0;
   } else {
     //Search for CRC32 in file
@@ -761,11 +753,7 @@ boolean getMapping() {
 
                 // If name consists out of all japanese characters use CART as name
                 if (myLength == 0) {
-                  romName[0] = 'C';
-                  romName[1] = 'A';
-                  romName[2] = 'R';
-                  romName[3] = 'T';
-                  romName[4] = '\0';
+                  strcpy_P(romName, PSTR("CART"));
                 }
 
                 // Save Mapper
@@ -792,11 +780,7 @@ boolean getMapping() {
       printPRG(0xE000);
 
       // Change ROM name to CART
-      romName[0] = 'C';
-      romName[1] = 'A';
-      romName[2] = 'R';
-      romName[3] = 'T';
-      romName[4] = '\0';
+      strcpy_P(romName, PSTR("CART"));
       return 0;
     } else {
       println_Msg(F("Database file not found"));
@@ -1045,11 +1029,7 @@ void selectMapping() {
 
             // If name consists out of all japanese characters use CART as name
             if (myLength == 0) {
-              romName[0] = 'C';
-              romName[1] = 'A';
-              romName[2] = 'R';
-              romName[3] = 'T';
-              romName[4] = '\0';
+              strcpy_P(romName, PSTR("CART"));
             }
 
             // Save Mapper

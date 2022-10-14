@@ -1074,11 +1074,7 @@ boolean checkcart_SNES() {
   // If name consists out of all japanese characters use game code
   if (myLength == 0) {
     // Get rom code
-    romName[0] = 'S';
-    romName[1] = 'H';
-    romName[2] = 'V';
-    romName[3] = 'C';
-    romName[4] = '-';
+    strcpy_P(romName, PSTR("SHVC-"));
     for (unsigned int i = 0; i < 4; i++) {
       myByte = snesHeader[0xFFB2 + i - headerStart];
       if (((char(myByte) >= 48 && char(myByte) <= 57) || (char(myByte) >= 65 && char(myByte) <= 122)) && myLength < 4) {
@@ -1088,13 +1084,7 @@ boolean checkcart_SNES() {
     }
     if (myLength == 0) {
       // Rom code unknown
-      romName[0] = 'U';
-      romName[1] = 'N';
-      romName[2] = 'K';
-      romName[3] = 'N';
-      romName[4] = 'O';
-      romName[5] = 'W';
-      romName[6] = 'N';
+      strcpy_P(romName, PSTR("UNKNOWN"));
     }
   }
 
