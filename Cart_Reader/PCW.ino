@@ -126,7 +126,7 @@ void setup_PCW() {
   // Multi-Pack Cart Check
   check_multi_PCW();
 
-  strcpy_P(romName, ("PCW"));
+  strcpy_P(romName, PSTR("PCW"));
 
   mode = mode_PCW;
 }

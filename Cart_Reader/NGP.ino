@@ -123,7 +123,7 @@ bool getCartInfo_NGP() {
   snprintf_P(cartID, 5, PSTR("%02X%02X"), readByte_NGP(0x21), readByte_NGP(0x20));
 
   // force rom size to 32 Mbits for few titles
-  if (strcmp_P(cartID, PSTR("0060")) == 0 || strcmp_P(cartID, PSTR("0061")) == 0 || strcmp_P(cartID, PSTR("0069")) == 0 )
+  if (strcmp_P(cartID, PSTR("0060")) == 0 || strcmp_P(cartID, PSTR("0061")) == 0 || strcmp_P(cartID, PSTR("0069")) == 0)
     cartSize = 4194304;
 
   // get app version

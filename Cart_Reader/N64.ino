@@ -3648,9 +3648,9 @@ void flashRepro_N64() {
         println_Msg(F(" x2"));
       else
         println_Msg("");
-    } else if ((strcmp_P(flashid, PSTR("227E")) == 0)  && (strcmp_P(cartID, PSTR("2101")) == 0)) {
+    } else if ((strcmp_P(flashid, PSTR("227E")) == 0) && (strcmp_P(cartID, PSTR("2101")) == 0)) {
       print_Msg(F("Spansion S29GL128N"));
-    } else if ((strcmp_P(flashid, PSTR("227E")) == 0)  && (strcmp_P(cartID, PSTR("2100")) == 0)) {
+    } else if ((strcmp_P(flashid, PSTR("227E")) == 0) && (strcmp_P(cartID, PSTR("2100")) == 0)) {
       print_Msg(F("ST M29W128GL"));
     } else if ((strcmp_P(flashid, PSTR("22C9")) == 0) || (strcmp_P(flashid, PSTR("22CB")) == 0)) {
       print_Msg(F("Macronix MX29LV640"));
@@ -3952,7 +3952,7 @@ void idFlashrom_N64() {
   sprintf_P(flashid, PSTR("%04X"), readWord_N64());
   // Read 2 bytes secondary flashrom ID
   setAddress_N64(romBase + 0x1C);
-  sprintf_P(cartID, PSTR("%04X"), ((readWord_N64() << 8)  | (readWord_N64() & 0xFF)));
+  sprintf_P(cartID, PSTR("%04X"), ((readWord_N64() << 8) | (readWord_N64() & 0xFF)));
 
   // Spansion S29GL256N(32MB/64MB) with either one or two flashrom chips
   if ((strcmp_P(cartID, PSTR("2201")) == 0) && (strcmp_P(flashid, PSTR("227E")) == 0)) {
@@ -3977,7 +3977,7 @@ void idFlashrom_N64() {
     sprintf_P(tempID, PSTR("%04X"), readWord_N64());
 
     // Check if second flashrom chip is present
-    if (strcmp_P(tempID, PSTR("227E")) == 0)  {
+    if (strcmp_P(tempID, PSTR("227E")) == 0) {
       cartSize = 64;
     }
     resetFlashrom_N64(romBase + 0x2000000);

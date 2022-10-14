@@ -740,8 +740,7 @@ setrom:
   intvsize = newintvsize;
 }
 
-void checkStatus_INTV()
-{
+void checkStatus_INTV() {
   EEPROM_readAnything(INTV_MAPPER, intvmapper);
   EEPROM_readAnything(INTV_ROM_SIZE, intvsize);
   if (intvmapper > 9) {

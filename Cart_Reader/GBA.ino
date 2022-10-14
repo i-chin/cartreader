@@ -364,7 +364,7 @@ void gbaMenu() {
           display_Clear();
           display_Update();
 
-          if (strcmp_P(flashid, PSTR("1F3D")) == 0) { // Atmel
+          if (strcmp_P(flashid, PSTR("1F3D")) == 0) {  // Atmel
             writeFLASH_GBA(1, 65536, 0, 1);
             verifyFLASH_GBA(65536, 0);
           } else {

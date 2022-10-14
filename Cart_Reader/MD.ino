@@ -757,7 +757,7 @@ void getCartInfo_MD() {
           idLockon[i] = char(sdBuffer[i]);
         }
 
-        if (!(strncmp_P(PSTR("GM 00001009-0"), idLockon, 13) & strncmp_P(PSTR("GM 00004049-0"), idLockon, 13) )) {
+        if (!(strncmp_P(PSTR("GM 00001009-0"), idLockon, 13) & strncmp_P(PSTR("GM 00004049-0"), idLockon, 13))) {
           //Sonic1 ID:GM 00001009-0? or GM 00004049-0?
           SnKmode = 2;
         } else if (!(strcmp_P(PSTR("GM 00001051-00"), idLockon) & strcmp_P(PSTR("GM 00001051-01"), idLockon) & strcmp_P(PSTR("GM 00001051-02"), idLockon))) {

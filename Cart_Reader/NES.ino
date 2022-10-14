@@ -1572,7 +1572,7 @@ void CreateRAMFileInSD() {
 #ifndef nointro
 void CartStart() {
   sd.chdir();
-  EEPROM_readAnything(FOLDER_NUM, foldern); // FOLDER #
+  EEPROM_readAnything(FOLDER_NUM, foldern);  // FOLDER #
   sprintf_P(folder, PSTR("NES/CART/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -1580,7 +1580,7 @@ void CartStart() {
 
 void CartFinish() {
   foldern += 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern); // FOLDER #
+  EEPROM_writeAnything(FOLDER_NUM, foldern);  // FOLDER #
   sd.chdir();
 }
 #endif

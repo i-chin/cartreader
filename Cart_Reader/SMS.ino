@@ -467,7 +467,7 @@ void getCartInfo_SMS() {
 
     if (strcmp_P(headerFZ, PSTR("COPYRIGHT SEGAPRG. BY T.ASAI")) == 0) {
       strcpy_P(romName, PSTR("TMR SEGA"));
-      cartSize =  128 * 1024UL;
+      cartSize = 128 * 1024UL;
     }
   }
 

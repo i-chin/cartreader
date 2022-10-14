@@ -353,7 +353,7 @@ setrom:
 void checkStatus_WSV() {
   EEPROM_readAnything(WSV_ROM_SIZE, wsvsize);
   if (wsvsize > 2) {
-    wsvsize = 1; // default 64K
+    wsvsize = 1;  // default 64K
     EEPROM_writeAnything(WSV_ROM_SIZE, wsvsize);
   }
 
