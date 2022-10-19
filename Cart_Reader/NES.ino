@@ -41,6 +41,7 @@ static const byte PROGMEM mapsize[] = {
   10, 3, 4, 4, 5, 1, 1,  // mmc4                                               [sram r/w]
   11, 1, 3, 1, 5, 0, 0,  // Color Dreams [UNLICENSED]
   13, 1, 1, 0, 0, 0, 0,  // cprom (videomation)
+  15, 6, 6, 0, 0, 0, 0,  // K-1029/K-1030P [UNLICENSED]
   16, 3, 4, 5, 6, 0, 1,  // bandai x24c02                                      [eep r/w]
   18, 3, 4, 5, 6, 0, 1,  // jaleco ss8806                                      [sram r/w]
   19, 3, 4, 5, 6, 0, 1,  // namco 106/163                                      [sram/prgram r/w]
@@ -58,6 +59,7 @@ static const byte PROGMEM mapsize[] = {
   45, 3, 6, 0, 8, 0, 0,  // ga23c asic multicart [UNLICENSED]
   47, 4, 4, 6, 6, 0, 0,  // (super spike vball + world cup)
   48, 3, 4, 6, 6, 0, 0,  // taito tc0690
+  62, 7, 7, 8, 8, 0, 0, // K-1017P [UNLICENSED]
   64, 2, 3, 4, 5, 0, 0,  // tengen rambo-1 [UNLICENSED]
   65, 3, 4, 5, 6, 0, 0,  // irem h-3001
   66, 2, 3, 2, 3, 0, 0,  // gxrom/mhrom
@@ -147,9 +149,9 @@ byte mapcount = (sizeof(mapsize) / sizeof(mapsize[0])) / 7;
 boolean mapfound = false;
 byte mapselect;
 
-int PRG[] = { 16, 32, 64, 128, 256, 512, 1024 };
+int PRG[] = { 16, 32, 64, 128, 256, 512, 1024, 2048 };
 byte prglo = 0;  // Lowest Entry
-byte prghi = 6;  // Highest Entry
+byte prghi = 7;  // Highest Entry
 
 int CHR[] = { 0, 8, 16, 32, 64, 128, 256, 512, 1024 };
 byte chrlo = 0;  // Lowest Entry
@@ -3023,6 +3025,16 @@ void readPRG(boolean readrom) {
           }
         }
         break;
+        
+      case 15:
+        banks = int_pow(2, prgsize);
+        for(int i = 0; i < banks; i += 2){
+          write_prg_byte(0x8000, i);
+          for (word address = 0x0; address < 0x8000; address += 512) {
+            dumpPRG(base, address);
+          }
+        }
+      break;
 
       case 16:
       case 159:  // 128K/256K
@@ -3188,7 +3200,17 @@ void readPRG(boolean readrom) {
           dumpPRG(base, address);
         }
         break;
-
+      
+      case 62:
+        banks = int_pow(2, prgsize) / 2;
+        for (int i = 0; i < banks; i++) {
+          write_prg_byte(0x8000 + (i * 512) + ((i & 32) << 1), 0x00);
+          for (word address = 0x0; address < 0x8000; address += 512) {
+            dumpPRG(base, address);
+          }
+        }
+        break;
+        
       case 66:  // 64K/128K
         banks = int_pow(2, prgsize) / 2;
         for (int i = 0; i < banks; i++) {                               // 64K/128K
@@ -3786,6 +3808,16 @@ void readCHR(boolean readrom) {
             }
           }
           break;
+          
+        case 62:
+          banks = int_pow(2, chrsize) / 2;
+          for (int i = 0; i < banks; i++) {
+            write_prg_byte(0x8000 + (i / 4), i & 3);
+            for (word address = 0x0; address < 0x2000; address += 512) {
+              dumpCHR(address);
+            }
+          }
+        break;
 
         case 67:  // 128K
           banks = int_pow(2, chrsize) * 2;
