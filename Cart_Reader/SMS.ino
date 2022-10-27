@@ -69,6 +69,8 @@ void _smsMenu() {
       readROM_SMS();
       if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
         compareCRC("gg.txt", 0, 1, 0);
+      } else if (raphnet_mode_sg1000) {
+        compareCRC("sg1000.txt", 0, 1, 0);
       } else {
         compareCRC("sms.txt", 0, 1, 0);
       }
@@ -558,21 +560,21 @@ void getCartInfo_SMS() {
 
 // Read rom and save to the SD card
 void readROM_SMS() {
-  // Get name, add extension and convert to char array for sd lib
+  // Get name, add extension depending on the system and convert to char array for sd lib
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   strcpy(fileName, romName);
   if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
     strcat_P(fileName, PSTR(".gg"));
+    sprintf_P(folder, PSTR("GG/ROM/%s/%d"), romName, foldern);
+  } else if (raphnet_mode_sg1000) {
+    strcat_P(fileName, PSTR(".sg"));
+    sprintf_P(folder, PSTR("SG1000/ROM/%s/%d"), romName, foldern);
   } else {
     strcat_P(fileName, PSTR(".sms"));
-  }
-
-  // create a new folder
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
-    sprintf_P(folder, PSTR("GG/ROM/%s/%d"), romName, foldern);
-  } else {
     sprintf_P(folder, PSTR("SMS/ROM/%s/%d"), romName, foldern);
   }
+
+  // Create a new folder
   sd.mkdir(folder, true);
   sd.chdir(folder);
 

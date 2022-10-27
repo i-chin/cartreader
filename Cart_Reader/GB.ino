@@ -1300,7 +1300,7 @@ void readSRAMFLASH_MBC6_GB() {
   strcat_P(fileName, PSTR(".sav"));
 
   // create a new folder for the save file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf_P(folder, PSTR("GB/SAVE/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -1313,7 +1313,7 @@ void readSRAMFLASH_MBC6_GB() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
