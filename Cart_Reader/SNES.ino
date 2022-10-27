@@ -593,8 +593,6 @@ byte readBank_SNES(byte myBank, word myAddress) {
 }
 
 void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
-  byte buffer[1024] = { 0 };
-
   uint16_t c = 0;
   uint16_t currByte = 32768;
 
@@ -612,7 +610,7 @@ void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
     currByte = 32768;
     while (1) {
       c = 0;
-      while (c < 1024) {
+      while (c < 512) {
         PORTF = (currByte & 0xFF);
         PORTK = ((currByte >> 8) & 0xFF);
 
@@ -627,11 +625,11 @@ void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
         NOP;
         NOP;
 
-        buffer[c] = PINC;
+        sdBuffer[c] = PINC;
         c++;
         currByte++;
       }
-      file->write(buffer, 1024);
+      file->write(sdBuffer, 512);
 
       // exit while(1) loop once the uint16_t currByte overflows from 0xffff to 0 (current bank is done)
       if (currByte == 0) break;
@@ -644,8 +642,6 @@ void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
 }
 
 void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
-  byte buffer[1024] = { 0 };
-
   uint16_t c = 0;
   uint16_t currByte = 0;
 
@@ -663,7 +659,7 @@ void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
     currByte = 0;
     while (1) {
       c = 0;
-      while (c < 1024) {
+      while (c < 512) {
         PORTF = (currByte & 0xFF);
         PORTK = ((currByte >> 8) & 0xFF);
 
@@ -678,11 +674,11 @@ void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
         NOP;
         NOP;
 
-        buffer[c] = PINC;
+        sdBuffer[c] = PINC;
         c++;
         currByte++;
       }
-      file->write(buffer, 1024);
+      file->write(sdBuffer, 512);
 
       // exit while(1) loop once the uint16_t currByte overflows from 0xffff to 0 (current bank is done)
       if (currByte == 0) break;
@@ -699,31 +695,6 @@ void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
 ******************************************/
 void getCartInfo_SNES() {
   boolean manualConfig = 0;
-
-  //Prime SA1 cartridge
-  uint16_t c = 0;
-  uint16_t currByte = 0;
-  byte buffer[1024] = { 0 };
-  PORTL = 192;
-  while (c < 1024) {
-    PORTF = (currByte & 0xFF);
-    PORTK = ((currByte >> 8) & 0xFF);
-
-    // Wait for the Byte to appear on the data bus
-    // Arduino running at 16Mhz -> one nop = 62.5ns
-    // slowRom is good for 200ns, fastRom is <= 120ns; S-CPU best case read speed: 3.57MHz / 280ns
-    // let's be conservative and use 6 x 62.5 = 375ns
-    NOP;
-    NOP;
-    NOP;
-    NOP;
-    NOP;
-    NOP;
-
-    buffer[c] = PINC;
-    c++;
-    currByte++;
-  }
 
   // Print start page
   if (checkcart_SNES() == 0) {

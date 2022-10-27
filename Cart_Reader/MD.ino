@@ -1169,8 +1169,6 @@ void readROM_MD() {
     print_Error(F("SD Error"), true);
   }
 
-  byte buffer[1024] = { 0 };
-
   // get current time
   unsigned long startTime = millis();
 
@@ -1194,7 +1192,7 @@ void readROM_MD() {
   if (SnKmode == 3) totalProgressBar += (uint32_t)cartSizeSonic2;
   draw_progressbar(0, totalProgressBar);
 
-  for (unsigned long currBuffer = 0; currBuffer < cartSize / 2; currBuffer += 512) {
+  for (unsigned long currBuffer = 0; currBuffer < cartSize / 2; currBuffer += 256) {
     // Blink led
     if (currBuffer % 16384 == 0)
       blinkLED();
@@ -1209,7 +1207,7 @@ void readROM_MD() {
 
     d = 0;
 
-    for (int currWord = 0; currWord < 512; currWord++) {
+    for (int currWord = 0; currWord < 256; currWord++) {
       unsigned long myAddress = currBuffer + currWord - (offsetSSF2Bank * 0x80000);
       PORTF = myAddress & 0xFF;
       PORTK = (myAddress >> 8) & 0xFF;
@@ -1230,8 +1228,8 @@ void readROM_MD() {
       NOP;
 
       // Read
-      buffer[d] = PINA;
-      buffer[d + 1] = PINC;
+      sdBuffer[d] = PINA;
+      sdBuffer[d + 1] = PINC;
 
       // Setting CS(PH3) HIGH
       PORTH |= (1 << 3);
@@ -1240,25 +1238,25 @@ void readROM_MD() {
 
       // Skip first 256 words
       if (((currBuffer == 0) && (currWord >= 256)) || (currBuffer > 0)) {
-        calcCKS += ((buffer[d] << 8) | buffer[d + 1]);
+        calcCKS += ((sdBuffer[d] << 8) | sdBuffer[d + 1]);
       }
       d += 2;
     }
-    myFile.write(buffer, 1024);
+    myFile.write(sdBuffer, 512);
 
     // update progress bar
-    processedProgressBar += 1024;
+    processedProgressBar += 512;
     draw_progressbar(processedProgressBar, totalProgressBar);
   }
   if (SnKmode >= 2) {
-    for (unsigned long currBuffer = 0; currBuffer < cartSizeLockon / 2; currBuffer += 512) {
+    for (unsigned long currBuffer = 0; currBuffer < cartSizeLockon / 2; currBuffer += 256) {
       // Blink led
       if (currBuffer % 16384 == 0)
         blinkLED();
 
       d = 0;
 
-      for (int currWord = 0; currWord < 512; currWord++) {
+      for (int currWord = 0; currWord < 256; currWord++) {
         unsigned long myAddress = currBuffer + currWord + cartSize / 2;
         PORTF = myAddress & 0xFF;
         PORTK = (myAddress >> 8) & 0xFF;
@@ -1279,8 +1277,8 @@ void readROM_MD() {
         NOP;
 
         // Read
-        buffer[d] = PINA;
-        buffer[d + 1] = PINC;
+        sdBuffer[d] = PINA;
+        sdBuffer[d + 1] = PINC;
 
         // Setting CS(PH3) HIGH
         PORTH |= (1 << 3);
@@ -1289,26 +1287,26 @@ void readROM_MD() {
 
         // Skip first 256 words
         if (((currBuffer == 0) && (currWord >= 256)) || (currBuffer > 0)) {
-          calcCKSLockon += ((buffer[d] << 8) | buffer[d + 1]);
+          calcCKSLockon += ((sdBuffer[d] << 8) | sdBuffer[d + 1]);
         }
         d += 2;
       }
-      myFile.write(buffer, 1024);
+      myFile.write(sdBuffer, 512);
 
       // update progress bar
-      processedProgressBar += 1024;
+      processedProgressBar += 512;
       draw_progressbar(processedProgressBar, totalProgressBar);
     }
   }
   if (SnKmode == 3) {
-    for (unsigned long currBuffer = 0; currBuffer < cartSizeSonic2 / 2; currBuffer += 512) {
+    for (unsigned long currBuffer = 0; currBuffer < cartSizeSonic2 / 2; currBuffer += 256) {
       // Blink led
       if (currBuffer % 16384 == 0)
         blinkLED();
 
       d = 0;
 
-      for (int currWord = 0; currWord < 512; currWord++) {
+      for (int currWord = 0; currWord < 256; currWord++) {
         unsigned long myAddress = currBuffer + currWord + (cartSize + cartSizeLockon) / 2;
         PORTF = myAddress & 0xFF;
         PORTK = (myAddress >> 8) & 0xFF;
@@ -1329,21 +1327,21 @@ void readROM_MD() {
         NOP;
 
         // Read
-        buffer[d] = PINA;
-        buffer[d + 1] = PINC;
+        sdBuffer[d] = PINA;
+        sdBuffer[d + 1] = PINC;
 
         // Setting CS(PH3) HIGH
         PORTH |= (1 << 3);
         // Setting OE(PH6) HIGH
         PORTH |= (1 << 6);
 
-        calcCKSSonic2 += ((buffer[d] << 8) | buffer[d + 1]);
+        calcCKSSonic2 += ((sdBuffer[d] << 8) | sdBuffer[d + 1]);
         d += 2;
       }
-      myFile.write(buffer, 1024);
+      myFile.write(sdBuffer, 512);
 
       // update progress bar
-      processedProgressBar += 1024;
+      processedProgressBar += 512;
       draw_progressbar(processedProgressBar, totalProgressBar);
     }
   }
