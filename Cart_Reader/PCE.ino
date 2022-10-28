@@ -812,7 +812,7 @@ void pceMenu() {
     if (pce_force_rom_size > 0) {
       sprintf_P(menuOptionspceCart[6], PSTR("ROM size now %dK"), pce_force_rom_size);
     } else {
-      sprintf_P(menuOptionspceCart[6], PSTR("Force ROM size")));
+      sprintf_P(menuOptionspceCart[6], PSTR("Force ROM size"));
     }
     mainMenu = question_box(adapterSwap == 1 ? F("PCE HuCARD menu(SWAP)") : F("PCE HuCARD menu(NOSWAP)"), menuOptionspceCart, 7, 0);
 
