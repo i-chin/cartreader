@@ -8,7 +8,7 @@
    Variables
  *****************************************/
 unsigned long sramEnd;
-int eepSize;
+word eepSize;
 word addrhi;
 word addrlo;
 word chksum;
@@ -103,10 +103,6 @@ static unsigned long cartSizeLockon;
 static unsigned long cartSizeSonic2 = 262144;
 static word chksumLockon;
 static word chksumSonic2 = 0x0635;
-static char romNameLockon[12];
-static char id[15];
-static char idLockon[15];
-static char labelLockon[17];
 
 /******************************************
    Configuration
@@ -192,8 +188,8 @@ void mdLoadConf() {
 static const char MDMenuItem1[] PROGMEM = "Game Cartridge";
 static const char MDMenuItem2[] PROGMEM = "SegaCD RamCart";
 static const char MDMenuItem3[] PROGMEM = "Flash Repro";
-static const char MDMenuItem4[] PROGMEM = "Reset";
-static const char* const menuOptionsMD[] PROGMEM = { MDMenuItem1, MDMenuItem2, MDMenuItem3, MDMenuItem4 };
+//static const char MDMenuItem4[] PROGMEM = "Reset"; (stored in common strings array)
+static const char* const menuOptionsMD[] PROGMEM = { MDMenuItem1, MDMenuItem2, MDMenuItem3, string_reset2 };
 
 // Cart menu items
 static const char MDCartMenuItem1[] PROGMEM = "Read Rom";
@@ -202,14 +198,14 @@ static const char MDCartMenuItem3[] PROGMEM = "Write Sram";
 static const char MDCartMenuItem4[] PROGMEM = "Read EEPROM";
 static const char MDCartMenuItem5[] PROGMEM = "Write EEPROM";
 static const char MDCartMenuItem6[] PROGMEM = "Cycle cart";
-static const char MDCartMenuItem7[] PROGMEM = "Reset";
-static const char* const menuOptionsMDCart[] PROGMEM = { MDCartMenuItem1, MDCartMenuItem2, MDCartMenuItem3, MDCartMenuItem4, MDCartMenuItem5, MDCartMenuItem6, MDCartMenuItem7 };
+//static const char MDCartMenuItem7[] PROGMEM = "Reset"; (stored in common strings array)
+static const char* const menuOptionsMDCart[] PROGMEM = { MDCartMenuItem1, MDCartMenuItem2, MDCartMenuItem3, MDCartMenuItem4, MDCartMenuItem5, MDCartMenuItem6, string_reset2 };
 
 // Sega CD Ram Backup Cartridge menu items
 static const char SCDMenuItem1[] PROGMEM = "Read Backup RAM";
 static const char SCDMenuItem2[] PROGMEM = "Write Backup RAM";
-static const char SCDMenuItem3[] PROGMEM = "Reset";
-static const char* const menuOptionsSCD[] PROGMEM = { SCDMenuItem1, SCDMenuItem2, SCDMenuItem3 };
+//static const char SCDMenuItem3[] PROGMEM = "Reset"; (stored in common strings array)
+static const char* const menuOptionsSCD[] PROGMEM = { SCDMenuItem1, SCDMenuItem2, string_reset2 };
 
 // Sega start menu
 void mdMenu() {
@@ -254,8 +250,8 @@ void mdMenu() {
       idFlash_MD();
       resetFlash_MD();
       print_Msg(F("Flash ID: "));
-      println_Msg(flashid);
-      if (strcmp_P(flashid, PSTR("C2F1")) == 0) {
+      println_Msg(flashid_str);
+      if (flashid == 0xC2F1) {
         println_Msg(F("MX29F1610 detected"));
         flashSize = 2097152;
       } else {
@@ -275,7 +271,8 @@ void mdMenu() {
       // Set CS(PH3) HIGH
       PORTH |= (1 << 3);
       println_Msg(F(""));
-      println_Msg(F("Press Button..."));
+      // Prints string out of the common strings array either with or without newline
+      print_STR(press_button_STR, 1);
       display_Update();
       wait();
       break;
@@ -350,10 +347,10 @@ void mdCartMenu() {
           println_Msg(F("Sram verified OK"));
           display_Update();
         } else {
-          print_Msg(F("Error: "));
+          print_STR(error_STR, 0);
           print_Msg(writeErrors);
-          println_Msg(F(" bytes "));
-          print_Error(F("did not verify."), false);
+          print_STR(_bytes_STR, 1);
+          print_Error(did_not_verify_STR, false);
         }
       } else {
         print_Error(F("Cart has no Sram"), false);
@@ -400,7 +397,8 @@ void mdCartMenu() {
       resetArduino();
       break;
   }
-  println_Msg(F("Press Button..."));
+  // Prints string out of the common strings array either with or without newline
+  print_STR(press_button_STR, 1);
   display_Update();
   wait();
 }
@@ -441,7 +439,8 @@ void segaCDMenu() {
       break;
   }
   println_Msg(F(""));
-  println_Msg(F("Press Button..."));
+  // Prints string out of the common strings array either with or without newline
+  print_STR(press_button_STR, 1);
   display_Update();
   wait();
 }
@@ -668,6 +667,23 @@ void dataIn_MD() {
 /******************************************
   MEGA DRIVE functions
 *****************************************/
+byte copyToRomName_MD(char *output, const byte *input, byte length) {
+  byte myLength = 0;
+
+  for (byte i = 0; i < 48; i++) {
+    if (
+      (
+        (input[i] >= '0' && input[i] <= '9') ||
+        (input[i] >= 'A' && input[i] <= 'z')
+      ) && myLength < length
+    ) {
+      output[myLength++] = input[i];
+    }
+  }
+
+  return myLength;
+}
+
 void getCartInfo_MD() {
   // Set control
   dataIn_MD();
@@ -706,6 +722,7 @@ void getCartInfo_MD() {
   // Sonic & Knuckles Check
   SnKmode = 0;
   if (chksum == 0xDFB3) {
+    char id[15];
 
     // Get ID
     for (byte c = 0; c < 14; c += 2) {
@@ -715,15 +732,13 @@ void getCartInfo_MD() {
       byte hiByte = myWord >> 8;
 
       // write to buffer
-      sdBuffer[c] = hiByte;
-      sdBuffer[c + 1] = loByte;
-    }
-    for (int i = 0; i < 14; i++) {
-      id[i] = char(sdBuffer[i]);
+      id[c] = hiByte;
+      id[c + 1] = loByte;
     }
 
     //Sonic & Knuckles ID:GM MK-1563 -00
     if (!strcmp_P(PSTR("GM MK-1563 -00"), id)) {
+      char labelLockon[17];
 
       // Get labelLockon
       for (byte c = 0; c < 16; c += 2) {
@@ -733,15 +748,13 @@ void getCartInfo_MD() {
         byte hiByte = myWord >> 8;
 
         // write to buffer
-        sdBuffer[c] = hiByte;
-        sdBuffer[c + 1] = loByte;
-      }
-      for (int i = 0; i < 16; i++) {
-        labelLockon[i] = char(sdBuffer[i]);
+        labelLockon[c] = hiByte;
+        labelLockon[c + 1] = loByte;
       }
 
       // check Lock-on game presence
       if (!(strcmp_P(PSTR("SEGA MEGA DRIVE "), labelLockon) & strcmp_P(PSTR("SEGA GENESIS    "), labelLockon))) {
+        char idLockon[15];
 
         // Lock-on cart checksum
         chksumLockon = readWord_MD(0x1000C7);
@@ -756,11 +769,8 @@ void getCartInfo_MD() {
           byte hiByte = myWord >> 8;
 
           // write to buffer
-          sdBuffer[c] = hiByte;
-          sdBuffer[c + 1] = loByte;
-        }
-        for (int i = 0; i < 14; i++) {
-          idLockon[i] = char(sdBuffer[i]);
+          idLockon[c] = hiByte;
+          idLockon[c + 1] = loByte;
         }
 
         if (!(strncmp_P(PSTR("GM 00001009-0"), idLockon, 13) & strncmp_P(PSTR("GM 00004049-0"), idLockon, 13))) {
@@ -965,16 +975,11 @@ void getCartInfo_MD() {
     sdBuffer[c] = hiByte;
     sdBuffer[c + 1] = loByte;
   }
-  byte myLength = 0;
-  for (unsigned int i = 0; i < 48; i++) {
-    if (((char(sdBuffer[i]) >= 48 && char(sdBuffer[i]) <= 57) || (char(sdBuffer[i]) >= 65 && char(sdBuffer[i]) <= 122)) && myLength < 15) {
-      romName[myLength] = char(sdBuffer[i]);
-      myLength++;
-    }
-  }
+  romName[copyToRomName_MD(romName, sdBuffer, sizeof(romName) - 1)] = 0;
 
   //Get Lock-on cart name
   if (SnKmode >= 2) {
+    char romNameLockon[12];
 
     //Change romName
     strcpy_P(romName, PSTR("SnK_"));
@@ -989,13 +994,7 @@ void getCartInfo_MD() {
       sdBuffer[c] = hiByte;
       sdBuffer[c + 1] = loByte;
     }
-    byte myLength = 0;
-    for (unsigned int i = 0; i < 48; i++) {
-      if (((char(sdBuffer[i]) >= 48 && char(sdBuffer[i]) <= 57) || (char(sdBuffer[i]) >= 65 && char(sdBuffer[i]) <= 122)) && myLength < 11) {
-        romNameLockon[myLength] = char(sdBuffer[i]);
-        myLength++;
-      }
-    }
+    romNameLockon[copyToRomName_MD(romNameLockon, sdBuffer, sizeof(romNameLockon) - 1)] = 0;
 
     switch (SnKmode) {
       case 2: strcat_P(romName, PSTR("SONIC1")); break;
@@ -1082,7 +1081,8 @@ void getCartInfo_MD() {
 
   // Wait for user input
 #if (defined(enable_LCD) || defined(enable_OLED))
-  println_Msg(F("Press Button..."));
+  // Prints string out of the common strings array either with or without newline
+  print_STR(press_button_STR, 1);
   display_Update();
   wait();
 #endif
@@ -1155,7 +1155,7 @@ void readROM_MD() {
   sd.chdir(folder);
 
   display_Clear();
-  print_Msg(F("Saving to "));
+  print_STR(saving_to_STR, 0);
   print_Msg(folder);
   println_Msg(F("/..."));
   display_Update();
@@ -1166,14 +1166,14 @@ void readROM_MD() {
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(F("SD Error"), true);
+    print_Error(sd_error_STR, true);
   }
 
   // get current time
-  unsigned long startTime = millis();
+  // unsigned long startTime = millis();
 
   // Phantasy Star/Beyond Oasis with 74HC74 and 74HC139 switch ROM/SRAM at address 0x200000
-  if (0x200000 < cartSize < 0x400000) {
+  if (0x200000 < cartSize && cartSize < 0x400000) {
     enableSram_MD(0);
   }
 
@@ -1487,10 +1487,10 @@ void writeSram_MD() {
 
     // Close the file:
     myFile.close();
-    println_Msg(F("Done"));
+    print_STR(done_STR, 1);
     display_Update();
   } else {
-    print_Error(F("SD Error"), true);
+    print_Error(sd_error_STR, true);
   }
   dataIn_MD();
 }
@@ -1515,7 +1515,7 @@ void readSram_MD() {
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(F("SD Error"), true);
+    print_Error(sd_error_STR, true);
   }
 
   for (unsigned long currBuffer = sramBase; currBuffer < sramBase + sramSize; currBuffer += 256) {
@@ -1555,7 +1555,7 @@ void readSram_MD() {
     }
     unsigned long padsize = (1UL << 16) - (sramSize << 1);
     unsigned long padblockcount = padsize >> 9;  // number of 512 byte blocks
-    for (int i = 0; i < padblockcount; i++) {
+    for (unsigned long i = 0; i < padblockcount; i++) {
       myFile.write(sdBuffer, 512);
     }
   }
@@ -1609,7 +1609,7 @@ unsigned long verifySram_MD() {
     // Close the file:
     myFile.close();
   } else {
-    print_Error(F("SD Error"), true);
+    print_Error(sd_error_STR, true);
   }
   // Return 0 if verified ok, or number of errors
   return writeErrors;
@@ -1635,7 +1635,7 @@ void resetFlash_MD() {
 void write29F1610_MD() {
   // Create filepath
   sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
-  print_Msg(F("Flashing file "));
+  print_STR(flashing_file_STR, 0);
   print_Msg(filePath);
   println_Msg(F("..."));
   display_Update();
@@ -1645,7 +1645,7 @@ void write29F1610_MD() {
     // Get rom size from file
     fileSize = myFile.fileSize();
     if (fileSize > flashSize) {
-      print_Error(F("File size exceeds flash size."), true);
+      print_Error(file_too_big_STR, true);
     }
     // Set data pins to output
     dataOut_MD();
@@ -1684,7 +1684,7 @@ void write29F1610_MD() {
     // Close the file:
     myFile.close();
   } else {
-    println_Msg(F("Can't open file"));
+    print_STR(open_file_STR, 1);
     display_Update();
   }
 }
@@ -1702,7 +1702,9 @@ void idFlash_MD() {
   dataIn_MD();
 
   // Read the two id bytes into a string
-  sprintf_P(flashid, PSTR("%02X%02X"), readFlash_MD(0) & 0xFF, readFlash_MD(1) & 0xFF);
+  flashid = (readFlash_MD(0) & 0xFF) << 8;
+  flashid |= readFlash_MD(1) & 0xFF;
+  sprintf_P(flashid_str, PSTR("%04X"), flashid);
 }
 
 byte readStatusReg_MD() {
@@ -1762,7 +1764,7 @@ void verifyFlash_MD() {
     // Get rom size from file
     fileSize = myFile.fileSize();
     if (fileSize > flashSize) {
-      print_Error(F("File size exceeds flash size."), true);
+      print_Error(file_too_big_STR, true);
     }
 
     blank = 0;
@@ -1787,15 +1789,15 @@ void verifyFlash_MD() {
       println_Msg(F("Flashrom verified OK"));
       display_Update();
     } else {
-      print_Msg(F("Error: "));
+      print_STR(error_STR, 0);
       print_Msg(blank);
-      println_Msg(F(" bytes "));
-      print_Error(F("did not verify."), false);
+      print_STR(_bytes_STR, 1);
+      print_Error(did_not_verify_STR, false);
     }
     // Close the file:
     myFile.close();
   } else {
-    println_Msg(F("Can't open file"));
+    print_STR(open_file_STR, 1);
     display_Update();
   }
 }
@@ -2380,7 +2382,7 @@ void readEEP_MD() {
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(F("SD Error"), true);
+    print_Error(sd_error_STR, true);
   }
   if (eepSize > 0x100) {  // 24C04+
     for (word currByte = 0; currByte < eepSize; currByte += 256) {
@@ -2446,10 +2448,10 @@ void writeEEP_MD() {
     myFile.close();
     println_Msg(F(""));
     display_Clear();
-    println_Msg(F("Done"));
+    print_STR(done_STR, 1);
     display_Update();
   } else {
-    print_Error(F("SD Error"), true);
+    print_Error(sd_error_STR, true);
   }
   dataIn_MD();
 }
@@ -2479,7 +2481,7 @@ void readBram_MD() {
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(F("SD Error"), true);
+    print_Error(sd_error_STR, true);
   }
 
   for (unsigned long currByte = 0; currByte < bramSize; currByte += 512) {
@@ -2525,10 +2527,10 @@ void writeBram_MD() {
     myFile.close();
     println_Msg(F(""));
     display_Clear();
-    println_Msg(F("Done"));
+    print_STR(done_STR, 1);
     display_Update();
   } else {
-    print_Error(F("SD Error"), true);
+    print_Error(sd_error_STR, true);
   }
   dataIn_MD();
 }
@@ -2566,7 +2568,7 @@ void readRealtec_MD() {
   sd.chdir(folder);
 
   display_Clear();
-  print_Msg(F("Saving to "));
+  print_STR(saving_to_STR, 0);
   print_Msg(folder);
   println_Msg(F("/..."));
   display_Update();
@@ -2577,7 +2579,7 @@ void readRealtec_MD() {
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(F("SD Error"), true);
+    print_Error(sd_error_STR, true);
   }
 
   // Realtec Registers

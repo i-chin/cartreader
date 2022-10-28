@@ -55,23 +55,23 @@ uint8_t tennokoe_bank_index = 0;
 static const char pceMenuItem1[] PROGMEM = "HuCARD";
 static const char pceMenuItem2[] PROGMEM = "Turbochip";
 static const char pceMenuItem3[] PROGMEM = "AdapterSetting";
-static const char pceMenuItem4[] PROGMEM = "Reset";
-static const char *const menuOptionspce[] PROGMEM = { pceMenuItem1, pceMenuItem2, pceMenuItem3, pceMenuItem4 };
+static const char *const menuOptionspce[] PROGMEM = { pceMenuItem1, pceMenuItem2, pceMenuItem3, string_reset2 };
 
 // PCE card menu items
-static const char pceCartMenuItem1[] = "Read ROM";
-static char pceCartMenuItem2[20];
-static char pceCartMenuItem3[20];
-static const char pceCartMenuItem4[] = "Reset";
-static const char pceCartMenuItem5[] = "Inc Bank Number";
-static const char pceCartMenuItem6[] = "Dec Bank Number";
-static char pceCartMenuItem7[20];
-static char menuOptionspceCart[7][20];
+static char menuOptionspceCart[7][20] = {
+  "Read ROM",
+  "", // Read RAM Bank %d
+  "", //Write RAM Bank %d
+  "Reset",
+  "Inc Bank Number",
+  "Dec Bank Number",
+  "" // ROM size now %dK / Force ROM size
+};
 
 // Turbochip menu items
 static const char pceTCMenuItem1[] PROGMEM = "Read ROM";
-static const char pceTCMenuItem2[] PROGMEM = "Reset";
-static const char *const menuOptionspceTC[] PROGMEM = { pceTCMenuItem1, pceTCMenuItem2 };
+//static const char pceTCMenuItem2[] PROGMEM = "Reset"; (stored in common strings array)
+static const char *const menuOptionspceTC[] PROGMEM = { pceTCMenuItem1, string_reset2 };
 
 // Adapter Setting Menu items
 static const char pceAdapterMenuItem1[] PROGMEM = "Swap Adapter";
@@ -454,9 +454,8 @@ uint32_t calculate_crc32(int n, unsigned char c[], uint32_t r) {
   return r;
 }
 
-void crc_search(char *file_p, char *folder_p, uint32_t rom_size, uint32_t crc) {
+void crc_search(char *file_p, char *folder_p, uint32_t rom_size __attribute__ ((unused)), uint32_t crc) {
   FsFile rom, script;
-  uint32_t r, processedsize;
   char gamename[100];
   char crc_file[9], crc_search[9];
   uint8_t flag;
@@ -533,10 +532,6 @@ void lock_tennokoe_bank_RAM() {
 }
 
 void read_tennokoe_bank_PCE(int bank_index) {
-  uint32_t processed_size = 0;
-  uint32_t verify_loop;
-  uint8_t verify_flag = 1;
-
   //clear the screen
   display_Clear();
 
@@ -564,7 +559,7 @@ void read_tennokoe_bank_PCE(int bank_index) {
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(F("Can't create file on SD"), true);
+    print_Error(create_file_STR, true);
   }
 
   pin_read_write_PCE();
@@ -703,8 +698,8 @@ void write_tennokoe_bank_PCE(int bank_index) {
     } else {
       println_Msg(F("Verify failed..."));
       print_Msg(diffcnt);
-      println_Msg(F(" bytes "));
-      print_Error(F("did not verify."), false);
+      print_STR(_bytes_STR, 1);
+      print_Error(did_not_verify_STR, false);
     }
 
     pin_init_PCE();
@@ -758,7 +753,7 @@ void read_rom_PCE(void) {
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(F("Can't create file on SD"), true);
+    print_Error(create_file_STR, true);
   }
 
   pin_read_write_PCE();
@@ -812,21 +807,15 @@ void pceMenu() {
   EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
 
   if (pce_internal_mode == HUCARD || pce_internal_mode == HUCARD_NOSWAP) {
-    sprintf_P(pceCartMenuItem2, PSTR("Read RAM Bank %d"), tennokoe_bank_index + 1);
-    sprintf_P(pceCartMenuItem3, PSTR("Write RAM Bank %d"), tennokoe_bank_index + 1);
-    strcpy(menuOptionspceCart[0], pceCartMenuItem1);
-    strcpy(menuOptionspceCart[1], pceCartMenuItem2);
-    strcpy(menuOptionspceCart[2], pceCartMenuItem3);
-    strcpy(menuOptionspceCart[3], pceCartMenuItem4);
-    strcpy(menuOptionspceCart[4], pceCartMenuItem5);
-    strcpy(menuOptionspceCart[5], pceCartMenuItem6);
+    sprintf_P(menuOptionspceCart[1], PSTR("Read RAM Bank %d"), tennokoe_bank_index + 1);
+    sprintf_P(menuOptionspceCart[2], PSTR("Write RAM Bank %d"), tennokoe_bank_index + 1);
     if (pce_force_rom_size > 0) {
-      sprintf_P(pceCartMenuItem7, PSTR("ROM size now %dK"), pce_force_rom_size);
+      sprintf_P(menuOptionspceCart[6], PSTR("ROM size now %dK"), pce_force_rom_size);
     } else {
-      sprintf_P(pceCartMenuItem7, PSTR("Force ROM size"));
+      sprintf_P(menuOptionspceCart[6], PSTR("Force ROM size")));
     }
-    strcpy(menuOptionspceCart[6], pceCartMenuItem7);
     mainMenu = question_box(adapterSwap == 1 ? F("PCE HuCARD menu(SWAP)") : F("PCE HuCARD menu(NOSWAP)"), menuOptionspceCart, 7, 0);
+
     // wait for user choice to come back from the question box menu
     switch (mainMenu) {
       case 0:
@@ -881,7 +870,8 @@ void pceMenu() {
   }
 
   println_Msg(F(""));
-  println_Msg(F("Press Button..."));
+  // Prints string out of the common strings array either with or without newline
+  print_STR(press_button_STR, 1);
   display_Update();
   wait();
 }
