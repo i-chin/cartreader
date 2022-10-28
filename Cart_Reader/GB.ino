@@ -903,9 +903,7 @@ void getCartInfo_GB() {
 
   // Strip trailing white space
   while (
-    myLength &&
-    (romName[myLength - 1] == '_' || romName[myLength - 1] == ' ')
-  ) {
+    myLength && (romName[myLength - 1] == '_' || romName[myLength - 1] == ' ')) {
     myLength--;
   }
   romName[myLength] = 0;
@@ -918,34 +916,16 @@ void getCartInfo_GB() {
   // MMM01 (Mani 4 in 1)
   if (
     (
-      strncmp_P(romName, PSTR("BOUKENJIMA2 SET"), 15) == 0 && sdBuffer[0x14D] == 0
-    ) || (
-      strncmp_P(romName, PSTR("BUBBLEBOBBLE SET"), 16) == 0 && sdBuffer[0x14D] == 0xC6
-    ) || (
-      strncmp_P(romName, PSTR("GANBARUGA SET"), 13) == 0 && sdBuffer[0x14D] == 0x90
-    ) || (
-      strncmp_P(romName, PSTR("RTYPE 2 SET"), 11) == 0 && sdBuffer[0x14D] == 0x32
-    )
-  ) {
+      strncmp_P(romName, PSTR("BOUKENJIMA2 SET"), 15) == 0 && sdBuffer[0x14D] == 0)
+    || (strncmp_P(romName, PSTR("BUBBLEBOBBLE SET"), 16) == 0 && sdBuffer[0x14D] == 0xC6) || (strncmp_P(romName, PSTR("GANBARUGA SET"), 13) == 0 && sdBuffer[0x14D] == 0x90) || (strncmp_P(romName, PSTR("RTYPE 2 SET"), 11) == 0 && sdBuffer[0x14D] == 0x32)) {
     romType = 0x0B;
   }
 
   // MBC1M
   if (
     (
-      strncmp_P(romName, PSTR("MOMOCOL"), 7) == 0 && sdBuffer[0x14D] == 0x28
-    ) || (
-      strncmp_P(romName, PSTR("BOMCOL"), 6) == 0 && sdBuffer[0x14D] == 0x86
-    ) || (
-      strncmp_P(romName, PSTR("GENCOL"), 6) == 0 && sdBuffer[0x14D] == 0x8A
-    ) || (
-      strncmp_P(romName, PSTR("SUPERCHINESE 123"), 16) == 0 && sdBuffer[0x14D] == 0xE4
-    ) || (
-      strncmp_P(romName, PSTR("MORTALKOMBATI&II"), 16) == 0 && sdBuffer[0x14D] == 0xB9
-    ) || (
-      strncmp_P(romName, PSTR("MORTALKOMBAT DUO"), 16) == 0 && sdBuffer[0x14D] == 0xA7
-    )
-  ) {
+      strncmp_P(romName, PSTR("MOMOCOL"), 7) == 0 && sdBuffer[0x14D] == 0x28)
+    || (strncmp_P(romName, PSTR("BOMCOL"), 6) == 0 && sdBuffer[0x14D] == 0x86) || (strncmp_P(romName, PSTR("GENCOL"), 6) == 0 && sdBuffer[0x14D] == 0x8A) || (strncmp_P(romName, PSTR("SUPERCHINESE 123"), 16) == 0 && sdBuffer[0x14D] == 0xE4) || (strncmp_P(romName, PSTR("MORTALKOMBATI&II"), 16) == 0 && sdBuffer[0x14D] == 0xB9) || (strncmp_P(romName, PSTR("MORTALKOMBAT DUO"), 16) == 0 && sdBuffer[0x14D] == 0xA7)) {
     romType += 0x100;
   }
 

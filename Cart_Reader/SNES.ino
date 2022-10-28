@@ -687,6 +687,7 @@ void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
     processedProgressBar += 1024;
     draw_progressbar(processedProgressBar, totalProgressBar);
   }
+
 }
 
 /******************************************
