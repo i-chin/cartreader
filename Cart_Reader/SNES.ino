@@ -1012,7 +1012,7 @@ boolean checkcart_SNES() {
   }
 
   // Get name
-  byte myLength = buildRomName(romName, &snesHeader[headerStart], 21);
+  byte myLength = buildRomName(romName, &snesHeader[0xFFC0 - headerStart], 21);
 
   // If name consists out of all japanese characters use game code
   if (myLength == 0) {
