@@ -591,8 +591,7 @@ byte readBank_SNES(byte myBank, word myAddress) {
   return tempByte;
 }
 
-void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
-  uint16_t c = 0;
+void readLoRomBanks(uint16_t start, uint16_t total, FsFile* file) {
   uint16_t currByte = 32768;
 
   //Initialize progress bar
@@ -600,7 +599,7 @@ void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
   uint32_t totalProgressBar = (uint32_t)(total - start) * 1024;
   draw_progressbar(0, totalProgressBar);
 
-  for (byte currBank = start; currBank < total; currBank++) {
+  for (uint16_t currBank = start; currBank < total; currBank++) {
     PORTL = currBank;
 
     // Blink led
@@ -608,8 +607,7 @@ void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
 
     currByte = 32768;
     while (1) {
-      c = 0;
-      while (c < 512) {
+      for(uint16_t c = 0; c < 512; c++, currByte++) {
         PORTF = (currByte & 0xFF);
         PORTK = ((currByte >> 8) & 0xFF);
 
@@ -625,8 +623,6 @@ void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
         NOP;
 
         sdBuffer[c] = PINC;
-        c++;
-        currByte++;
       }
       file->write(sdBuffer, 512);
 
@@ -640,8 +636,7 @@ void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
   }
 }
 
-void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
-  uint16_t c = 0;
+void readHiRomBanks(uint16_t start, uint16_t total, FsFile* file) {
   uint16_t currByte = 0;
 
   //Initialize progress bar
@@ -649,7 +644,7 @@ void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
   uint32_t totalProgressBar = (uint32_t)(total - start) * 1024;
   draw_progressbar(0, totalProgressBar);
 
-  for (byte currBank = start; currBank < total; currBank++) {
+  for (uint16_t currBank = start; currBank < total; currBank++) {
     PORTL = currBank;
 
     // Blink led
@@ -657,8 +652,7 @@ void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
 
     currByte = 0;
     while (1) {
-      c = 0;
-      while (c < 512) {
+      for(uint16_t c = 0; c < 512; c++, currByte++) {
         PORTF = (currByte & 0xFF);
         PORTK = ((currByte >> 8) & 0xFF);
 
@@ -674,8 +668,6 @@ void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
         NOP;
 
         sdBuffer[c] = PINC;
-        c++;
-        currByte++;
       }
       file->write(sdBuffer, 512);
 
