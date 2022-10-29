@@ -127,7 +127,7 @@ char ver[5] = "11.0";
 #define enable_PCE
 
 // Benesse Pocket Challenge W
-#define enable_PCW
+//#define enable_PCW
 
 // Sega Master System
 #define enable_SMS
@@ -145,10 +145,10 @@ char ver[5] = "11.0";
 #define enable_VBOY
 
 // WonderSwan
-#define enable_WS
+//#define enable_WS
 
 // Watara Supervision
-#define enable_WSV
+//#define enable_WSV
 
 //******************************************
 // HW CONFIGS
@@ -509,7 +509,7 @@ byte sdBuffer[512];
 
 // soft reset Arduino: jumps to 0
 // using the watchdog timer would be more elegant but some Mega2560 bootloaders are buggy with it
-void (*resetArduino)(void) = 0;
+void (*resetArduino)(void) __attribute__ ((noreturn)) = 0;
 
 // Progressbar
 void draw_progressbar(uint32_t processedsize, uint32_t totalsize);
@@ -1995,6 +1995,22 @@ void print_Error(byte errorMessage, boolean forceReset) {
       delay(2000);
     }
   }
+}
+
+void print_FatalError(const __FlashStringHelper* errorMessage) __attribute__ ((noreturn));
+void print_FatalError(const __FlashStringHelper* errorMessage) {
+  print_Error(errorMessage, true);
+  // Redundant as print_Error already calls it, but makes gcc understand that
+  // this in fact does not return.
+  resetArduino();
+}
+
+void print_FatalError(byte errorMessage) __attribute__ ((noreturn));
+void print_FatalError(byte errorMessage){
+  print_Error(errorMessage, true);
+  // Redundant as print_Error already calls it, but makes gcc understand that
+  // this in fact does not return.
+  resetArduino();
 }
 
 void wait() {

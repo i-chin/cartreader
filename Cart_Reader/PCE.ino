@@ -58,15 +58,13 @@ static const char pceMenuItem3[] PROGMEM = "AdapterSetting";
 static const char *const menuOptionspce[] PROGMEM = { pceMenuItem1, pceMenuItem2, pceMenuItem3, string_reset2 };
 
 // PCE card menu items
-static char menuOptionspceCart[7][20] = {
-  "Read ROM",
-  "",  // Read RAM Bank %d
-  "",  //Write RAM Bank %d
-  "Reset",
-  "Inc Bank Number",
-  "Dec Bank Number",
-  ""  // ROM size now %dK / Force ROM size
-};
+static const char menuOptionspceCart_0[] PROGMEM = "Read ROM";
+static const char menuOptionspceCart_1_fmt[] PROGMEM = "Read RAM Bank %d";
+static const char menuOptionspceCart_2_fmt[] PROGMEM = "Write RAM Bank %d";
+static const char menuOptionspceCart_4[] PROGMEM = "Inc Bank Number";
+static const char menuOptionspceCart_5[] PROGMEM = "Dec Bank Number";
+static const char menuOptionspceCart_6_fmt[] PROGMEM = "ROM size now %dK";
+static const char menuOptionspceCart_6[] PROGMEM = "Force ROM size";
 
 // Turbochip menu items
 static const char pceTCMenuItem1[] PROGMEM = "Read ROM";
@@ -807,14 +805,18 @@ void pceMenu() {
   EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
 
   if (pce_internal_mode == HUCARD || pce_internal_mode == HUCARD_NOSWAP) {
-    sprintf_P(menuOptionspceCart[1], PSTR("Read RAM Bank %d"), tennokoe_bank_index + 1);
-    sprintf_P(menuOptionspceCart[2], PSTR("Write RAM Bank %d"), tennokoe_bank_index + 1);
+    strcpy_P(menuOptions[0], menuOptionspceCart_0);
+    sprintf_P(menuOptions[1], menuOptionspceCart_1_fmt, tennokoe_bank_index + 1);
+    sprintf_P(menuOptions[2], menuOptionspceCart_2_fmt, tennokoe_bank_index + 1);
+    strcpy_P(menuOptions[3], string_reset2);
+    strcpy_P(menuOptions[4], menuOptionspceCart_4);
+    strcpy_P(menuOptions[5], menuOptionspceCart_5);
     if (pce_force_rom_size > 0) {
-      sprintf_P(menuOptionspceCart[6], PSTR("ROM size now %dK"), pce_force_rom_size);
+      sprintf_P(menuOptions[6], menuOptionspceCart_6_fmt, pce_force_rom_size);
     } else {
-      sprintf_P(menuOptionspceCart[6], PSTR("Force ROM size"));
+      strcpy_P(menuOptions[6], menuOptionspceCart_6);
     }
-    mainMenu = question_box(adapterSwap == 1 ? F("PCE HuCARD menu(SWAP)") : F("PCE HuCARD menu(NOSWAP)"), menuOptionspceCart, 7, 0);
+    mainMenu = question_box(adapterSwap == 1 ? F("PCE HuCARD menu(SWAP)") : F("PCE HuCARD menu(NOSWAP)"), menuOptions, 7, 0);
 
     // wait for user choice to come back from the question box menu
     switch (mainMenu) {
@@ -852,7 +854,7 @@ void pceMenu() {
   } else {
     // Copy menuOptions out of progmem
     convertPgm(menuOptionspceTC, 2);
-    mainMenu = question_box(adapterSwap == 1 ? F("TG TurboChip menu(SWAP)") : F("TG TurboChip menu(NOSWAP)"), menuOptions, 2, 0);
+    mainMenu = question_box(F("TG TurboChip menu"), menuOptions, 2, 0);
 
     // wait for user choice to come back from the question box menu
     switch (mainMenu) {
