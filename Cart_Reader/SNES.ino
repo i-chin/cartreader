@@ -216,7 +216,7 @@ void snesMenu() {
           display_Update();
         } else {
           display_Clear();
-          print_Error(F("Does not have ROM"), false);
+          print_Error(F("Does not have ROM"));
         }
       }
       break;
@@ -229,7 +229,7 @@ void snesMenu() {
         readSRAM();
       } else {
         display_Clear();
-        print_Error(F("Does not have SRAM"), false);
+        print_Error(F("Does not have SRAM"));
       }
       break;
 
@@ -248,11 +248,11 @@ void snesMenu() {
           print_STR(error_STR, 0);
           print_Msg(wrErrors);
           print_STR(_bytes_STR, 1);
-          print_Error(did_not_verify_STR, false);
+          print_Error(did_not_verify_STR);
         }
       } else {
         display_Clear();
-        print_Error(F("Does not have SRAM"), false);
+        print_Error(F("Does not have SRAM"));
       }
       break;
 
@@ -283,11 +283,11 @@ void snesMenu() {
           print_STR(error_STR, 0);
           print_Msg(wrErrors);
           print_STR(_bytes_STR, 1);
-          print_Error(did_not_verify_STR, false);
+          print_Error(did_not_verify_STR);
         }
       } else {
         display_Clear();
-        print_Error(F("Does not have SRAM"), false);
+        print_Error(F("Does not have SRAM"));
       }
       break;
 
@@ -465,7 +465,7 @@ void setup_Snes() {
 #ifdef clockgen_installed
   else {
     display_Clear();
-    print_Error(F("Clock Generator not found"), true);
+    print_FatalError(F("Clock Generator not found"));
   }
 #endif
 
@@ -591,7 +591,7 @@ byte readBank_SNES(byte myBank, word myAddress) {
   return tempByte;
 }
 
-void readLoRomBanks(uint16_t start, uint16_t total, FsFile* file) {
+void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
   uint16_t currByte = 32768;
 
   //Initialize progress bar
@@ -599,7 +599,7 @@ void readLoRomBanks(uint16_t start, uint16_t total, FsFile* file) {
   uint32_t totalProgressBar = (uint32_t)(total - start) * 1024;
   draw_progressbar(0, totalProgressBar);
 
-  for (uint16_t currBank = start; currBank < total; currBank++) {
+  for (word currBank = start; currBank < total; currBank++) {
     PORTL = currBank;
 
     // Blink led
@@ -624,7 +624,7 @@ void readLoRomBanks(uint16_t start, uint16_t total, FsFile* file) {
 
         sdBuffer[c] = PINC;
       }
-      file->write(sdBuffer, 512);
+      file->write(sdBuffer, sizeof(sdBuffer));
 
       // exit while(1) loop once the uint16_t currByte overflows from 0xffff to 0 (current bank is done)
       if (currByte == 0) break;
@@ -636,7 +636,7 @@ void readLoRomBanks(uint16_t start, uint16_t total, FsFile* file) {
   }
 }
 
-void readHiRomBanks(uint16_t start, uint16_t total, FsFile* file) {
+void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
   uint16_t currByte = 0;
 
   //Initialize progress bar
@@ -644,7 +644,7 @@ void readHiRomBanks(uint16_t start, uint16_t total, FsFile* file) {
   uint32_t totalProgressBar = (uint32_t)(total - start) * 1024;
   draw_progressbar(0, totalProgressBar);
 
-  for (uint16_t currBank = start; currBank < total; currBank++) {
+  for (word currBank = start; currBank < total; currBank++) {
     PORTL = currBank;
 
     // Blink led
@@ -669,7 +669,7 @@ void readHiRomBanks(uint16_t start, uint16_t total, FsFile* file) {
 
         sdBuffer[c] = PINC;
       }
-      file->write(sdBuffer, 512);
+      file->write(sdBuffer, sizeof(sdBuffer));
 
       // exit while(1) loop once the uint16_t currByte overflows from 0xffff to 0 (current bank is done)
       if (currByte == 0) break;
@@ -679,7 +679,6 @@ void readHiRomBanks(uint16_t start, uint16_t total, FsFile* file) {
     processedProgressBar += 1024;
     draw_progressbar(processedProgressBar, totalProgressBar);
   }
-
 }
 
 /******************************************
@@ -1192,7 +1191,7 @@ unsigned int calc_checksum(char* fileName, char* folder) {
     return (calcChecksum);
   } else {
     // Else show error
-    print_Error(F("DUMP ROM 1ST"), false);
+    print_Error(F("DUMP ROM 1ST"));
     return 0;
   }
 }
@@ -1219,7 +1218,7 @@ boolean compare_checksum() {
   } else {
     print_Msg(F(" != "));
     println_Msg(checksumStr);
-    print_Error(F("Invalid Checksum"), false);
+    print_Error(F("Invalid Checksum"));
     display_Update();
     return 0;
   }
@@ -1254,7 +1253,7 @@ void readROM_SNES() {
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(create_file_STR, true);
+    print_FatalError(create_file_STR);
   }
 
   //Dump Derby Stallion '96 (Japan) Actual Size is 24Mb
@@ -1583,7 +1582,7 @@ void writeSRAM(boolean browseFile) {
     display_Update();
 
   } else {
-    print_Error(F("File doesnt exist"), false);
+    print_Error(F("File doesnt exist"));
   }
 }
 
@@ -1607,7 +1606,7 @@ void readSRAM() {
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(sd_error_STR, true);
+    print_FatalError(sd_error_STR);
   }
   int sramBanks = 0;
   if (romType == LO) {
@@ -1883,7 +1882,7 @@ unsigned long verifySRAM() {
         print_STR(error_STR, 0);
         print_Msg(writeErrors);
         print_STR(_bytes_STR, 1);
-        print_Error(did_not_verify_STR, false);
+        print_Error(did_not_verify_STR);
       }
       display_Update();
       wait();
@@ -1900,7 +1899,7 @@ unsigned long verifySRAM() {
     myFile.close();
     return writeErrors;
   } else {
-    print_Error(F("Can't open file"), false);
+    print_Error(F("Can't open file"));
     return 1;
   }
 }

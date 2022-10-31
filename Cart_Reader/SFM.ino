@@ -109,7 +109,7 @@ void sfmGameMenu() {
           println_Msg(F(" Timeout"));
           println_Msg(readBank_SFM(0, 0x2400), HEX);
           println_Msg(F(""));
-          print_Error(F("Powercycle SFM cart"), true);
+          print_FatalError(F("Powercycle SFM cart"));
         }
       }
       // Copy gameCode to romName in case of japanese chars in romName
@@ -132,7 +132,7 @@ void sfmGameMenu() {
       mode = mode_SFM_Game;
     }
   } else {
-    print_Error(F("Switch to HiRom failed"), false);
+    print_Error(F("Switch to HiRom failed"));
   }
 }
 
@@ -177,7 +177,7 @@ void sfmGameOptions() {
         print_STR(error_STR, 0);
         print_Msg(wrErrors);
         print_STR(_bytes_STR, 1);
-        print_Error(did_not_verify_STR, false);
+        print_Error(did_not_verify_STR);
       }
       break;
 
@@ -246,7 +246,7 @@ void sfmFlashMenu() {
         // Read flash
         readFlash_SFM();
       } else {
-        print_Error(F("Switch to HiRom failed"), false);
+        print_Error(F("Switch to HiRom failed"));
       }
       break;
 
@@ -316,13 +316,13 @@ void sfmFlashMenu() {
             resetFlash_SFM(0xC0);
             resetFlash_SFM(0xE0);
           } else {
-            print_Error(F("Error: Wrong Flash ID"), true);
+            print_FatalError(F("Error: Wrong Flash ID"));
           }
         } else {
-          print_Error(F("Error: Wrong Flash ID"), true);
+          print_FatalError(F("Error: Wrong Flash ID"));
         }
       } else {
-        print_Error(F("failed"), false);
+        print_Error(F("failed"));
       }
       break;
 
@@ -353,13 +353,13 @@ void sfmFlashMenu() {
             resetFlash_SFM(0xC0);
             resetFlash_SFM(0xE0);
           } else {
-            print_Error(F("Error: Wrong Flash ID"), true);
+            print_FatalError(F("Error: Wrong Flash ID"));
           }
         } else {
-          print_Error(F("Error: Wrong Flash ID"), true);
+          print_FatalError(F("Error: Wrong Flash ID"));
         }
       } else {
-        print_Error(F("failed"), false);
+        print_Error(F("failed"));
       }
       break;
 
@@ -576,7 +576,7 @@ void setup_SFM() {
 #ifdef clockgen_installed
   else {
     display_Clear();
-    print_Error(F("Clock Generator not found"), true);
+    print_FatalError(F("Clock Generator not found"));
   }
 #endif
 
@@ -598,7 +598,7 @@ void setup_SFM() {
       println_Msg(F("Hirom All Timeout"));
       println_Msg(F(""));
       println_Msg(F(""));
-      print_Error(F("Powercycle SFM cart"), true);
+      print_FatalError(F("Powercycle SFM cart"));
     }
   }
 }
@@ -883,7 +883,7 @@ void readROM_SFM() {
 
   //clear the screen
   display_Clear();
-  println_Msg(F("Creating folder: "));
+  print_Msg(F("Creating folder "));
   println_Msg(folder);
   display_Update();
 
@@ -893,7 +893,7 @@ void readROM_SFM() {
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(create_file_STR, true);
+    print_FatalError(create_file_STR);
   }
 
   // Check if LoROM or HiROM...
@@ -917,7 +917,7 @@ void readROM_SFM() {
     println_Msg(F("Dumping HiRom..."));
     display_Update();
 
-    for (byte currBank = 192; currBank < (numBanks + 192); currBank++) {
+    for (word currBank = 192; currBank < (numBanks + 192); currBank++) {
       for (long currByte = 0; currByte < 65536; currByte += 512) {
         for (int c = 0; c < 512; c++) {
           sdBuffer[c] = readBank_SFM(currBank, currByte + c);
@@ -999,8 +999,7 @@ void idFlash_SFM(int startBank) {
 void writeFlash_SFM(int startBank, uint32_t pos) {
   display_Clear();
   print_Msg(F("Writing Bank 0x"));
-  print_Msg(startBank, HEX);
-  print_Msg(F("..."));
+  println_Msg(startBank, HEX);
   display_Update();
 
   // Open file on sd card
@@ -1016,8 +1015,13 @@ void writeFlash_SFM(int startBank, uint32_t pos) {
     dataOut();
 
     if (romType) {
+      //Initialize progress bar
+      uint32_t processedProgressBar = 0;
+      uint32_t totalProgressBar = numBanks * 0x10000;
+      draw_progressbar(0, totalProgressBar);
+
       // Write hirom
-      for (byte currBank = startBank; currBank < startBank + numBanks; currBank++) {
+      for (word currBank = startBank; currBank < startBank + numBanks; currBank++) {
         // Fill SDBuffer with 1 page at a time then write it repeat until all bytes are written
         for (unsigned long currByte = 0; currByte < 0x10000; currByte += 128) {
           myFile.read(sdBuffer, 128);
@@ -1039,8 +1043,16 @@ void writeFlash_SFM(int startBank, uint32_t pos) {
           // Wait until write is finished
           busyCheck_SFM(startBank);
         }
+        // update progress bar
+        processedProgressBar += 0x10000;
+        draw_progressbar(processedProgressBar, totalProgressBar);
       }
     } else {
+      //Initialize progress bar
+      uint32_t processedProgressBar = 0;
+      uint32_t totalProgressBar = numBanks * 0x8000;
+      draw_progressbar(0, totalProgressBar);
+
       // Write lorom
       for (byte currBank = 0; currBank < numBanks; currBank++) {
         for (unsigned long currByte = 0x8000; currByte < 0x10000; currByte += 128) {
@@ -1062,13 +1074,16 @@ void writeFlash_SFM(int startBank, uint32_t pos) {
           // Wait until write is finished
           busyCheck_SFM(startBank);
         }
+        // update progress bar
+        processedProgressBar += 0x8000;
+        draw_progressbar(processedProgressBar, totalProgressBar);
       }
     }
     // Close the file:
     myFile.close();
     println_Msg("");
   } else {
-    print_Error(open_file_STR, true);
+    print_FatalError(open_file_STR);
   }
 }
 
@@ -1145,7 +1160,7 @@ byte blankcheck_SFM(int startBank) {
 
   byte blank = 1;
   if (romType) {
-    for (byte currBank = startBank; currBank < startBank + numBanks; currBank++) {
+    for (word currBank = startBank; currBank < startBank + numBanks; currBank++) {
       for (unsigned long currByte = 0; currByte < 0x10000; currByte++) {
         if (readBank_SFM(currBank, currByte) != 0xFF) {
           currBank = startBank + numBanks;
@@ -1182,7 +1197,7 @@ unsigned long verifyFlash_SFM(int startBank, uint32_t pos) {
     controlIn_SFM();
 
     if (romType) {
-      for (byte currBank = startBank; currBank < startBank + numBanks; currBank++) {
+      for (word currBank = startBank; currBank < startBank + numBanks; currBank++) {
         for (unsigned long currByte = 0; currByte < 0x10000; currByte += 512) {
           // Fill SDBuffer
           myFile.read(sdBuffer, 512);
@@ -1211,7 +1226,7 @@ unsigned long verifyFlash_SFM(int startBank, uint32_t pos) {
   } else {
     // SD Error
     verified = 999999;
-    print_Error(F("Can't open file on SD"), false);
+    print_Error(F("Can't open file on SD"));
   }
   // Return 0 if verified ok, or number of errors
   return verified;
@@ -1231,10 +1246,10 @@ void readFlash_SFM() {
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(create_file_STR, true);
+    print_FatalError(create_file_STR);
   }
   if (romType) {
-    for (byte currBank = 0xC0; currBank < 0xC0 + numBanks; currBank++) {
+    for (word currBank = 0xC0; currBank < 0xC0 + numBanks; currBank++) {
       for (unsigned long currByte = 0; currByte < 0x10000; currByte += 512) {
         for (int c = 0; c < 512; c++) {
           sdBuffer[c] = readBank_SFM(currBank, currByte + c);
@@ -1375,7 +1390,7 @@ void readMapping() {
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(sd_error_STR, true);
+    print_FatalError(sd_error_STR);
   }
 
   // Read the mapping info out of the 1st chip
@@ -1461,10 +1476,10 @@ void eraseMapping(byte startBank) {
       dataIn();
       controlIn_SFM();
     } else {
-      print_Error(F("Error: Wrong Flash ID"), true);
+      print_FatalError(F("Error: Wrong Flash ID"));
     }
   } else {
-    print_Error(F("Unlock failed"), true);
+    print_FatalError(F("Unlock failed"));
   }
 }
 
@@ -1589,17 +1604,17 @@ void writeMapping_SFM(byte startBank, uint32_t pos) {
         myFile.close();
         println_Msg("");
       } else {
-        print_Error(F("Can't open file on SD"), false);
+        print_Error(F("Can't open file on SD"));
       }
 
       // Switch to read
       dataIn();
       controlIn_SFM();
     } else {
-      print_Error(F("Error: Wrong Flash ID"), true);
+      print_FatalError(F("Error: Wrong Flash ID"));
     }
   } else {
-    print_Error(F("Unlock failed"), true);
+    print_FatalError(F("Unlock failed"));
   }
 }
 
@@ -1707,7 +1722,7 @@ void write_SFM(int startBank, uint32_t pos) {
           println_Msg(F("OK"));
           display_Update();
         } else {
-          print_Error(F("Could not erase flash"), true);
+          print_FatalError(F("Could not erase flash"));
         }
       }
       // Write flash
@@ -1727,13 +1742,13 @@ void write_SFM(int startBank, uint32_t pos) {
         print_STR(error_STR, 0);
         print_Msg(writeErrors);
         print_STR(_bytes_STR, 1);
-        print_Error(did_not_verify_STR, true);
+        print_FatalError(did_not_verify_STR);
       }
     } else {
-      print_Error(F("Error: Wrong Flash ID"), true);
+      print_FatalError(F("Error: Wrong Flash ID"));
     }
   } else {
-    print_Error(F("Unlock failed"), true);
+    print_FatalError(F("Unlock failed"));
   }
 }
 

@@ -4,8 +4,8 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             28.10.2022
-   Version:          11.0
+   Date:             31.10.2022
+   Version:          11.1
 
    SD lib: https://github.com/greiman/SdFat
    LCD lib: https://github.com/olikraus/u8g2
@@ -57,7 +57,7 @@
 
 **********************************************************************************/
 
-char ver[5] = "11.0";
+char ver[5] = "11.1";
 
 // EEPROM Index Define
 //******************************************
@@ -128,7 +128,7 @@ char ver[5] = "11.0";
 #define enable_PCE
 
 // Benesse Pocket Challenge W
-//#define enable_PCW
+#define enable_PCW
 
 // Sega Master System
 #define enable_SMS
@@ -146,10 +146,10 @@ char ver[5] = "11.0";
 #define enable_VBOY
 
 // WonderSwan
-//#define enable_WS
+#define enable_WS
 
 // Watara Supervision
-//#define enable_WSV
+#define enable_WSV
 
 //******************************************
 // HW CONFIGS
@@ -316,6 +316,10 @@ bool i2c_found;
 #ifdef clockgen_calibration
 #include "FreqCount.h"
 #endif
+
+void _print_FatalError(void) __attribute__((noreturn));
+void print_FatalError(const __FlashStringHelper* errorMessage) __attribute__((noreturn));
+void print_FatalError(byte errorMessage) __attribute__((noreturn));
 
 /******************************************
   Common Strings
@@ -510,7 +514,7 @@ byte sdBuffer[512];
 
 // soft reset Arduino: jumps to 0
 // using the watchdog timer would be more elegant but some Mega2560 bootloaders are buggy with it
-void (*resetArduino)(void) __attribute__ ((noreturn)) = 0;
+void (*resetArduino)(void) __attribute__((noreturn)) = 0;
 
 // Progressbar
 void draw_progressbar(uint32_t processedsize, uint32_t totalsize);
@@ -635,7 +639,7 @@ uint32_t calculateCRC(char* fileName, char* folder, int offset) {
     //print_Msg(folder);
     //print_Msg(F("/"));
     //print_Msg(fileName);
-    print_Error(F(" not found"), true);
+    print_FatalError(F(" not found"));
     return 0;
   }
 }
@@ -767,7 +771,7 @@ boolean compareCRC(const char* database, char* crcString, boolean renamerom, int
           // Write iNES header
           sd.chdir(folder);
           if (!myFile.open(fileName, O_RDWR)) {
-            print_Error(sd_error_STR, true);
+            print_FatalError(sd_error_STR);
           }
           for (byte z = 0; z < 16; z++) {
             myFile.write(iNES_HEADER[z]);
@@ -905,6 +909,12 @@ byte starting_letter() {
 #endif
 }
 
+void print_MissingModule(void) {
+  display_Clear();
+  println_Msg(F("Please enable module"));
+  print_FatalError(F("in Cart_Reader.ino."));
+}
+
 /******************************************
   Main menu optimized for rotary encoder
 *****************************************/
@@ -932,6 +942,8 @@ static const char* const modeOptions[] PROGMEM = { modeItem1, modeItem2, modeIte
 void mainMenu() {
   // create menu with title and 15 options to choose from
   unsigned char modeMenu;
+  byte num_answers;
+  byte option_offset;
 
   // Main menu spans across two pages
   currPage = 1;
@@ -940,23 +952,23 @@ void mainMenu() {
 
   while (1) {
     if (currPage == 1) {
-      // Copy menuOptions out of progmem
-      convertPgm(modeOptions + 0, 7);
-      modeMenu = question_box(F("OPEN SOURCE CART READER"), menuOptions, 7, 0);
+      option_offset = 0;
+      num_answers = 7;
     }
     if (currPage == 2) {
-      // Copy menuOptions out of progmem
-      convertPgm(modeOptions + 7, 7);
-      modeMenu = question_box(F("OPEN SOURCE CART READER"), menuOptions, 7, 0);
+      option_offset = 7;
+      num_answers = 7;
     }
     if (currPage == 3) {
-      // Copy menuOptions out of progmem
-      convertPgm(modeOptions + 14, 2);
-      modeMenu = question_box(F("OPEN SOURCE CART READER"), menuOptions, 2, 0);
+      option_offset = 14;
+      num_answers = 2;
     }
+    // Copy menuOptions out of progmem
+    convertPgm(modeOptions + option_offset, num_answers);
+    modeMenu = question_box(F("OPEN SOURCE CART READER"), menuOptions, num_answers, 0);
     if (numPages == 0) {
       // Execute choice
-      modeMenu = (currPage - 1) * 7 + modeMenu;
+      modeMenu += option_offset;
       break;
     }
   }
@@ -1081,10 +1093,7 @@ void mainMenu() {
       break;
 
     default:
-      display_Clear();
-      println_Msg(F("Please enable module"));
-      print_Error(F("in Cart_Reader.ino."), true);
-      break;
+      print_MissingModule();  // does not return
   }
 }
 
@@ -1100,11 +1109,7 @@ static const char modeItem2[] PROGMEM = "SNES/SFC (CLK0+1)";
 static const char modeItem2[] PROGMEM = "Super Nintendo/SFC";
 #endif
 static const char modeItem3[] PROGMEM = "Mega Drive/Genesis";
-#if defined(clockgen_installed)
 static const char modeItem4[] PROGMEM = "N64 (3V EEP CLK1)";
-#else
-static const char modeItem4[] PROGMEM = "Nintendo 64(3V EEP)";
-#endif
 static const char modeItem5[] PROGMEM = "Game Boy";
 static const char modeItem6[] PROGMEM = "About";
 // static const char modeItem7[] PROGMEM = "Reset"; (stored in common strings array)
@@ -1180,6 +1185,9 @@ void mainMenu() {
     case 6:
       resetArduino();
       break;
+
+    default:
+      print_MissingModule();  // does not return
   }
 }
 
@@ -1218,10 +1226,7 @@ void addonMenu() {
       break;
 
     default:
-      display_Clear();
-      println_Msg(F("Please enable module"));
-      print_Error(F("in Cart_Reader.ino."), true);
-      break;
+      print_MissingModule();  // does not return
   }
 }
 
@@ -1277,10 +1282,7 @@ void consoleMenu() {
       break;
 
     default:
-      display_Clear();
-      println_Msg(F("Please enable module"));
-      print_Error(F("in Cart_Reader.ino."), true);
-      break;
+      print_MissingModule();  // does not return
   }
 }
 
@@ -1338,10 +1340,7 @@ void handheldMenu() {
       break;
 
     default:
-      display_Clear();
-      println_Msg(F("Please enable module"));
-      print_Error(F("in Cart_Reader.ino."), true);
-      break;
+      print_MissingModule();  // does not return
   }
 }
 #endif
@@ -1526,7 +1525,7 @@ void clkcal() {
 
   if (!i2c_found) {
     display_Clear();
-    print_Error(F("Clock Generator not found"), true);
+    print_FatalError(F("Clock Generator not found"));
   }
 
   //clockgen.set_correction(cal_factor, SI5351_PLL_INPUT_XO);
@@ -1722,11 +1721,11 @@ int32_t atoi32_signed(const char* input_string) {
 }
 
 int32_t readClockOffset() {
-    int32_t clock_offset;
+  int32_t clock_offset;
 
-    EEPROM_readAnything(CLK_GEN_OFFSET, clock_offset);
+  EEPROM_readAnything(CLK_GEN_OFFSET, clock_offset);
 
-    return clock_offset;
+  return clock_offset;
 }
 #endif
 
@@ -1833,12 +1832,12 @@ void setup() {
   // Init SD card
   if (!sd.begin(SS)) {
     display_Clear();
-    print_Error(sd_error_STR, true);
+    print_FatalError(sd_error_STR);
   }
 
 #ifdef global_log
   if (!myLog.open("OSCR_LOG.txt", O_RDWR | O_CREAT | O_APPEND)) {
-    print_Error(sd_error_STR, true);
+    print_FatalError(sd_error_STR);
   }
   println_Msg(F(""));
 #if defined(HW1)
@@ -1947,71 +1946,38 @@ void convertPgm(const char* const pgmOptions[], byte numArrays) {
   }
 }
 
-void print_Error(const __FlashStringHelper* errorMessage, boolean forceReset) {
+void _print_Error(void) {
   errorLvl = 1;
   setColor_RGB(255, 0, 0);
+  display_Update();
+}
+
+void print_Error(const __FlashStringHelper* errorMessage) {
   println_Msg(errorMessage);
-  display_Update();
-
-  if (forceReset) {
-    println_Msg(F(""));
-    print_STR(press_button_STR, 1);
-    display_Update();
-    wait();
-    if (ignoreError == 0) {
-      resetArduino();
-    } else {
-      ignoreError = 0;
-      display_Clear();
-      println_Msg(F(""));
-      println_Msg(F("Error Overwrite"));
-      println_Msg(F(""));
-      display_Update();
-      delay(2000);
-    }
-  }
+  _print_Error();
 }
 
-void print_Error(byte errorMessage, boolean forceReset) {
-  errorLvl = 1;
-  setColor_RGB(255, 0, 0);
+void print_Error(byte errorMessage) {
   print_STR(errorMessage, 1);
+  _print_Error();
+}
+
+void _print_FatalError(void) {
+  println_Msg(F(""));
+  print_STR(press_button_STR, 1);
   display_Update();
-
-  if (forceReset) {
-    println_Msg(F(""));
-    // Prints string out of the common strings array either with or without newline
-    print_STR(press_button_STR, 1);
-    display_Update();
-    wait();
-    if (ignoreError == 0) {
-      resetArduino();
-    } else {
-      ignoreError = 0;
-      display_Clear();
-      println_Msg(F(""));
-      println_Msg(F("Error Overwrite"));
-      println_Msg(F(""));
-      display_Update();
-      delay(2000);
-    }
-  }
+  wait();
+  resetArduino();
 }
 
-void print_FatalError(const __FlashStringHelper* errorMessage) __attribute__ ((noreturn));
 void print_FatalError(const __FlashStringHelper* errorMessage) {
-  print_Error(errorMessage, true);
-  // Redundant as print_Error already calls it, but makes gcc understand that
-  // this in fact does not return.
-  resetArduino();
+  print_Error(errorMessage);
+  _print_FatalError();
 }
 
-void print_FatalError(byte errorMessage) __attribute__ ((noreturn));
-void print_FatalError(byte errorMessage){
-  print_Error(errorMessage, true);
-  // Redundant as print_Error already calls it, but makes gcc understand that
-  // this in fact does not return.
-  resetArduino();
+void print_FatalError(byte errorMessage) {
+  print_Error(errorMessage);
+  _print_FatalError();
 }
 
 void wait() {
@@ -2081,7 +2047,7 @@ void save_log() {
   strcpy(fileName, romName);
   strcat_P(fileName, PSTR(".txt"));
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_Error(sd_error_STR, true);
+    print_FatalError(sd_error_STR);
   }
 
   while (myLog.available()) {
@@ -2478,7 +2444,7 @@ byte questionBox_Serial(const __FlashStringHelper* question, char answers[7][20]
       EEPROM_readAnything(FOLDER_NUM, foldern);
       sprintf_P(fileName, PSTR("IMPORT/%d.bin"), foldern);
       if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-        print_Error(create_file_STR, true);
+        print_FatalError(create_file_STR);
       }
 
       // Read file from serial
@@ -2745,7 +2711,7 @@ void wait_serial() {
         myFile.close();
       }
       else {
-        print_Error(open_file_STR, true);
+        print_FatalError(open_file_STR);
       }
     }*/
 }
@@ -2895,15 +2861,6 @@ void wait_btn() {
     // get input button
     int b = checkButton();
 
-#ifdef enable_N64
-#ifndef clockgen_installed
-    // Send some clock pulses to the Eeprom in case it locked up
-    if ((mode == mode_N64_Cart) && ((saveType == 5) || (saveType == 6))) {
-      pulseClock_N64(1);
-    }
-#endif
-#endif
-
     // if the cart readers input button is pressed shortly
     if (b == 1) {
       errorLvl = 0;
@@ -2997,15 +2954,6 @@ void wait_btn() {
     // get input button
     int b = checkButton();
 
-#ifdef enable_N64
-#ifndef clockgen_installed
-    // Send some clock pulses to the Eeprom in case it locked up
-    if ((mode == mode_N64_Cart) && ((saveType == 5) || (saveType == 6))) {
-      pulseClock_N64(1);
-    }
-#endif
-#endif
-
     // if the cart readers input button is pressed shortly
     if (b == 1) {
       errorLvl = 0;
@@ -3036,15 +2984,6 @@ void wait_encoder() {
     // Get rotary encoder
     encoder.tick();
     int newPos = encoder.getPosition();
-
-#ifdef enable_N64
-#ifndef clockgen_installed
-    // Send some clock pulses to the Eeprom in case it locked up
-    if ((mode == mode_N64_Cart) && ((saveType == 5) || (saveType == 6))) {
-      pulseClock_N64(1);
-    }
-#endif
-#endif
 
     if (rotaryPos != newPos) {
       rotaryPos = newPos;
@@ -3105,7 +3044,7 @@ browserstart:
   // Open filepath directory
   if (!myDir.open(filePath)) {
     display_Clear();
-    print_Error(sd_error_STR, true);
+    print_FatalError(sd_error_STR);
   }
 
   // Count files in directory
@@ -3131,7 +3070,7 @@ page:
   // Open filepath directory
   if (!myDir.open(filePath)) {
     display_Clear();
-    print_Error(sd_error_STR, true);
+    print_FatalError(sd_error_STR);
   }
 
   int countFile = 0;
@@ -3166,7 +3105,7 @@ page:
 
   for (byte i = 0; i < 8; i++) {
     // Copy short string into fileOptions
-    snprintf_P( answers[i], FILEOPTS_LENGTH, PSTR("%s"), fileNames[i] );
+    snprintf_P( answers[i], FILEOPTS_LENGTH, PSTR("%s"), fileNames[i]);
   }
 
   // Create menu with title and 1-7 options to choose from
