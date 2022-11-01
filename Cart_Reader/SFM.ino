@@ -902,7 +902,7 @@ void readROM_SFM() {
     display_Update();
 
     // Read up to 96 banks starting at bank 0×00.
-    for (byte currBank = 0; currBank < numBanks; currBank++) {
+    for (word currBank = 0; currBank < numBanks; currBank++) {
       // Dump the bytes to SD 512B at a time
       for (long currByte = 32768; currByte < 65536; currByte += 512) {
         for (int c = 0; c < 512; c++) {
@@ -1054,7 +1054,7 @@ void writeFlash_SFM(int startBank, uint32_t pos) {
       draw_progressbar(0, totalProgressBar);
 
       // Write lorom
-      for (byte currBank = 0; currBank < numBanks; currBank++) {
+      for (word currBank = 0; currBank < numBanks; currBank++) {
         for (unsigned long currByte = 0x8000; currByte < 0x10000; currByte += 128) {
           myFile.read(sdBuffer, 128);
           // Write command sequence
@@ -1169,7 +1169,7 @@ byte blankcheck_SFM(int startBank) {
       }
     }
   } else {
-    for (byte currBank = 0; currBank < numBanks; currBank++) {
+    for (word currBank = 0; currBank < numBanks; currBank++) {
       for (unsigned long currByte = 0x8000; currByte < 0x10000; currByte++) {
         if (readBank_SFM(currBank, currByte) != 0xFF) {
           currBank = numBanks;
@@ -1209,7 +1209,7 @@ unsigned long verifyFlash_SFM(int startBank, uint32_t pos) {
         }
       }
     } else {
-      for (byte currBank = 0; currBank < numBanks; currBank++) {
+      for (word currBank = 0; currBank < numBanks; currBank++) {
         for (unsigned long currByte = 0x8000; currByte < 0x10000; currByte += 512) {
           // Fill SDBuffer
           myFile.read(sdBuffer, 512);
@@ -1258,7 +1258,7 @@ void readFlash_SFM() {
       }
     }
   } else {
-    for (byte currBank = 0; currBank < numBanks; currBank++) {
+    for (word currBank = 0; currBank < numBanks; currBank++) {
       for (unsigned long currByte = 0x8000; currByte < 0x10000; currByte += 512) {
         for (int c = 0; c < 512; c++) {
           sdBuffer[c] = readBank_SFM(currBank, currByte + c);
