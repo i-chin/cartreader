@@ -75,7 +75,7 @@ static const char *const menuOptionspceTC[] PROGMEM = { pceTCMenuItem1, string_r
 static const char pceAdapterMenuItem1[] PROGMEM = "Swap Adapter";
 static const char pceAdapterMenuItem2[] PROGMEM = "No Swap Adapter";
 static const char pceAdapterMenuItem3[] PROGMEM = "Reset";
-static const char* const menuOptionsAdapter[] PROGMEM = {pceAdapterMenuItem1, pceAdapterMenuItem2, pceAdapterMenuItem3};
+static const char *const menuOptionsAdapter[] PROGMEM = { pceAdapterMenuItem1, pceAdapterMenuItem2, pceAdapterMenuItem3 };
 
 // PCE start menu
 void pcsMenu(void) {
@@ -93,10 +93,10 @@ void pcsMenu(void) {
       //Hucard
       display_Clear();
       display_Update();
-      if(adapterSwap == 1){
-          pce_internal_mode = HUCARD;
-      }else{
-          pce_internal_mode = HUCARD_NOSWAP;
+      if (adapterSwap == 1) {
+        pce_internal_mode = HUCARD;
+      } else {
+        pce_internal_mode = HUCARD_NOSWAP;
       }
       setup_cart_PCE();
       mode = mode_PCE;
@@ -106,9 +106,9 @@ void pcsMenu(void) {
       //Turbografx
       display_Clear();
       display_Update();
-      if(adapterSwap == 1){
+      if (adapterSwap == 1) {
         pce_internal_mode = TURBOCHIP;
-      }else{
+      } else {
         pce_internal_mode = TURBOCHIP_NOSWAP;
       }
       setup_cart_PCE();
@@ -878,15 +878,13 @@ void pceMenu() {
   wait();
 }
 
-void adapter_Setting()
-{
+void adapter_Setting() {
   unsigned char devSelect;
   byte adapterSwap;
   EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
   convertPgm(menuOptionsAdapter, 3);
   devSelect = question_box(F("ADAPTER TYPE"), menuOptions, 3, 0);
-  switch(devSelect)
-  {
+  switch (devSelect) {
     case 0:  // Swap Adapter
       display_Clear();
       println_Msg(F("Select Swap Adapter"));

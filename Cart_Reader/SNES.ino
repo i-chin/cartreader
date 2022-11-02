@@ -607,7 +607,7 @@ void readLoRomBanks(unsigned int start, unsigned int total, FsFile* file) {
 
     currByte = 32768;
     while (1) {
-      for(uint16_t c = 0; c < 512; c++, currByte++) {
+      for (uint16_t c = 0; c < 512; c++, currByte++) {
         PORTF = (currByte & 0xFF);
         PORTK = ((currByte >> 8) & 0xFF);
 
@@ -652,7 +652,7 @@ void readHiRomBanks(unsigned int start, unsigned int total, FsFile* file) {
 
     currByte = 0;
     while (1) {
-      for(uint16_t c = 0; c < 512; c++, currByte++) {
+      for (uint16_t c = 0; c < 512; c++, currByte++) {
         PORTF = (currByte & 0xFF);
         PORTK = ((currByte >> 8) & 0xFF);
 

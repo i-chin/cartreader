@@ -61,18 +61,18 @@ char ver[5] = "11.2";
 
 // EEPROM Index Define
 //******************************************
-#define CONFIG_REV_NUM   0 // Config Rev #
-#define FOLDER_NUM       1 // FOLDER #
-#define PCE_ADAPTER      3 // PCE ADAPTER_SWAPT
-#define CLK_GEN_OFFSET   4 // CLK GEN ONNSET
-#define NES_MAPPER      10 // NES MAPPER
-#define NES_PRG_SIZE    11 // NES PRG SIZE
-#define NES_CHR_SIZE    12 // NES CHR SIZE
-#define NES_RAM_SIZE    13 // NES RAM SIZE
-#define COL_ROM_SIZE    20 // COLECOVISION ROM SIZE
-#define INTV_MAPPER     30 // INTELLIVISION MAPPER
-#define INTV_ROM_SIZE   31 // INTELLIVISION ROM SIZE
-#define WSV_ROM_SIZE    41 // WATARA SUPERVISION ROM SIZE
+#define CONFIG_REV_NUM 0  // Config Rev #
+#define FOLDER_NUM 1      // FOLDER #
+#define PCE_ADAPTER 3     // PCE ADAPTER_SWAPT
+#define CLK_GEN_OFFSET 4  // CLK GEN ONNSET
+#define NES_MAPPER 10     // NES MAPPER
+#define NES_PRG_SIZE 11   // NES PRG SIZE
+#define NES_CHR_SIZE 12   // NES CHR SIZE
+#define NES_RAM_SIZE 13   // NES RAM SIZE
+#define COL_ROM_SIZE 20   // COLECOVISION ROM SIZE
+#define INTV_MAPPER 30    // INTELLIVISION MAPPER
+#define INTV_ROM_SIZE 31  // INTELLIVISION ROM SIZE
+#define WSV_ROM_SIZE 41   // WATARA SUPERVISION ROM SIZE
 //******************************************
 // Config Revision
 //******************************************
@@ -1369,10 +1369,10 @@ void aboutScreen() {
   println_Msg(ver);
   println_Msg(F(""));
   print_Msg(F(" Config Rev:"));
-  sprintf_P(buf,PSTR("%d"),configRev);
+  sprintf_P(buf, PSTR("%d"), configRev);
   println_Msg(buf);
   print_Msg(F(" ClkGenOffset:"));
-  sprintf_P(buf,PSTR("%ld"),cal_offset);
+  sprintf_P(buf, PSTR("%ld"), cal_offset);
   println_Msg(buf);
   println_Msg(F(""));
   // Prints string out of the common strings array either with or without newline
@@ -1778,8 +1778,7 @@ void setup() {
 
   byte configRev = 0;
   EEPROM_readAnything(CONFIG_REV_NUM, configRev);
-  if(configRev != ConfigRev)
-  {
+  if (configRev != ConfigRev) {
     resetEEPROM();
   }
 
@@ -3012,17 +3011,17 @@ void wait_encoder() {
    Eeprom Functions
  *****************************************/
 void resetEEPROM() {
-  EEPROM_writeAnything(CONFIG_REV_NUM, (byte)ConfigRev); // Config Rev. #
-  EEPROM_writeAnything(FOLDER_NUM,     (int)0);     // FOLDER #
-  EEPROM_writeAnything(PCE_ADAPTER,    (byte)1);    // PCE ADAPTER_SWAPT
-  EEPROM_writeAnything(CLK_GEN_OFFSET, (int32_t)0); // CLK GEE OFFSET
-  EEPROM_writeAnything(NES_MAPPER,     (byte)0);    // NES MAPPER
-  EEPROM_writeAnything(NES_PRG_SIZE,   (byte)0);    // NES PRG SIZE
-  EEPROM_writeAnything(NES_CHR_SIZE,   (byte)0);    // NES CHR SIZE
-  EEPROM_writeAnything(NES_RAM_SIZE,   (byte)0);    // NES RAM SIZE
-  EEPROM_writeAnything(COL_ROM_SIZE,   (byte)0);    // COLECOVISION ROM SIZE
-  EEPROM_writeAnything(INTV_MAPPER,    (byte)0);    // INTELLIVISION MAPPER
-  EEPROM_writeAnything(INTV_ROM_SIZE,  (byte)0);    // INTELLIVISION ROM SIZE
+  EEPROM_writeAnything(CONFIG_REV_NUM, (byte)ConfigRev);  // Config Rev. #
+  EEPROM_writeAnything(FOLDER_NUM, (int)0);               // FOLDER #
+  EEPROM_writeAnything(PCE_ADAPTER, (byte)1);             // PCE ADAPTER_SWAPT
+  EEPROM_writeAnything(CLK_GEN_OFFSET, (int32_t)0);       // CLK GEE OFFSET
+  EEPROM_writeAnything(NES_MAPPER, (byte)0);              // NES MAPPER
+  EEPROM_writeAnything(NES_PRG_SIZE, (byte)0);            // NES PRG SIZE
+  EEPROM_writeAnything(NES_CHR_SIZE, (byte)0);            // NES CHR SIZE
+  EEPROM_writeAnything(NES_RAM_SIZE, (byte)0);            // NES RAM SIZE
+  EEPROM_writeAnything(COL_ROM_SIZE, (byte)0);            // COLECOVISION ROM SIZE
+  EEPROM_writeAnything(INTV_MAPPER, (byte)0);             // INTELLIVISION MAPPER
+  EEPROM_writeAnything(INTV_ROM_SIZE, (byte)0);           // INTELLIVISION ROM SIZE
 
   delay(1000);
 }
@@ -3119,7 +3118,7 @@ page:
 
   for (byte i = 0; i < 8; i++) {
     // Copy short string into fileOptions
-    snprintf_P( answers[i], FILEOPTS_LENGTH, PSTR("%s"), fileNames[i]);
+    snprintf_P(answers[i], FILEOPTS_LENGTH, PSTR("%s"), fileNames[i]);
   }
 
   // Create menu with title and 1-7 options to choose from
