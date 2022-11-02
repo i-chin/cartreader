@@ -733,7 +733,7 @@ static void readDatabaseEntry(FsFile& database, struct database_entry* entry) {
   entry->crc512 = strtoul(entry->crc512_str, NULL, 16);
 }
 
-static void selectMapping(FsFile& database) {
+boolean selectMapping(FsFile& database) {
   // Select starting letter
   byte myLetter = starting_letter();
 
@@ -744,6 +744,7 @@ static void selectMapping(FsFile& database) {
     setPRGSize();
     setCHRSize();
     setRAMSize();
+    return 0;
   } else {
 #ifdef global_log
     // Disable log to prevent unnecessary logging
@@ -766,6 +767,7 @@ static void selectMapping(FsFile& database) {
     dont_log = false;
 #endif
   }
+  return 1;
 }
 
 void readRom_NES() {
@@ -2334,9 +2336,6 @@ void checkMMC6() {               // Detect MMC6 Carts - read PRG 0x3E00A ("START
 }
 
 void checkStatus_NES() {
-#ifdef nointro
-  getMapping();
-#endif
   EEPROM_readAnything(NES_MAPPER, mapper);
   EEPROM_readAnything(NES_PRG_SIZE, prgsize);
   EEPROM_readAnything(NES_CHR_SIZE, chrsize);
@@ -2911,16 +2910,19 @@ void readPRG(boolean readrom) {
       case 88:
       case 95:
       case 154:  // 128K
-      case 206:  // 32K/64K/128K
+      case 206:  // 32/64/128K
         banks = int_pow(2, prgsize) * 2;
-        for (int i = 0; i < banks; i += 2) {
-          write_prg_byte(0x8000, 6);                                    // PRG ROM Command ($8000-$9FFF)
-          write_prg_byte(0x8001, i);                                    // PRG Bank
-          write_prg_byte(0x8000, 7);                                    // PRG ROM Command ($A000-$BFFF)
-          write_prg_byte(0x8001, i + 1);                                // PRG Bank
-          for (word address = 0x0; address < 0x4000; address += 512) {  // 8K Banks ($8000-$BFFF)
+        for (int i = 0; i < banks-2; i += 2) {
+          write_prg_byte(0x8000, 6);
+          write_prg_byte(0x8001, i);
+          write_prg_byte(0x8000, 7);
+          write_prg_byte(0x8001, i | 1);
+          for (word address = 0x0; address < 0x4000; address += 512) {
             dumpPRG(base, address);
           }
+        }
+        for (word address = 0x4000; address < 0x8000; address += 512) {
+            dumpPRG(base, address);
         }
         break;
 
@@ -3051,6 +3053,16 @@ void readPRG(boolean readrom) {
         for (int j = 0; j < 8; j++) {   // PRG CHIP 2 128K
           write_mmc1_byte(0xE000, j);
           for (word address = 0x0; address < 0x4000; address += 512) {  // 16K Banks ($8000-$BFFF)
+            dumpPRG(base, address);
+          }
+        }
+        break;
+        
+      case 111:
+        banks = int_pow(2, prgsize) / 2;
+        for (int i = 0; i < banks; i++) {
+          write_prg_byte(0x5000, i);
+          for (word address = 0x0; address < 0x8000; address += 512) {
             dumpPRG(base, address);
           }
         }

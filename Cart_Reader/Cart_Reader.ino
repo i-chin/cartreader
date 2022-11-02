@@ -4,7 +4,7 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             01.11.2022
+   Date:             02.11.2022
    Version:          11.2
 
    SD lib: https://github.com/greiman/SdFat
@@ -696,14 +696,15 @@ void rewind_line(FsFile& readfile, byte count = 1) {
   uint32_t position = readfile.curPosition();
   count++;
   for (byte count_newline = 0; count_newline < count; count_newline++) {
-    while (1) {
-      if (readfile.curPosition() == 0)
-        break;
+    while (position) {
+      position--;
       readfile.seekCur(-1);
       if (readfile.peek() == '\n')
         break;
     }
   }
+  if (position)
+    readfile.seekCur(1);
 }
 
 // Calculate CRC32 if needed and compare it to CRC read from database
@@ -990,6 +991,9 @@ void mainMenu() {
       display_Clear();
       display_Update();
       setup_NES();
+#ifdef nointro
+      getMapping();
+#endif
       checkStatus_NES();
       nesMenu();
       break;
@@ -1246,6 +1250,9 @@ void consoleMenu() {
       display_Clear();
       display_Update();
       setup_NES();
+#ifdef nointro
+      getMapping();
+#endif
       checkStatus_NES();
       nesMenu();
       break;
