@@ -526,6 +526,7 @@ void getMapping() {
   }
   oldcrc32 = ~oldcrc32;
   oldcrc32MMC3 = ~oldcrc32MMC3;
+  boolean browseDatabase;
 
   // Filter out all 0xFF checksums at 0x8000 and 0xE000
   if (oldcrc32 == 0xBD7BC39F && oldcrc32MMC3 == 0xBD7BC39F) {
