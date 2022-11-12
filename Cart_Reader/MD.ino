@@ -209,6 +209,7 @@ static const char* const menuOptionsSCD[] PROGMEM = { SCDMenuItem1, SCDMenuItem2
 
 // Sega start menu
 void mdMenu() {
+  vselect(false);
   // create menu with title and 4 options to choose from
   unsigned char mdDev;
   // Copy menuOptions out of progmem
@@ -721,6 +722,7 @@ void getCartInfo_MD() {
   SnKmode = 0;
   if (chksum == 0xDFB3) {
     char id[15];
+    memset(id, 0, 15);
 
     // Get ID
     for (byte c = 0; c < 14; c += 2) {
@@ -737,6 +739,7 @@ void getCartInfo_MD() {
     //Sonic & Knuckles ID:GM MK-1563 -00
     if (!strcmp_P(PSTR("GM MK-1563 -00"), id)) {
       char labelLockon[17];
+      memset(labelLockon, 0, 17);
 
       // Get labelLockon
       for (byte c = 0; c < 16; c += 2) {
@@ -753,6 +756,7 @@ void getCartInfo_MD() {
       // check Lock-on game presence
       if (!(strcmp_P(PSTR("SEGA MEGA DRIVE "), labelLockon) & strcmp_P(PSTR("SEGA GENESIS    "), labelLockon))) {
         char idLockon[15];
+        memset(idLockon, 0, 15);
 
         // Lock-on cart checksum
         chksumLockon = readWord_MD(0x1000C7);
@@ -771,10 +775,17 @@ void getCartInfo_MD() {
           idLockon[c + 1] = loByte;
         }
 
+<<<<<<< HEAD
         if (!(strncmp_P(PSTR("GM 00001009-0"), idLockon, 13) & strncmp_P(PSTR("GM 00004049-0"), idLockon, 13))) {
           //Sonic1 ID:GM 00001009-0? or GM 00004049-0?
           SnKmode = 2;
         } else if (!(strcmp_P(PSTR("GM 00001051-00"), idLockon) & strcmp_P(PSTR("GM 00001051-01"), idLockon) & strcmp_P(PSTR("GM 00001051-02"), idLockon))) {
+=======
+        if (!strncmp("GM 00001009-0", idLockon, 13) || !strncmp("GM 00004049-0", idLockon, 13)) {
+          //Sonic1 ID:GM 00001009-0? or GM 00004049-0?
+          SnKmode = 2;
+        } else if (!strcmp("GM 00001051-00", idLockon) || !strcmp("GM 00001051-01", idLockon) || !strcmp("GM 00001051-02", idLockon)) {
+>>>>>>> 8dcb84110968469345c035346fb01963b26ad4fe
           //Sonic2 ID:GM 00001051-00 or GM 00001051-01 or GM 00001051-02
           SnKmode = 3;
 
@@ -1373,20 +1384,14 @@ void readROM_MD() {
     display_Update();
   }
 
-  // Calculate and compare CRC32 with nointro
-  if (is32x)
-    //database, crcString, renamerom, offset
-    compareCRC("32x.txt", 0, 1, 0);
-  else
-    compareCRC("md.txt", 0, 1, 0);
-
   // More checksums
   if (SnKmode >= 2) {
+    print_Msg(F("Lock-on checksum..."));
     if (chksumLockon == calcCKSLockon) {
-      println_Msg(F("Checksum2 OK"));
+      println_Msg(F("OK"));
       display_Update();
     } else {
-      print_Msg(F("Checksum2 Error: "));
+      print_Msg(F("Error"));
       char calcsumStr[5];
       sprintf_P(calcsumStr, PSTR("%04X"), calcCKSLockon);
       println_Msg(calcsumStr);
@@ -1395,11 +1400,12 @@ void readROM_MD() {
     }
   }
   if (SnKmode == 3) {
+    print_Msg(F("Adittional checksum..."));
     if (chksumSonic2 == calcCKSSonic2) {
-      println_Msg(F("Checksum3 OK"));
+      println_Msg(F("OK"));
       display_Update();
     } else {
-      print_Msg(F("Checksum3 Error: "));
+      print_Msg(F("Error"));
       char calcsumStr[5];
       sprintf_P(calcsumStr, PSTR("%04X"), calcCKSSonic2);
       println_Msg(calcsumStr);
@@ -1407,6 +1413,14 @@ void readROM_MD() {
       display_Update();
     }
   }
+
+  // Calculate and compare CRC32 with nointro
+  if (is32x)
+    //database, crcString, renamerom, offset
+    compareCRC("32x.txt", 0, 1, 0);
+  else
+    compareCRC("md.txt", 0, 1, 0);
+
 }
 
 /******************************************

@@ -4,8 +4,8 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             02.11.2022
-   Version:          11.2
+   Date:             12.11.2022
+   Version:          11.3
 
    SD lib: https://github.com/greiman/SdFat
    LCD lib: https://github.com/olikraus/u8g2
@@ -57,7 +57,7 @@
 
 **********************************************************************************/
 
-char ver[5] = "11.2";
+char ver[5] = "11.3";
 
 // EEPROM Index Define
 //******************************************
@@ -155,6 +155,7 @@ char ver[5] = "11.2";
 // HW CONFIGS
 //******************************************
 #if (defined(HW4) || defined(HW5))
+// #define enable_vselect
 #define enable_LCD
 #define enable_neopixel
 #define background_color 100, 0, 0  //Green, Red, Blue
@@ -973,7 +974,7 @@ void mainMenu() {
     } else if (currPage == 2) {
       option_offset = 7;
       num_answers = 7;
-    } else { // currPage == 3
+    } else {  // currPage == 3
       option_offset = 14;
       num_answers = 2;
     }
@@ -1774,11 +1775,13 @@ int32_t initializeClockOffset() {
 void setup() {
   // Set Button Pin PG2 to Input
   DDRG &= ~(1 << 2);
-#ifdef HW5
+#if defined(HW5) && !defined(enable_vselect)
   // HW5 has status LED connected to PD7
   // Set LED Pin PD7 to Output
   DDRD |= (1 << 7);
   PORTD |= (1 << 7);
+#elif defined(enable_vselect)
+  DDRD |= (1 << 7);
 #else
   // HW1/2/3 have button connected to PD7
   // Set Button Pin PD7 to Input
@@ -1886,6 +1889,9 @@ void setup() {
 
   // status LED ON
   statusLED(true);
+
+  // Set power to low to protect carts
+  vselect(true);
 
   // Start menu system
   startMenu();
@@ -2372,7 +2378,9 @@ void rgbLed(byte Color) {
 }
 
 void blinkLED() {
-#if defined(HW5)
+#if defined(enable_vselect)
+  // Nothing
+#elif defined(HW5)
   PORTD ^= (1 << 7);
 #elif defined(enable_OLED)
   PORTB ^= (1 << 4);
@@ -2384,7 +2392,7 @@ void blinkLED() {
 #endif
 }
 
-#if defined(HW5)
+#if defined(HW5) && !defined(enable_vselect)
 void statusLED(boolean on) {
   if (!on)
     PORTD |= (1 << 7);
@@ -2414,8 +2422,21 @@ void statusLED(boolean on) {
     }
   */
 }
+void vselect(boolean vlow __attribute__((unused))) {
+}
+#elif defined(enable_vselect)
+void statusLED(boolean on __attribute__((unused))) {
+}
+void vselect(boolean vlow) {
+  if (vlow)
+    PORTD |= (1 << 7);
+  else
+    PORTD &= ~(1 << 7);
+}
 #else
 void statusLED(boolean on __attribute__((unused))) {
+}
+void vselect(boolean vlow __attribute__((unused))) {
 }
 #endif
 
