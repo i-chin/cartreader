@@ -79,14 +79,10 @@ static const char *const menuOptionsAdapter[] PROGMEM = { pceAdapterMenuItem1, p
 
 // PCE start menu
 void pcsMenu(void) {
-<<<<<<< HEAD
   byte adapterSwap;
   EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
-  // create menu with title and 4 options to choose from
-=======
   vselect(false);
-  // create menu with title and 3 options to choose from
->>>>>>> 8dcb84110968469345c035346fb01963b26ad4fe
+  // create menu with title and 4 options to choose from
   unsigned char pceDev;
   // Copy menuOptions out of progmem
   convertPgm(menuOptionspce, 4);

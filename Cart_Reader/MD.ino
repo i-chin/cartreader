@@ -721,8 +721,7 @@ void getCartInfo_MD() {
   // Sonic & Knuckles Check
   SnKmode = 0;
   if (chksum == 0xDFB3) {
-    char id[15];
-    memset(id, 0, 15);
+    char id[15] = {0};
 
     // Get ID
     for (byte c = 0; c < 14; c += 2) {
@@ -738,8 +737,7 @@ void getCartInfo_MD() {
 
     //Sonic & Knuckles ID:GM MK-1563 -00
     if (!strcmp_P(PSTR("GM MK-1563 -00"), id)) {
-      char labelLockon[17];
-      memset(labelLockon, 0, 17);
+      char labelLockon[17] = {0};
 
       // Get labelLockon
       for (byte c = 0; c < 16; c += 2) {
@@ -755,8 +753,7 @@ void getCartInfo_MD() {
 
       // check Lock-on game presence
       if (!(strcmp_P(PSTR("SEGA MEGA DRIVE "), labelLockon) & strcmp_P(PSTR("SEGA GENESIS    "), labelLockon))) {
-        char idLockon[15];
-        memset(idLockon, 0, 15);
+        char idLockon[15] = {0};
 
         // Lock-on cart checksum
         chksumLockon = readWord_MD(0x1000C7);
@@ -775,17 +772,10 @@ void getCartInfo_MD() {
           idLockon[c + 1] = loByte;
         }
 
-<<<<<<< HEAD
-        if (!(strncmp_P(PSTR("GM 00001009-0"), idLockon, 13) & strncmp_P(PSTR("GM 00004049-0"), idLockon, 13))) {
+        if (!strncmp_P(PSTR("GM 00001009-0"), idLockon, 13) || !strncmp_P(PSTR("GM 00004049-0"), idLockon, 13)) {
           //Sonic1 ID:GM 00001009-0? or GM 00004049-0?
           SnKmode = 2;
-        } else if (!(strcmp_P(PSTR("GM 00001051-00"), idLockon) & strcmp_P(PSTR("GM 00001051-01"), idLockon) & strcmp_P(PSTR("GM 00001051-02"), idLockon))) {
-=======
-        if (!strncmp("GM 00001009-0", idLockon, 13) || !strncmp("GM 00004049-0", idLockon, 13)) {
-          //Sonic1 ID:GM 00001009-0? or GM 00004049-0?
-          SnKmode = 2;
-        } else if (!strcmp("GM 00001051-00", idLockon) || !strcmp("GM 00001051-01", idLockon) || !strcmp("GM 00001051-02", idLockon)) {
->>>>>>> 8dcb84110968469345c035346fb01963b26ad4fe
+        } else if (!strcmp_P(PSTR("GM 00001051-00"), idLockon) || !strcmp_P(PSTR("GM 00001051-01"), idLockon) || !strcmp_P(PSTR("GM 00001051-02"), idLockon)) {
           //Sonic2 ID:GM 00001051-00 or GM 00001051-01 or GM 00001051-02
           SnKmode = 3;
 
