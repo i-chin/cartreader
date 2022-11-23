@@ -32,7 +32,7 @@
 static const byte PROGMEM mapsize[] = {
   0, 0, 1, 0, 1, 0, 2,    // nrom                                                [sram r/w]
   1, 1, 5, 0, 5, 0, 3,    // mmc1                                                [sram r/w]
-  2, 3, 4, 0, 0, 0, 0,    // uxrom
+  2, 2, 4, 0, 0, 0, 0,    // uxrom
   3, 0, 1, 0, 3, 0, 0,    // cnrom
   4, 1, 5, 0, 6, 0, 1,    // mmc3/mmc6                                           [sram/prgram r/w]
   5, 3, 5, 5, 7, 0, 3,    // mmc5                                                [sram r/w]
@@ -51,10 +51,11 @@ static const byte PROGMEM mapsize[] = {
   24, 4, 4, 5, 5, 0, 0,   // vrc6a (akumajou densetsu)
   25, 3, 4, 5, 6, 0, 1,   // vrc2c/vrc4b/vrc4d                                  [sram r/w]
   26, 4, 4, 5, 6, 1, 1,   // vrc6b                                              [sram r/w]
+  28, 5, 7, 0, 0, 0, 0,   // Action 53 [UNLICENSED]
   30, 4, 5, 0, 0, 0, 0,   // unrom 512 (NESmaker) [UNLICENSED]
   32, 3, 4, 5, 5, 0, 0,   // irem g-101
   33, 3, 4, 5, 6, 0, 0,   // taito tc0190
-  34, 3, 3, 0, 0, 0, 0,   // bnrom [nina-1 NOT SUPPORTED]
+  34, 3, 5, 0, 0, 0, 0,   // bnrom [nina-1 NOT SUPPORTED]
   36, 0, 3, 1, 5, 0, 0,   // TXC 01-22000-400 Board [UNLICENSED]
   37, 4, 4, 6, 6, 0, 0,   // (super mario bros + tetris + world cup)
   45, 3, 6, 0, 8, 0, 0,   // ga23c asic multicart [UNLICENSED]
@@ -565,7 +566,7 @@ void getMapping() {
       }
     }
     if (database.available()) {
-      browseDatabase = false;
+      browseDatabase = true;
     } else {
       // File searched until end but nothing found
       println_Msg(F(""));
@@ -2693,6 +2694,25 @@ void readPRG(boolean readrom) {
           }
         }
         break;
+        
+      case 28:  // using 32k mode for inner and outer banks, switching only with outer
+        banks = int_pow(2, prgsize) / 2;
+        write_prg_byte(0x5000, 0x81);
+        write_prg_byte(0x8000, 0);
+        write_prg_byte(0x5000, 0x80);
+        write_prg_byte(0x8000, 0);
+        write_prg_byte(0x5000, 0x01);
+        write_prg_byte(0x8000, 0);
+        write_prg_byte(0x5000, 0x00);
+        write_prg_byte(0x8000, 0);
+        for (int i = 0; i < banks; i++) {
+          write_prg_byte(0x5000, 0x81);
+          write_prg_byte(0x8000, i);
+          for (word address = 0x0; address < 0x8000; address += 512) {
+            dumpPRG(base, address);
+          }
+        }
+        break;
 
       case 30:  // 256K/512K
         banks = int_pow(2, prgsize);
@@ -2918,7 +2938,7 @@ void readPRG(boolean readrom) {
       case 154:  // 128K
       case 206:  // 32/64/128K
         banks = int_pow(2, prgsize) * 2;
-        for (int i = 0; i < banks-2; i += 2) {
+        for (int i = 0; i < banks - 2; i += 2) {
           write_prg_byte(0x8000, 6);
           write_prg_byte(0x8001, i);
           write_prg_byte(0x8000, 7);
@@ -2928,7 +2948,7 @@ void readPRG(boolean readrom) {
           }
         }
         for (word address = 0x4000; address < 0x8000; address += 512) {
-            dumpPRG(base, address);
+          dumpPRG(base, address);
         }
         break;
 
@@ -3063,7 +3083,7 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-        
+
       case 111:
         banks = int_pow(2, prgsize) / 2;
         for (int i = 0; i < banks; i++) {
@@ -3149,7 +3169,7 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-        
+
       case 226:
         banks = int_pow(2, prgsize);
         for (int i = 0; i < banks; i += 2) {
@@ -3160,16 +3180,16 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-        
+
       case 228:
         banks = int_pow(2, prgsize);
-        for (int i = 0; i < banks; i += 2) { // up to 1024k PRG
+        for (int i = 0; i < banks; i += 2) {  // up to 1024k PRG
           write_prg_byte(0x8000 + ((i & 0x3F) << 6), 0);
           for (word address = 0x0; address < 0x8000; address += 512) {
             dumpPRG(base, address);
           }
         }
-        if (prgsize > 6) { // reading the 3rd 512k PRG chip (Action 52)
+        if (prgsize > 6) {  // reading the 3rd 512k PRG chip (Action 52)
           for (int i = 0; i < 32; i += 2) {
             write_prg_byte(0x9800 + ((i & 0x1F) << 6), 0);
             for (word address = 0x0; address < 0x8000; address += 512) {
@@ -3989,7 +4009,7 @@ void readCHR(boolean readrom) {
             }
           }
           break;
-          
+
         case 228:
           banks = int_pow(2, chrsize) / 2;
           for (int i = 0; i < banks; i++) {
