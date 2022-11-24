@@ -18,15 +18,9 @@
    Variables
  *****************************************/
 // Received N64 Eeprom data bits, 1 page
-bool tempBits[65];
 int eepPages;
 
 // N64 Controller
-// 256 bits of received Controller data + 8 bit CRC
-char N64_raw_dump[265];
-// Array that holds one Controller Pak block of 32 bytes data
-byte myBlock[33];
-String rawStr = "";  // above char array read into a string
 struct {
   char stick_x;
   char stick_y;
