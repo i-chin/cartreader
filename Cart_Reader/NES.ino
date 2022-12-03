@@ -590,7 +590,6 @@ void getMapping() {
 
     // Display database
     while (database.available()) {
-      byte iNES[16];
       byte* output;
       char* input;
 
@@ -600,8 +599,8 @@ void getMapping() {
       readDatabaseEntry(database, &entry);
 
       input = entry.iNES_str;
-      output = iNES;
-      for (byte i = 0; i < sizeof(iNES); i++) {
+      output = iNES_HEADER;
+      for (byte i = 0; i < sizeof(iNES_HEADER); i++) {
         unsigned int buf;
 
         sscanf_P(input, PSTR("%2X"), &buf);
@@ -609,29 +608,29 @@ void getMapping() {
         input += 2;
       }
 
-      mapper = (iNES[6] >> 4) | (iNES[7] & 0xF0) | (iNES[8] & 0x0F);
+      mapper = (iNES_HEADER[6] >> 4) | (iNES_HEADER[7] & 0xF0) | (iNES_HEADER[8] & 0x0F);
 
-      if ((iNES[9] & 0x0F) != 0x0F) {
+      if ((iNES_HEADER[9] & 0x0F) != 0x0F) {
         // simple notation
-        prgsize = (iNES[4] | ((iNES[9] & 0x0F) << 8));  //*16
+        prgsize = (iNES_HEADER[4] | ((iNES_HEADER[9] & 0x0F) << 8));  //*16
       } else {
         // exponent-multiplier notation
-        prgsize = (((1 << (iNES[4] >> 2)) * ((iNES[4] & 0b11) * 2 + 1)) >> 14);  //*16
+        prgsize = (((1 << (iNES_HEADER[4] >> 2)) * ((iNES_HEADER[4] & 0b11) * 2 + 1)) >> 14);  //*16
       }
       if (prgsize != 0)
         prgsize = (int(log(prgsize) / log(2)));
 
-      if ((iNES[9] & 0xF0) != 0xF0) {
+      if ((iNES_HEADER[9] & 0xF0) != 0xF0) {
         // simple notation
-        chrsize = (uppow2(iNES[5] | ((iNES[9] & 0xF0) << 4))) * 2;  //*4
+        chrsize = (uppow2(iNES_HEADER[5] | ((iNES_HEADER[9] & 0xF0) << 4))) * 2;  //*4
       } else {
         // exponent-multiplier notation
-        chrsize = (((1 << (iNES[5] >> 2)) * ((iNES[5] & 0b11) * 2 + 1)) >> 13) * 2;  //*4
+        chrsize = (((1 << (iNES_HEADER[5] >> 2)) * ((iNES_HEADER[5] & 0b11) * 2 + 1)) >> 13) * 2;  //*4
       }
       if (chrsize != 0)
         chrsize = (int(log(chrsize) / log(2)));
 
-      ramsize = ((iNES[10] & 0xF0) ? (64 << ((iNES[10] & 0xF0) >> 4)) : 0) / 4096;  //*4
+      ramsize = ((iNES_HEADER[10] & 0xF0) ? (64 << ((iNES_HEADER[10] & 0xF0) >> 4)) : 0) / 4096;  //*4
       if (ramsize != 0)
         ramsize = (int(log(ramsize) / log(2)));
 
@@ -738,7 +737,6 @@ static void readDatabaseEntry(FsFile& database, struct database_entry* entry) {
   entry->crc512_str = &entry->crc_str[8 + 1];
   entry->crc512_str[8] = 0;
   entry->iNES_str = &entry->crc_str[8 + 1 + 8 + 1];
-  memcpy(iNES_HEADER, entry->iNES_str, sizeof(iNES_HEADER));
 
   entry->crc = strtoul(entry->crc_str, NULL, 16);
   entry->crc512 = strtoul(entry->crc512_str, NULL, 16);
