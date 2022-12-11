@@ -83,7 +83,7 @@ char ver[5] = "11.4";
 //******************************************
 // Remove // in front of the line with your hardware version
 // #define HW5
-// #define HW4
+#define HW4
 // #define HW3
 // #define HW2
 // #define HW1
@@ -163,7 +163,7 @@ char ver[5] = "11.4";
 // #define rotate_counter_clockwise
 #define clockgen_installed
 #define fastcrc
-#define ws_adapter_v2
+//#define ws_adapter_v2
 #endif
 
 #if (defined(HW2) || defined(HW3))
@@ -206,7 +206,7 @@ char ver[5] = "11.4";
 // #define RTC_installed
 
 // Use calibration data from snes_clk.txt
-// #define clockgen_calibration
+ #define clockgen_calibration
 
 // Use Adafruit Clock Generator
 // #define clockgen_installed
