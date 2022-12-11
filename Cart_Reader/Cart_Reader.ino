@@ -83,7 +83,7 @@ char ver[5] = "11.4";
 //******************************************
 // Remove // in front of the line with your hardware version
 // #define HW5
-#define HW4
+// #define HW4
 // #define HW3
 // #define HW2
 // #define HW1
@@ -163,7 +163,7 @@ char ver[5] = "11.4";
 // #define rotate_counter_clockwise
 #define clockgen_installed
 #define fastcrc
-//#define ws_adapter_v2
+#define ws_adapter_v2
 #endif
 
 #if (defined(HW2) || defined(HW3))
@@ -1753,7 +1753,6 @@ int32_t readClockOffset() {
 int32_t initializeClockOffset() {
 #ifdef clockgen_calibration
   FsFile clock_file;
-  const char zero_char_arr[] = { '0' };
   int32_t clock_offset = readClockOffset();
   if (clock_offset > INT32_MIN) {
     i2c_found = clockgen.init(SI5351_CRYSTAL_LOAD_8PF, 0, clock_offset);
