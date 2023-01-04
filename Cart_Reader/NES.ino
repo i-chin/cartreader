@@ -2795,7 +2795,7 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-        
+
       case 31:
         banks = int_pow(2, prgsize) * 4;
         for (int i = 0; i < banks; i += 8) {
@@ -2958,7 +2958,7 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-        
+
       case 56:
         banks = int_pow(2, prgsize) * 2;
         for (int i = 0; i < banks; i++) {
@@ -2969,7 +2969,7 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-        
+
       case 57:
         banks = int_pow(2, prgsize);
         for (int i = 0; i < banks; i++) {
@@ -3058,7 +3058,7 @@ void readPRG(boolean readrom) {
       case 68:
       case 73:  // 128K
         banks = int_pow(2, prgsize);
-        for (int i = 0; i < banks; i++) {                               // 128K
+        for (int i = 0; i < banks; i++) {  // 128K
           write_prg_byte(0xF000, i);
           for (word address = 0x0; address < 0x4000; address += 512) {  // 16K Banks ($8000-$BFFF)
             dumpPRG(base, address);
@@ -3228,7 +3228,7 @@ void readPRG(boolean readrom) {
       case 94:  // bus conflicts - fixed last bank
         banks = int_pow(2, prgsize);
         busConflict = true;
-        for (int i = 0; i < banks-1; i++) {
+        for (int i = 0; i < banks - 1; i++) {
           for (int x = 0; x < 0x4000; x++) {
             if (read_prg_byte(0xC000 + x) == (i << 2)) {
               write_prg_byte(0xC000 + x, i << 2);
@@ -3248,13 +3248,13 @@ void readPRG(boolean readrom) {
         }
         break;
 
-      case 97:  // fixed first bank
+      case 97:   // fixed first bank
       case 180:  // bus conflicts - fixed fist bank
         banks = int_pow(2, prgsize);
         busConflict = true;
         for (word address = 0x0; address < 0x4000; address += 512) {
-            dumpPRG(base, address);
-          }
+          dumpPRG(base, address);
+        }
         for (int i = 1; i < banks; i++) {
           for (int x = 0; x < 0x4000; x++) {
             if (read_prg_byte(0x8000 + x) == i) {
@@ -3502,7 +3502,7 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-      
+
       case 214:
         banks = int_pow(2, prgsize);
         for (int i = 0; i < banks; i++) {
@@ -3619,12 +3619,12 @@ void readPRG(boolean readrom) {
           }
         }
         break;
-        
+
       case 236:
         banks = int_pow(2, prgsize);
         for (int i = 0; i < banks; i++) {
           write_prg_byte(0x8000 | ((i & 0x38) >> 3), 0);  // A19-A17
-          write_prg_byte(0xC030 | (i & 0x0F), 0);  // A17-A14
+          write_prg_byte(0xC030 | (i & 0x0F), 0);         // A17-A14
           for (word address = 0x0; address < 0x4000; address += 512) {
             dumpPRG(base, address);
           }
@@ -3918,8 +3918,8 @@ void readCHR(boolean readrom) {
         case 25:  // 128K/256K
           banks = int_pow(2, chrsize) * 4;
           for (int i = 0; i < banks; i++) {
-            write_prg_byte(0xB000, i & 0xF);           // CHR Bank Lower 4 bits
-            write_prg_byte(0xB00A, (i >> 4) & 0xF);    // Combine VRC2c and VRC4b, VRC4d reg
+            write_prg_byte(0xB000, i & 0xF);         // CHR Bank Lower 4 bits
+            write_prg_byte(0xB00A, (i >> 4) & 0xF);  // Combine VRC2c and VRC4b, VRC4d reg
             for (word address = 0x0; address < 0x400; address += 512) {
               dumpCHR(address);
             }
@@ -4074,7 +4074,7 @@ void readCHR(boolean readrom) {
             }
           }
           break;
-          
+
         case 56:
           banks = int_pow(2, chrsize) * 4;
           for (int i = 0; i < banks; i++) {
@@ -4084,11 +4084,11 @@ void readCHR(boolean readrom) {
             }
           }
           break;
-          
+
         case 57:
           banks = int_pow(2, chrsize) / 2;
           for (int i = 0; i < banks; i++) {
-            write_prg_byte(0x8800, i & 0x07);  // A15-A13
+            write_prg_byte(0x8800, i & 0x07);                  // A15-A13
             write_prg_byte(0x8000, 0x80 | ((i & 0x08) << 3));  // A16
             for (word address = 0x0; address < 0x2000; address += 512) {
               dumpCHR(address);
@@ -4528,7 +4528,7 @@ void readCHR(boolean readrom) {
             }
           }
           break;
-          
+
         case 214:
           banks = int_pow(2, chrsize) / 2;
           for (int i = 0; i < banks; i++) {
@@ -4568,7 +4568,7 @@ void readCHR(boolean readrom) {
             }
           }
           break;
-          
+
         case 236:
           banks = int_pow(2, chrsize) / 2;
           for (int i = 0; i < banks; i++) {
