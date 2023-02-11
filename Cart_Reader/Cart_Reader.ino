@@ -4,8 +4,8 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             17.01.2023
-   Version:          12.1
+   Date:             10.02.2023
+   Version:          12.3
 
    SD lib: https://github.com/greiman/SdFat
    LCD lib: https://github.com/olikraus/u8g2
@@ -57,7 +57,7 @@
 
 **********************************************************************************/
 
-char ver[5] = "12.1";
+char ver[5] = "12.3";
 
 // EEPROM Index Define
 //******************************************
@@ -185,7 +185,7 @@ char ver[5] = "12.1";
 #define enable_Button2
 #define clockgen_installed
 #define CA_LED
-//#define fastcrc
+#define fastcrc
 #endif
 
 #if defined(HW1)
@@ -220,7 +220,7 @@ char ver[5] = "12.1";
 // #define RTC_installed
 
 // Use calibration data from snes_clk.txt
- #define clockgen_calibration
+// #define clockgen_calibration
 
 // Use Adafruit Clock Generator
 // #define clockgen_installed
@@ -788,20 +788,20 @@ void rewind_line(FsFile& readfile, byte count = 1) {
 }
 
 // Calculate CRC32 if needed and compare it to CRC read from database
-boolean compareCRC(const char* database, char* crcString, boolean renamerom, int offset) {
+boolean compareCRC(const char* database, uint32_t crc32sum, boolean renamerom, int offset) {
 #ifdef nointro
   char crcStr[9];
-  if (crcString == 0) {
+  print_Msg(F("CRC32... "));
+  display_Update();
+
+  if (crc32sum == 0) {
     //go to root
     sd.chdir();
     // Calculate CRC32
-    print_Msg(F("CRC32... "));
-    display_Update();
     sprintf_P(crcStr, PSTR("%08lX"), calculateCRC(fileName, folder, offset));
   } else {
-    // Use precalculated crc
-    print_Msg(F("CRC32... "));
-    strcpy(crcStr, crcString);
+    // Convert precalculated crc to string
+    sprintf(crcStr, "%08lX", ~crc32sum);
   }
   // Print checksum
   print_Msg(crcStr);
@@ -823,6 +823,7 @@ boolean compareCRC(const char* database, char* crcString, boolean renamerom, int
 
       //if checksum search successful, rename the file and end search
       if (strcmp(crc_search, crcStr) == 0) {
+
 #ifdef enable_NES
         if ((mode == mode_NES) && (offset != 0)) {
           // Rewind to iNES Header
@@ -882,12 +883,12 @@ boolean compareCRC(const char* database, char* crcString, boolean renamerom, int
       }
     }
     if (strcmp(crc_search, crcStr) != 0) {
-      println_Msg(F(" -> Not found"));
+      print_Error(F(" -> Not found"));
       return 0;
     }
   } else {
     println_Msg(F(" -> Error"));
-    println_Msg(F("Database missing"));
+    print_Error(F("Database missing"));
     return 0;
   }
 #else   // nointro

@@ -237,8 +237,26 @@ void n64CartMenu() {
   // wait for user choice to come back from the question box menu
   switch (mainMenu) {
     case 0:
+      display_Clear();
       sd.chdir("/");
+#ifndef fastcrc
+      // Dumping ROM slow
       readRom_N64();
+      sd.chdir("/");
+      compareCRC("n64.txt", 0, 1, 0);
+#else
+      // Dumping ROM fast
+      compareCRC("n64.txt", readRom_N64(), 1, 0);
+#endif
+
+#ifdef global_log
+      save_log();
+#endif
+
+      // Prints string out of the common strings array either with or without newline
+      print_STR(press_button_STR, 1);
+      display_Update();
+      wait();
       break;
 
     case 1:
@@ -2767,19 +2785,21 @@ void getFramType() {
   Rom functions
 *****************************************/
 // Read rom and save to the SD card
+#ifndef fastcrc
+// dumping rom slow
 void readRom_N64() {
   // Get name, add extension and convert to char array for sd lib
   strcpy(fileName, romName);
   strcat_P(fileName, PSTR(".Z64"));
 
-redumpnewfolder:
   // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf_P(folder, PSTR("N64/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
-  display_Clear();
+  // clear the screen
+  // display_Clear();
   print_STR(saving_to_STR, 0);
   print_Msg(folder);
   println_Msg(F("/..."));
@@ -2789,16 +2809,15 @@ redumpnewfolder:
   foldern = foldern + 1;
   EEPROM_writeAnything(FOLDER_NUM, foldern);
 
-redumpsamefolder:
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_FatalError(sd_error_STR);
+    print_FatalError(create_file_STR);
   }
 
-  // get current time
-  unsigned long startTime = millis();
-#ifndef fastcrc
-  // dumping rom slow
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = (uint32_t)(cartSize)*1024 * 1024;
+  draw_progressbar(0, totalProgressBar);
 
   for (unsigned long currByte = romBase; currByte < (romBase + (cartSize * 1024 * 1024)); currByte += 512) {
     // Blink led
@@ -2808,18 +2827,48 @@ redumpsamefolder:
     // Set the address for the next 512 bytes
     setAddress_N64(currByte);
 
-    for (word c = 0; c < sizeof(sdBuffer); c += 2) {
+    for (word c = 0; c < 512; c += 2) {
       word myWord = readWord_N64();
       sdBuffer[c] = myWord >> 8;
       sdBuffer[c + 1] = myWord & 0xFF;
     }
-    myFile.write(sdBuffer, sizeof(sdBuffer));
+    myFile.write(sdBuffer, 512);
+
+    processedProgressBar += 512;
+    draw_progressbar(processedProgressBar, totalProgressBar);
   }
   // Close the file:
   myFile.close();
-
-  if (compareCRC("n64.txt", 0, 1, 0)) {
+}
 #else
+// dumping rom fast
+uint32_t readRom_N64() {
+  // Get name, add extension and convert to char array for sd lib
+  strcpy(fileName, romName);
+  strcat_P(fileName, PSTR(".Z64"));
+
+  // create a new folder
+  EEPROM_readAnything(0, foldern);
+  sprintf_P(folder, PSTR("N64/ROM/%s/%d"), romName, foldern);
+  sd.mkdir(folder, true);
+  sd.chdir(folder);
+
+  // clear the screen
+  // display_Clear();
+  print_STR(saving_to_STR, 0);
+  print_Msg(folder);
+  println_Msg(F("/..."));
+  display_Update();
+
+  // write new folder number back to eeprom
+  foldern = foldern + 1;
+  EEPROM_writeAnything(0, foldern);
+
+  // Open file on sd card
+  if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
+    print_FatalError(create_file_STR);
+  }
+
 
   //Initialize progress bar
   uint32_t processedProgressBar = 0;
@@ -2904,90 +2953,10 @@ redumpsamefolder:
   // Close the file:
   myFile.close();
 
-  // convert checksum to string
-  char crcStr[9];
-  sprintf_P(crcStr, PSTR("%08lX"), ~oldcrc32);
-
-  // Search n64.txt for crc
-  if (compareCRC("n64.txt", crcStr, 1, 0)) {
-#endif
-    unsigned long timeElapsed = (millis() - startTime) / 1000;  // seconds
-    print_Msg(F("Done ("));
-    print_Msg(timeElapsed);  // include elapsed time
-    println_Msg(F("s)"));
-    println_Msg(F(""));
-    // Prints string out of the common strings array either with or without newline
-    print_STR(press_button_STR, 1);
-    display_Update();
-    // This saves a tt file with rom info next to the dumped rom
-#ifdef savesummarytotxt
-    savesummary_N64(1, crcStr, timeElapsed);
-#endif
-#ifdef global_log
-    save_log();
-#endif
-    wait();
-  } else {
-    // Dump was bad or unknown
-    errorLvl = 1;
-    setColor_RGB(255, 0, 0);
-    println_Msg(F(""));
-    // Prints string out of the common strings array either with or without newline
-    print_STR(press_button_STR, 1);
-    display_Update();
-    // This saves a tt file with rom info next to the dumped rom
-#ifdef savesummarytotxt
-    savesummary_N64(0, crcStr, timeElapsed);
-#endif
-    wait();
-
-    // N64 CRC32 error Menu
-    unsigned char CRCMenu;
-    // Copy menuOptions out of progmem
-    convertPgm(menuOptionsN64CRC, 4);
-
-    CRCMenu = question_box(F("Redump cartridge?"), menuOptions, 4, 0);
-
-    // wait for user choice to come back from the question box menu
-    switch (CRCMenu) {
-      case 0:
-        // Return to N64 menu
-        display_Clear();
-        break;
-
-      case 1:
-        // Dump again into new folder
-        display_Clear();
-        setColor_RGB(0, 0, 0);
-        goto redumpnewfolder;
-        break;
-
-      case 2:
-        // Dump again into same folder
-        // Change to last directory
-        sd.chdir(folder);
-        // Delete old file
-        if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-          print_FatalError(sd_error_STR);
-        }
-        if (!myFile.remove()) {
-          print_FatalError(F("Delete Error"));
-        }
-        // Dump again
-        display_Clear();
-        println_Msg(F("Reading Rom..."));
-        display_Update();
-        setColor_RGB(0, 0, 0);
-        goto redumpsamefolder;
-        break;
-
-      case 3:
-        // Reset
-        resetArduino();
-        break;
-    }
-  }
+  // Return checksum
+  return oldcrc32;
 }
+#endif
 
 #ifdef savesummarytotxt
 // Save an info.txt with information on the dumped rom to the SD card
