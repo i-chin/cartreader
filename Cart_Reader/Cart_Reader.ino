@@ -4,8 +4,8 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             13.02.2023
-   Version:          12.3
+   Date:             23.02.2023
+   Version:          12.4
 
    SD lib: https://github.com/greiman/SdFat
    LCD lib: https://github.com/olikraus/u8g2
@@ -23,7 +23,7 @@
    Wayne and Layne - Video Game Shield menu
    skaman - Cart ROM READER SNES ENHANCED, Famicom Cart Dumper, Coleco-, Intellivision, Virtual Boy, WSV, PCW, ARC, Atari, ODY2, Fairchild modules
    Tamanegi_taro - PCE and Satellaview modules
-   splash5 - GBSmart, Wonderswan and NGP modules
+   splash5 - GBSmart, Wonderswan, NGP and Super A'can modules
    hkz & themanbehindthecurtain - N64 flashram commands
    Andrew Brown & Peter Den Hartog - N64 controller protocol
    libdragon - N64 controller checksum functions
@@ -57,7 +57,7 @@
 
 **********************************************************************************/
 
-char ver[5] = "12.3";
+char ver[5] = "12.4";
 
 // EEPROM Index Define
 //******************************************
@@ -164,6 +164,9 @@ char ver[5] = "12.3";
 
 // WonderSwan
 //#define enable_WS
+
+// Super A'can
+//#define enable_SUPRACAN
 
 //******************************************
 // HW CONFIGS
@@ -427,6 +430,7 @@ void print_STR(byte string_number, boolean newline) {
 #define mode_ODY2 29
 #define mode_ARC 30
 #define mode_FAIRCHILD 31
+#define mode_SUPRACAN 32
 
 // optimization-safe nop delay
 #define NOP __asm__ __volatile__("nop\n\t")
@@ -1020,9 +1024,11 @@ static const char modeItem15[] PROGMEM = "Atari 2600";
 static const char modeItem16[] PROGMEM = "Magnavox Odyssey 2";
 static const char modeItem17[] PROGMEM = "Arcadia 2001";
 static const char modeItem18[] PROGMEM = "Fairchild Channel F";
-static const char modeItem19[] PROGMEM = "Flashrom Programmer";
-static const char modeItem20[] PROGMEM = "About";
-static const char* const modeOptions[] PROGMEM = { modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7, modeItem8, modeItem9, modeItem10, modeItem11, modeItem12, modeItem13, modeItem14, modeItem15, modeItem16, modeItem17, modeItem18, modeItem19, modeItem20 };
+static const char modeItem19[] PROGMEM = "Super A'can";
+static const char modeItem20[] PROGMEM = "Flashrom Programmer";
+static const char modeItem21[] PROGMEM = "About";
+//static const char modeItem22[] PROGMEM = "Reset"; (stored in common strings array)
+static const char* const modeOptions[] PROGMEM = { modeItem1, modeItem2, modeItem3, modeItem4, modeItem5, modeItem6, modeItem7, modeItem8, modeItem9, modeItem10, modeItem11, modeItem12, modeItem13, modeItem14, modeItem15, modeItem16, modeItem17, modeItem18, modeItem19, modeItem20, modeItem21, string_reset2 };
 
 // All included slots
 void mainMenu() {
@@ -1034,7 +1040,7 @@ void mainMenu() {
   // Main menu spans across three pages
   currPage = 1;
   lastPage = 1;
-  numPages = 3;
+  numPages = 4;
 
   while (1) {
     if (currPage == 1) {
@@ -1043,9 +1049,12 @@ void mainMenu() {
     } else if (currPage == 2) {
       option_offset = 7;
       num_answers = 7;
-    } else {  // currPage == 3
+    } else if (currPage == 3) {
       option_offset = 14;
-      num_answers = 6;
+      num_answers = 7;
+    } else {  // currPage == 4
+      option_offset = 21;
+      num_answers = 1;
     }
     // Copy menuOptions out of progmem
     convertPgm(modeOptions + option_offset, num_answers);
@@ -1193,8 +1202,14 @@ void mainMenu() {
       break;
 #endif
 
-#ifdef enable_FLASH
+#ifdef enable_SUPRACAN
     case 18:
+      setup_SuprAcan();
+      break;
+#endif
+
+#ifdef enable_FLASH
+    case 19:
 #ifdef enable_FLASH16
       flashMenu();
 #else
@@ -1203,8 +1218,12 @@ void mainMenu() {
       break;
 #endif
 
-    case 19:
+    case 20:
       aboutScreen();
+      break;
+
+    case 21:
+      resetArduino();
       break;
 
     default:
@@ -1233,10 +1252,11 @@ static const char* const modeOptions[] PROGMEM = { modeItem1, modeItem2, modeIte
 // Add-ons submenu
 static const char addonsItem1[] PROGMEM = "70s Consoles";
 static const char addonsItem2[] PROGMEM = "80s Consoles";
-static const char addonsItem3[] PROGMEM = "Handhelds";
-static const char addonsItem4[] PROGMEM = "Flashrom Programmer";
+static const char addonsItem3[] PROGMEM = "90s Consoles";
+static const char addonsItem4[] PROGMEM = "Handhelds";
+static const char addonsItem5[] PROGMEM = "Flashrom Programmer";
 //static const char addonsItem5[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const addonsOptions[] PROGMEM = { addonsItem1, addonsItem2, addonsItem3, addonsItem4, string_reset2 };
+static const char* const addonsOptions[] PROGMEM = { addonsItem1, addonsItem2, addonsItem3, addonsItem4, addonsItem5, string_reset2 };
 
 // 70s Consoles submenu
 static const char consoles70Item1[] PROGMEM = "Atari 2600";
@@ -1254,6 +1274,10 @@ static const char consoles80Item2[] PROGMEM = "PC Engine/TG16";
 static const char consoles80Item3[] PROGMEM = "SMS/GG/MIII/SG-1000";
 //static const char consoles80Item4[] PROGMEM = "Reset"; (stored in common strings array)
 static const char* const consoles80Options[] PROGMEM = { consoles80Item1, consoles80Item2, consoles80Item3, string_reset2 };
+
+// 90s Consoles submenu
+static const char consoles90Item1[] PROGMEM = "Super A'can";
+static const char* const consoles90Options[] PROGMEM = { consoles90Item1, string_reset2 };
 
 // Handhelds submenu
 static const char handheldsItem1[] PROGMEM = "Virtual Boy";
@@ -1320,8 +1344,8 @@ void addonMenu() {
   // create menu with title and 5 options to choose from
   unsigned char addonsMenu;
   // Copy menuOptions out of progmem
-  convertPgm(addonsOptions, 5);
-  addonsMenu = question_box(F("Type"), menuOptions, 5, 0);
+  convertPgm(addonsOptions, 6);
+  addonsMenu = question_box(F("Type"), menuOptions, 6, 0);
 
   // wait for user choice to come back from the question box menu
   switch (addonsMenu) {
@@ -1335,13 +1359,17 @@ void addonMenu() {
       consoles80Menu();
       break;
 
-    // Handhelds
     case 2:
+      consoles90Menu();
+      break;
+
+    // Handhelds
+    case 3:
       handheldMenu();
       break;
 
 #ifdef enable_FLASH
-    case 3:
+    case 4:
 #ifdef enable_FLASH16
       flashMenu();
 #else
@@ -1350,7 +1378,7 @@ void addonMenu() {
       break;
 #endif
 
-    case 4:
+    case 5:
       resetArduino();
       break;
 
@@ -1366,7 +1394,6 @@ void consoles70Menu() {
   // Copy menuOptions out of progmem
   convertPgm(consoles70Options, 7);
   consoles70Menu = question_box(F("Choose Adapter"), menuOptions, 7, 0);
-
   // wait for user choice to come back from the question box menu
   switch (consoles70Menu) {
 #ifdef enable_ATARI
@@ -1462,6 +1489,31 @@ void consoles80Menu() {
 
     default:
       print_MissingModule();  // does not return
+  }
+}
+
+// Everything that needs an adapter
+void consoles90Menu() {
+  unsigned char consoles90Menu;
+  // Copy menuOptions out of progmem
+  convertPgm(consoles90Options, 2);
+  consoles90Menu = question_box(F("Choose Adapter"), menuOptions, 2, 0);
+
+  // wait for user choice to come back from the question box menu
+  switch (consoles90Menu) {
+#ifdef enable_SUPRACAN
+    case 0:
+      setup_SuprAcan();
+      break;
+#endif
+
+    case 1:
+      resetArduino();
+      break;
+
+    default:
+      print_MissingModule();  // does not return
+      break;
   }
 }
 
@@ -3518,6 +3570,11 @@ void loop() {
 #ifdef enable_FAIRCHILD
   else if (mode == mode_FAIRCHILD) {
     fairchildMenu();
+  }
+#endif
+#ifdef enable_SUPRACAN
+  else if (mode == mode_SUPRACAN) {
+    suprAcanMenu();
   }
 #endif
   else {
