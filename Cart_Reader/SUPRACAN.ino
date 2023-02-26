@@ -150,8 +150,8 @@ void suprAcanMenu() {
 static void readROM_Acan() {
   uint32_t crc32 = 0xffffffff;
 
-  EEPROM_readAnything(0, foldern);
-  snprintf(folder, FILEPATH_LENGTH, "/ACAN/ROM/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  snprintf_P(folder, FILEPATH_LENGTH, PSTR("/ACAN/ROM/%d"), foldern);
 
   display_Clear();
   print_STR(saving_to_STR, 0);
@@ -166,7 +166,7 @@ static void readROM_Acan() {
     print_FatalError(create_file_STR);
 
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   draw_progressbar(0, cartSize);
 
@@ -195,8 +195,8 @@ static void readROM_Acan() {
 
 static void readSRAM_Acan() {
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
-  snprintf(folder, FILEPATH_LENGTH, "/ACAN/SAVE/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  snprintf_P(folder, FILEPATH_LENGTH, PSTR("/ACAN/SAVE/%d"), foldern);
 
   display_Clear();
   print_STR(saving_to_STR, 0);
@@ -211,7 +211,7 @@ static void readSRAM_Acan() {
     print_FatalError(create_file_STR);
 
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   dataIn_MD();
   for (uint32_t i = 0; i < 0x10000; i += 1024) {
@@ -229,7 +229,7 @@ static void writeSRAM_Acan() {
   filePath[0] = 0;
   sd.chdir();
   fileBrowser(F("Select a file"));
-  snprintf(filePath, FILEPATH_LENGTH, "%s/%s", filePath, fileName);
+  snprintf_P(filePath, FILEPATH_LENGTH, PSTR("%s/%s"), filePath, fileName);
 
   display_Clear();
 
@@ -293,8 +293,8 @@ static void verifySRAM_Acan() {
 
 static void readUM6650() {
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
-  snprintf(folder, sizeof(folder), "/ACAN/UM6650/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  snprintf_P(folder, sizeof(folder), PSTR("/ACAN/UM6650/%d"), foldern);
 
   display_Clear();
   print_STR(saving_to_STR, 0);
@@ -309,7 +309,7 @@ static void readUM6650() {
     print_FatalError(create_file_STR);
 
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   for (uint16_t i = 0; i < 256; i++) {
     dataOut_MD();
@@ -362,7 +362,7 @@ static void writeUM6650() {
   filePath[0] = 0;
   sd.chdir("/");
   fileBrowser(F("Select a file"));
-  snprintf(filePath, FILEPATH_LENGTH, "%s/%s", filePath, fileName);
+  snprintf_P(filePath, FILEPATH_LENGTH, PSTR("%s/%s"), filePath, fileName);
 
   display_Clear();
 
@@ -397,7 +397,7 @@ static void flashCart_Acan() {
   filePath[0] = 0;
   sd.chdir();
   fileBrowser(F("Select a file"));
-  snprintf(filePath, FILEPATH_LENGTH, "%s/%s", filePath, fileName);
+  snprintf_P(filePath, FILEPATH_LENGTH, PSTR("%s/%s"), filePath, fileName);
 
   display_Clear();
 
