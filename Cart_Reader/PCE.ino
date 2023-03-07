@@ -622,6 +622,11 @@ void read_tennokoe_bank_PCE(int bank_index) {
 
   //Close the file:
   myFile.close();
+
+  println_Msg(F(""));
+  print_STR(press_button_STR, 1);
+  display_Update();
+  wait();
 }
 
 void write_tennokoe_bank_PCE(int bank_index) {
@@ -713,11 +718,15 @@ void write_tennokoe_bank_PCE(int bank_index) {
     // Close the file:
     myFile.close();
     println_Msg(F("Finished"));
-    display_Update();
-    wait();
+
   } else {
     print_Error(F("File doesn't exist"));
   }
+
+  println_Msg(F(""));
+  print_STR(press_button_STR, 1);
+  display_Update();
+  wait();
 }
 
 void read_rom_PCE(void) {
@@ -803,6 +812,11 @@ void read_rom_PCE(void) {
 
   //CRC search and rename ROM
   crc_search(fileName, folder, rom_size, crc);
+
+  println_Msg(F(""));
+  print_STR(press_button_STR, 1);
+  display_Update();
+  wait();
 }
 
 // PC Engine Menu
@@ -841,17 +855,14 @@ void pceMenu() {
         if (tennokoe_bank_index < 3) {
           tennokoe_bank_index++;
         }
-        pceMenu();
         break;
       case 4:
         if (tennokoe_bank_index > 0) {
           tennokoe_bank_index--;
         }
-        pceMenu();
         break;
       case 5:
         pce_force_rom_size = FORCED_SIZE;
-        pceMenu();
         break;
       case 6:
         resetArduino();
@@ -873,12 +884,6 @@ void pceMenu() {
         break;
     }
   }
-
-  println_Msg(F(""));
-  // Prints string out of the common strings array either with or without newline
-  print_STR(press_button_STR, 1);
-  display_Update();
-  wait();
 }
 
 void adapter_Setting() {
