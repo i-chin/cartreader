@@ -63,7 +63,7 @@ static const char menuOptionspceCart_1[] PROGMEM = "Read RAM Bank %d";
 static const char menuOptionspceCart_2[] PROGMEM = "Write RAM Bank %d";
 static const char menuOptionspceCart_3[] PROGMEM = "Inc Bank Number";
 static const char menuOptionspceCart_4[] PROGMEM = "Dec Bank Number";
-static const char menuOptionspceCart_5[] PROGMEM = "Force 1MB ROM size";
+static const char menuOptionspceCart_5[] PROGMEM = "Set %dK ROM size";
 static const char menuOptionspceCart_5_fmt[] PROGMEM = "ROM size now %dK";
 
 // Turbochip menu items
@@ -818,12 +818,12 @@ void pceMenu() {
     sprintf_P(menuOptions[2], menuOptionspceCart_2, tennokoe_bank_index + 1);
     strcpy_P(menuOptions[3], menuOptionspceCart_3);
     strcpy_P(menuOptions[4], menuOptionspceCart_4);
-    strcpy_P(menuOptions[5], menuOptionspceCart_5);
     if (pce_force_rom_size > 0) {
-      sprintf_P(menuOptions[6], menuOptionspceCart_6_fmt, pce_force_rom_size);
+      sprintf_P(menuOptions[5], menuOptionspceCart_5_fmt, pce_force_rom_size);
     } else {
-      strcpy_P(menuOptions[6], menuOptionspceCart_6);
+      sprintf_P(menuOptions[5], menuOptionspceCart_5, FORCED_SIZE);
     }
+    strcpy_P(menuOptions[6], string_reset2);
     mainMenu = question_box(adapterSwap == 1 ? F("PCE HuCARD menu(SWAP)") : F("PCE HuCARD menu(NOSWAP)"), menuOptions, 7, 0);
 
     // wait for user choice to come back from the question box menu
