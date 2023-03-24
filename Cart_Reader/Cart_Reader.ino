@@ -144,7 +144,7 @@ char ver[5] = "12.4";
 // PC Engine/TurboGrafx 16
 //#define enable_PCE
 
-// Sega Master System
+// Sega Master System/Mark III/Game Gear/SG-1000
 #define enable_SMS
 
 // Sega Mega Drive/Genesis
@@ -165,7 +165,7 @@ char ver[5] = "12.4";
 // Watara Supervision
 //#define enable_WSV
 
-// WonderSwan
+// WonderSwan and Benesse Pocket Challenge v2
 //#define enable_WS
 
 // Super A'can
