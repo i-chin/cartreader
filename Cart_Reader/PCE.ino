@@ -79,7 +79,7 @@ static const char *const menuOptionsAdapter[] PROGMEM = { pceAdapterMenuItem1, p
 void pcsMenu(void) {
   byte adapterSwap;
   EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
-  vselect(false);
+  setVoltage(VOLTS_SET_5V);
   // create menu with title and 4 options to choose from
   unsigned char pceDev;
   // Copy menuOptions out of progmem
@@ -849,25 +849,31 @@ void pceMenu() {
       case 0:
         read_rom_PCE();
         break;
+
       case 1:
         read_tennokoe_bank_PCE(tennokoe_bank_index);
         break;
+
       case 2:
         write_tennokoe_bank_PCE(tennokoe_bank_index);
         break;
+
       case 3:
         if (tennokoe_bank_index < 3) {
           tennokoe_bank_index++;
         }
         break;
+
       case 4:
         if (tennokoe_bank_index > 0) {
           tennokoe_bank_index--;
         }
         break;
+
       case 5:
         pce_force_rom_size = FORCED_SIZE;
         break;
+
       case 6:
         resetArduino();
         break;
