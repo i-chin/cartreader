@@ -287,11 +287,11 @@ void readSRAM_SV() {
   controlIn_SNES();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy_P(fileName, PSTR("BSX.srm"));
+  strcpy(fileName, "BSX.srm");
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("SNES/SAVE/BSX/%d"), foldern);
+  sprintf(folder, "SNES/SAVE/BSX/%d", foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -333,7 +333,7 @@ void writeSRAM_SV() {
   sd.chdir("/");
   fileBrowser(F("Select srm file"));
   // Create filepath
-  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
+  sprintf(filePath, "%s/%s", filePath, fileName);
   //clear the screen
   display_Clear();
 
@@ -418,11 +418,11 @@ void readROM_SV() {
   controlIn_SNES();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy_P(fileName, PSTR("MEMPACK.bs"));
+  strcpy(fileName, "MEMPACK.bs");
 
   // create a new folder for the save file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("SNES/ROM/%s/%d"), PSTR("MEMPACK"), foldern);
+  sprintf(folder, "SNES/ROM/%s/%d", "MEMPACK", foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -466,10 +466,10 @@ void writeROM_SV(void) {
   // Get Checksum as string to make sure that BS-X cart is inserted
   dataIn();
   controlIn_SNES();
-  sprintf_P(checksumStr, PSTR("%02X%02X"), readBank_SV(0, 65503), readBank_SV(0, 65502));
+  sprintf(checksumStr, "%02X%02X", readBank_SV(0, 65503), readBank_SV(0, 65502));
 
   //if CRC is not 8B86, BS-X cart is not inserted. Display error and reset
-  if (strcmp_P(PSTR("8B86"), checksumStr) != 0) {
+  if (strcmp("8B86", checksumStr) != 0) {
     display_Clear();
     print_FatalError(F("Error: Must use BS-X cart"));
   }
@@ -479,7 +479,7 @@ void writeROM_SV(void) {
   sd.chdir("/");
   fileBrowser(F("Select BS file"));
   // Create filepath
-  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
+  sprintf(filePath, "%s/%s", filePath, fileName);
   display_Clear();
 
   //open file on sd card
