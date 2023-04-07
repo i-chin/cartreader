@@ -314,6 +314,7 @@ void readSRAM_SV() {
 
   //startBank = 0x10; endBank = 0x17; CS low
   for (byte BSBank = 0x10; BSBank < 0x18; BSBank++) {
+    draw_progressbar(((BSBank - 0x10) * 0x1000), 32768);
     //startAddr = 0x5000
     for (long currByte = 0x5000; currByte < 0x6000; currByte += 512) {
       for (unsigned long c = 0; c < 512; c++) {
@@ -321,7 +322,6 @@ void readSRAM_SV() {
       }
       myFile.write(sdBuffer, 512);
     }
-    draw_progressbar(((BSBank - 0x10) * 0x1000), 32768);
  }
   draw_progressbar(32768, 32768);
   delay(100);
@@ -359,13 +359,13 @@ void writeSRAM_SV() {
     for (byte currBank = 0x10; currBank < 0x18; currBank++) {
       //startAddr = 0x5000
       for (long currByte = 0x5000; currByte < 0x6000; currByte += 512) {
+        draw_progressbar(((currBank - 0x10) * 0x1000), 32768);
         myFile.read(sdBuffer, 512);
         for (unsigned long c = 0; c < 512; c++) {
           //startBank = 0x10; CS low
           writeBank_SV(currBank, currByte + c, sdBuffer[c]);
         }
       }
-      draw_progressbar(((currBank - 0x10) * 0x1000), 32768);
     }
     // Finish progressbar
     draw_progressbar(32768, 32768);
