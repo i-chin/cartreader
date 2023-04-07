@@ -449,20 +449,10 @@ void getCartInfo_SMS() {
     }
   }
 
-<<<<<<< HEAD
-  // SMS header not found
-  if (strcmp_P(romName, PSTR("TMR SEGA")) != 0) {
-    // Set cartsize manually
-    unsigned char SMSRomMenu;
-    // Copy menuOptions out of progmem
-    convertPgm(romOptionsSMS, (raphnet_mode_sg1000 ? 4 : 7));
-    SMSRomMenu = question_box(F("Select ROM size"), menuOptions, (raphnet_mode_sg1000 ? 4 : 7), 0);
-=======
   // If "TMR SEGA" header is not found
-  if (strcmp(romName, "TMR SEGA") != 0) { 
+  if (strcmp_P(romName, PSTR("TMR SEGA")) != 0) { 
     // Set rom size manually
     unsigned char SMSRomSize;
->>>>>>> ff31141f7ece64fa84e26b730225aa3757d0e334
 
     if (system_sg1000) {
       // Rom sizes for SG-1000
@@ -563,27 +553,15 @@ void readROM_SMS() {
   // Get name, add extension depending on the system and convert to char array for sd lib
   EEPROM_readAnything(FOLDER_NUM, foldern);
   strcpy(fileName, romName);
-<<<<<<< HEAD
-  if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
-    strcat_P(fileName, PSTR(".gg"));
-    sprintf_P(folder, PSTR("GG/ROM/%s/%d"), romName, foldern);
-  } else if (raphnet_mode_sg1000) {
-    strcat_P(fileName, PSTR(".sg"));
-    sprintf_P(folder, PSTR("SG1000/ROM/%s/%d"), romName, foldern);
-  } else {
-    strcat_P(fileName, PSTR(".sms"));
-    sprintf_P(folder, PSTR("SMS/ROM/%s/%d"), romName, foldern);
-=======
   if (system_sms) {
-    strcat(fileName, ".sms");
+    strcat_P(fileName, PSTR(".sms"));
     sprintf(folder, "SMS/ROM/%s/%d", romName, foldern);
   } else if (system_gg) {
-    strcat(fileName, ".gg");
-    sprintf(folder, "GG/ROM/%s/%d", romName, foldern);
+    strcat_P(fileName, PSTR(".gg"));
+    sprintf_P(folder, PSTR("GG/ROM/%s/%d"), romName, foldern);
   } else {
-    strcat(fileName, ".sg");
-    sprintf(folder, "SG1000/ROM/%s/%d", romName, foldern);
->>>>>>> ff31141f7ece64fa84e26b730225aa3757d0e334
+    strcat_P(fileName, PSTR(".sg"));
+    sprintf_P(folder, PSTR("SG1000/ROM/%s/%d"), romName, foldern);
   }
 
   // Create a new folder
@@ -684,16 +662,9 @@ void readSRAM_SMS() {
   strcpy(fileName, romName);
   strcat_P(fileName, PSTR(".sav"));
 
-<<<<<<< HEAD
-  // create a new folder
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  if ((retrode_mode && !retrode_mode_sms) || retron_mode) {
-    sprintf_P(folder, PSTR("GG/SAVE/%s/%d"), romName, foldern);
-=======
-  EEPROM_readAnything(0, foldern);
   if (system_gg) {
-    sprintf(folder, "GG/SAVE/%s/%d", romName, foldern);
->>>>>>> ff31141f7ece64fa84e26b730225aa3757d0e334
+    sprintf_P(folder, PSTR("GG/SAVE/%s/%d"), romName, foldern);
   } else {
     sprintf_P(folder, PSTR("SMS/SAVE/%s/%d"), romName, foldern);
   }
