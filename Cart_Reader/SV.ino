@@ -322,7 +322,8 @@ void readSRAM_SV() {
       }
       myFile.write(sdBuffer, 512);
     }
- }
+  }
+  // Finish progressbar
   draw_progressbar(32768, 32768);
   delay(100);
   // Close the file:
@@ -357,9 +358,9 @@ void writeSRAM_SV() {
 
     // Write to sram bank
     for (byte currBank = 0x10; currBank < 0x18; currBank++) {
+      draw_progressbar(((currBank - 0x10) * 0x1000), 32768);
       //startAddr = 0x5000
       for (long currByte = 0x5000; currByte < 0x6000; currByte += 512) {
-        draw_progressbar(((currBank - 0x10) * 0x1000), 32768);
         myFile.read(sdBuffer, 512);
         for (unsigned long c = 0; c < 512; c++) {
           //startBank = 0x10; CS low
@@ -519,8 +520,8 @@ void writeROM_SV(void) {
     println_Msg(F("Blank check..."));
     display_Update();
     for (int currBank = 0xC0; currBank < 0xD0; currBank++) {
-      draw_progressbar(((currBank - 0xC0) * 0x10000), 0x100000);
       for (long currByte = 0; currByte < 65536; currByte++) {
+        draw_progressbar(((currBank - 0xC0) * 0x10000) + currByte, 0x100000);
         if (0xFF != readBank_SV(currBank, currByte)) {
           println_Msg(F(""));
           println_Msg(F("Erase failed"));
@@ -539,9 +540,8 @@ void writeROM_SV(void) {
     println_Msg(F("Writing pack..."));
     display_Update();
     for (int currBank = 0xC0; currBank < 0xD0; currBank++) {
-      draw_progressbar(((currBank - 0xC0) * 0x10000), 0x100000);
       for (long currByte = 0; currByte < 65536; currByte++) {
-
+        draw_progressbar(((currBank - 0xC0) * 0x10000) + currByte, 0x100000);
         writeBank_SV(0xC0, 0x0000, 0x10);  //Program Byte
         writeBank_SV(currBank, currByte, myFile.read());
         writeBank_SV(0xC0, 0x0000, 0x70);  //Status Mode
@@ -562,8 +562,8 @@ void writeROM_SV(void) {
     print_STR(verifying_STR, 1);
     display_Update();
     for (int currBank = 0xC0; currBank < 0xD0; currBank++) {
-      draw_progressbar(((currBank - 0xC0) * 0x10000), 0x100000);
       for (long currByte = 0; currByte < 65536; currByte++) {
+        draw_progressbar(((currBank - 0xC0) * 0x10000) + currByte, 0x100000);
         if (myFile.read() != readBank_SV(currBank, currByte)) {
           println_Msg(F(""));
           println_Msg(F("Verify failed"));
