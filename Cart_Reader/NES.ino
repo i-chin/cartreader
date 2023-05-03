@@ -118,6 +118,7 @@ static const byte PROGMEM mapsize[] = {
   140, 3, 3, 3, 5, 0, 0,  // jaleco jf-11/jf-14
   142, 1, 3, 0, 0, 0, 0,  // UNL-KS7032 [UNLICENSED]
   146, 1, 2, 2, 3, 0, 0,  // Sachen 3015 [UNLICENSED]
+  148, 1, 2, 0, 4, 0, 0,  // Sachen SA-0037 & Tengen 800008 [UNLICENSED]
   // 151 - bad mapper, not used
   152, 2, 3, 5, 5, 0, 0,  // BANDAI-74*161/161/32
   153, 5, 5, 0, 0, 1, 1,  // (famicom jump ii)                                 [sram r/w]
@@ -208,13 +209,13 @@ const char _file_name_with_number_fmt[] PROGMEM = "%s.%02d.%s";
 byte mapcount = (sizeof(mapsize) / sizeof(mapsize[0])) / 7;
 byte mapselect;
 
-const int PRG[] PROGMEM = { 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
+const int PRG[] PROGMEM = { 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768 };
 byte prglo = 0;  // Lowest Entry
-byte prghi = 8;  // Highest Entry
+byte prghi = 11;  // Highest Entry
 
-const int CHR[] PROGMEM = { 0, 8, 16, 32, 64, 128, 256, 512, 1024 };
+const int CHR[] PROGMEM = { 0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
 byte chrlo = 0;  // Lowest Entry
-byte chrhi = 8;  // Highest Entry
+byte chrhi = 10;  // Highest Entry
 
 const byte RAM[] PROGMEM = { 0, 8, 16, 32 };
 byte ramlo = 0;  // Lowest Entry
@@ -224,16 +225,17 @@ int banks;
 int prg;
 int chr;
 byte ram;
-boolean vrc4e = false;
+bool vrc4e = false;
 byte prgchk0;
 byte prgchk1;
-boolean mmc6 = false;
+bool mmc6 = false;
 byte prgchk2;
 byte prgchk3;
 word eepsize;
 byte bytecheck;
 byte firstbyte;
-boolean flashfound = false;  // NESmaker 39SF040 Flash Cart
+bool flashfound = false;  // NESmaker 39SF040 Flash Cart
+bool busConflict = false;
 
 // Cartridge Config
 byte mapper;
@@ -567,14 +569,14 @@ void getMapping() {
   }
   oldcrc32 = ~oldcrc32;
   oldcrc32MMC3 = ~oldcrc32MMC3;
-  boolean browseDatabase;
+  bool browseDatabase;
 
   // Filter out all 0xFF checksums at 0x8000 and 0xE000
   if (oldcrc32 == 0xBD7BC39F && oldcrc32MMC3 == 0xBD7BC39F) {
     println_Msg(F("No data found."));
     println_Msg(F("Using manual selection"));
     display_Update();
-    delay(1000);
+    delay(500);
     setDefaultRomName();
     browseDatabase = selectMapping(database);
   } else {
@@ -775,7 +777,7 @@ static void readDatabaseEntry(FsFile& database, struct database_entry* entry) {
   entry->crc512 = strtoul(entry->crc512_str, NULL, 16);
 }
 
-boolean selectMapping(FsFile& database) {
+bool selectMapping(FsFile& database) {
   // Select starting letter
   byte myLetter = starting_letter();
 
@@ -1743,7 +1745,7 @@ chooseMapper:
   newmapper = hundreds * 100 + tens * 10 + units;
 
   // Check if valid
-  boolean validMapper = 0;
+  bool validMapper = 0;
   byte mapcount = (sizeof(mapsize) / sizeof(mapsize[0])) / 7;
   for (byte currMaplist = 0; currMaplist < mapcount; currMaplist++) {
     if (pgm_read_byte(mapsize + currMaplist * 7) == newmapper)
@@ -1817,13 +1819,13 @@ chooseMapper:
   print_Msg(newmapper);
   println_Msg(F(" SELECTED"));
   display_Update();
-  delay(1000);
+  delay(500);
 
   // Serial Monitor
 #elif defined(enable_serial)
 setmapper:
   String newmap;
-  boolean mapfound = false;
+  bool mapfound = false;
   Serial.println(F("SUPPORTED MAPPERS:"));
   for (int i = 0; i < mapcount; i++) {
     int index = i * 7;
@@ -1963,7 +1965,7 @@ void setPRGSize() {
   print_Msg(pgm_read_word(&(PRG[newprgsize])));
   println_Msg(F("K"));
   display_Update();
-  delay(1000);
+  delay(500);
 
 #elif defined(enable_serial)
   if (prglo == prghi)
@@ -2083,7 +2085,7 @@ void setCHRSize() {
   print_Msg(pgm_read_word(&(CHR[newchrsize])));
   println_Msg(F("K"));
   display_Update();
-  delay(1000);
+  delay(500);
 
 #elif defined(enable_serial)
   if (chrlo == chrhi)
@@ -2274,7 +2276,7 @@ void setRAMSize() {
     println_Msg(F("K"));
   }
   display_Update();
-  delay(1000);
+  delay(500);
 
 #elif defined(enable_serial)
   if (ramlo == ramhi)
@@ -2495,7 +2497,7 @@ void writeMMC5RAM(word base, word address) {  // MMC5 SRAM WRITE
   write_prg_byte(0x5103, 0);  // PRG RAM PROTECT2
 }
 
-void readPRG(boolean readrom) {
+void readPRG(bool readrom) {
   if (!readrom) {
     display_Clear();
     display_Update();
@@ -2546,6 +2548,7 @@ void readPRG(boolean readrom) {
         break;
 
       case 2:  // bus conflicts - fixed last bank
+      case 30: // bus conflicts in non-flashable configuration
         banks = int_pow(2, prgsize);
         busConflict = true;
         for (int i = 0; i < banks - 1; i++) {
@@ -2776,19 +2779,6 @@ void readPRG(boolean readrom) {
           write_prg_byte(0x5000, 0x81);
           write_prg_byte(0x8000, i);
           for (word address = 0x0; address < 0x8000; address += 512) {
-            dumpPRG(base, address);
-          }
-        }
-        break;
-
-      case 30:  // 256K/512K
-        banks = int_pow(2, prgsize);
-        for (int i = 0; i < banks; i++) {  // 256K/512K
-          if (flashfound)
-            write_prg_byte(0xC000 + i, i);  // Flashable
-          else
-            write_prg_byte(0x8000 + i, i);                              // Non-Flashable
-          for (word address = 0x0; address < 0x4000; address += 512) {  // 16K Banks ($8000-$BFFF)
             dumpPRG(base, address);
           }
         }
@@ -3379,6 +3369,26 @@ void readPRG(boolean readrom) {
           }
         }
         break;
+        
+      case 148:  // Sachen SA-008-A and Tengen 800008 -- Bus conflicts
+        banks = int_pow(2, prgsize) / 2;
+        busConflict = true;
+        for (int i = 0; i < banks; i++) {
+          for (int x = 0; x < 0x8000; x++) {
+            if (read_prg_byte(0x8000 + x) == i) {
+              write_prg_byte(0x8000 + x, i << 3);
+              busConflict = false;
+              break;
+            }
+          }
+          if (busConflict) {
+            write_prg_byte(0x8000 + i, i << 3);
+          }
+          for (word address = 0x0; address < 0x8000; address += 512) {
+            dumpPRG(base, address);
+          }
+        }
+        break;
 
       case 153:  // 512K
         banks = int_pow(2, prgsize);
@@ -3707,7 +3717,7 @@ void readPRG(boolean readrom) {
   LED_BLUE_OFF;
 }
 
-void readCHR(boolean readrom) {
+void readCHR(bool readrom) {
   if (!readrom) {
     display_Clear();
     display_Update();
@@ -4458,6 +4468,26 @@ void readCHR(boolean readrom) {
           banks = int_pow(2, chrsize) / 2;
           for (int i = 0; i < banks; i++) {  // 8K Banks
             write_prg_byte(0x6000, i);
+            for (word address = 0x0; address < 0x2000; address += 512) {
+              dumpCHR(address);
+            }
+          }
+          break;
+          
+        case 148:  // Sachen SA-008-A and Tengen 800008 -- Bus conflicts
+          banks = int_pow(2, chrsize);
+          busConflict = true;
+          for (int i = 0; i < banks; i++) {
+            for (int x = 0; x < 0x8000; x++) {
+              if (read_prg_byte(0x8000 + x) == i) {
+                write_prg_byte(0x8000 + x, i & 0x07);
+                busConflict = false;
+                break;
+              }
+            }
+            if (busConflict) {
+              write_prg_byte(0x8000 + i, i & 0x07);
+            }
             for (word address = 0x0; address < 0x2000; address += 512) {
               dumpCHR(address);
             }
