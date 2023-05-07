@@ -81,7 +81,12 @@
 /******************************************
    Libraries
  *****************************************/
-
+/*
+#include <iSdio.h>
+#include <utility/Sd2CardExt.h>
+const int chipSelectPin = 4;
+Sd2CardExt card;
+*/
 // SD Card
 #include "SdFat.h"
 SdFs sd;
