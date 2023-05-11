@@ -109,8 +109,9 @@ static const byte PROGMEM mapsize[] = {
   // 100 - bad mapper, not used
   // 101 - bad mapper, not used
   105, 4, 4, 0, 0, 0, 0,  // (nintendo world Championships 1990) [UNTESTED]
-  113, 1, 4, 0, 5, 0, 0,  // NINA-03/06 [UNLICENSED]
   111, 5, 5, 0, 0, 0, 0,  // GTROM [UNLICENSED]
+  113, 1, 4, 0, 5, 0, 0,  // NINA-03/06 [UNLICENSED]
+  114, 3, 4, 5, 6, 0, 0,  // SuperGame MMC3-clone [UNLICENSED]
   118, 3, 4, 5, 5, 0, 1,  // txsrom/mmc3                                       [sram r/w]
   119, 3, 3, 4, 4, 0, 0,  // tqrom/mmc3
   126, 1, 8, 0, 8, 0, 0,  // MMC3-based multicart (PJ-008, AT-207) [UNLICENSED]
@@ -3320,6 +3321,18 @@ void readPRG(bool readrom) {
           }
         }
         break;
+        
+      case 114:  // Submapper 0
+        banks = int_pow(2, prgsize) * 2;
+        write_prg_byte(0x6000, 0);
+        for (int i = 0; i < banks; i++) {
+          write_prg_byte(0xA000, 4);
+          write_prg_byte(0xC000, i);
+          for (word address = 0x0; address < 0x2000; address += 512) {
+            dumpPRG(base, address);
+          }
+        }
+        break;
 
       case 126:
         banks = int_pow(2, prgsize) * 2;
@@ -3577,13 +3590,14 @@ void readPRG(bool readrom) {
 
       case 228:
         banks = int_pow(2, prgsize);
+        write_prg_byte(0x8000, 0);
         for (int i = 0; i < banks; i += 2) {  // up to 1024k PRG
           write_prg_byte(0x8000 + ((i & 0x3F) << 6), 0);
           for (word address = 0x0; address < 0x8000; address += 512) {
             dumpPRG(base, address);
           }
         }
-        if (prgsize > 6) {  // reading the 3rd 512k PRG chip (Action 52)
+        if (prgsize > 5) {  // reading the 3rd 512k PRG chip (Action 52)
           for (int i = 0; i < 32; i += 2) {
             write_prg_byte(0x9800 + ((i & 0x1F) << 6), 0);
             for (word address = 0x0; address < 0x8000; address += 512) {
@@ -4432,6 +4446,18 @@ void readCHR(bool readrom) {
             }
           }
           break;
+          
+        case 114:  // Submapper 0
+          banks = int_pow(2, chrsize) * 4;
+          for (int i = 0; i < banks; i++) {
+            write_prg_byte(0x6000, (i & 0x80) >> 7);
+            write_prg_byte(0xA000, 6);
+            write_prg_byte(0xC000, i);
+            for (word address = 0x1000; address < 0x1400; address += 512) {
+              dumpCHR(address);
+            }
+          }
+          break;
 
         case 126:
           banks = int_pow(2, chrsize) * 2;
@@ -4637,8 +4663,9 @@ void readCHR(bool readrom) {
 
         case 228:
           banks = int_pow(2, chrsize) / 2;
+          write_prg_byte(0x8000, 0);
           for (int i = 0; i < banks; i++) {
-            write_prg_byte((0x8000 + (i & 0x3C)) >> 2, (i & 0x03));
+            write_prg_byte(0x8000 + ((i & 0x3C) >> 2), i & 0x03);
             for (word address = 0x0; address < 0x2000; address += 512) {
               dumpCHR(address);
             }
