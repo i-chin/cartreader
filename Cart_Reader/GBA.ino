@@ -900,7 +900,7 @@ void readROM_GBA() {
 	char tempStr[32];
 	myFile.seek(0x1FFFEFF);
 	myFile.read(padding_byte, 1);
-	sprintf(tempStr, "Fixing ROM padding (0x%02X)", padding_byte[0]);
+	sprintf_P(tempStr, PSTR("Fixing ROM padding (0x%02X)"), padding_byte[0]);
 	println_Msg(tempStr);
 	memset(padding_byte+1, padding_byte[0], 255);
 	myFile.write(padding_byte, 256);
