@@ -743,7 +743,7 @@ void getCartInfo_MD() {
   }
 
   //Identify games using SVP chip
-  if (!strncmp("GM MK-1229 ", id, 11) || !strncmp("GM G-7001  ", id, 11)) // Virtua Racing (E/U/J)
+  if (!strncmp_P(PSTR("GM MK-1229 "), id, 11) || !strncmp_P(PSTR("GM G-7001  "), id, 11)) // Virtua Racing (E/U/J)
     isSVP = 1;
   else
     isSVP = 0;
