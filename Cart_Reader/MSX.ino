@@ -366,11 +366,11 @@ void readROM_MSX() {
     display_Update();
   } else {
     strcpy(fileName, romName);
-    strcat(fileName, ".bin");
+    strcat_P(fileName, PSTR(".bin"));
 
     // create a new folder for storing rom file
-    EEPROM_readAnything(0, foldern);
-    sprintf(folder, "MSX/ROM/%d", foldern);
+    EEPROM_readAnything(FOLDER_NUM, foldern);
+    sprintf_P(folder, PSTR("MSX/ROM/%d"), foldern);
     sd.mkdir(folder, true);
     sd.chdir(folder);
 
@@ -386,7 +386,7 @@ void readROM_MSX() {
 
     // write new folder number back to EEPROM
     foldern++;
-    EEPROM_writeAnything(0, foldern);
+    EEPROM_writeAnything(FOLDER_NUM, foldern);
 
     switch (msxmapper) {
       case 0:  // No Mapper
@@ -623,8 +623,8 @@ void readRAM_MSX() {
 
     if (msxsize == 0) {
       // create a new folder for storing ram file
-      EEPROM_readAnything(0, foldern);
-      sprintf(folder, "MSX/RAM/%d", foldern);
+      EEPROM_readAnything(FOLDER_NUM, foldern);
+      sprintf_P(folder, PSTR("MSX/RAM/%d"), foldern);
       sd.mkdir(folder, true);
       sd.chdir(folder);
     }
@@ -642,7 +642,7 @@ void readRAM_MSX() {
     if (msxsize == 0) {
       // write new folder number back to EEPROM
       foldern++;
-      EEPROM_writeAnything(0, foldern);
+      EEPROM_writeAnything(FOLDER_NUM, foldern);
     }
 
     switch (msxmapper) {
@@ -742,7 +742,7 @@ void writeRAM_MSX() {
   } else {
     fileBrowser(F("Select RAM File"));
     sd.chdir();
-    sprintf(filePath, "%s/%s", filePath, fileName);
+    sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
     display_Clear();
     println_Msg(F("Writing File: "));
     println_Msg(filePath);
@@ -1000,7 +1000,7 @@ setmapper:
     goto setmapper;
   }
 #endif
-  EEPROM_writeAnything(7, newmsxmapper);
+  EEPROM_writeAnything(MSX_MAPPER, newmsxmapper);
   msxmapper = newmsxmapper;
 }
 
@@ -1155,7 +1155,7 @@ setrom:
     Serial.print(MSX[newmsxsize]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(8, newmsxsize);
+  EEPROM_writeAnything(MSX_ROM_SIZE, newmsxsize);
   msxsize = newmsxsize;
 }
 
@@ -1287,7 +1287,7 @@ setram:
   Serial.print(MSXRAM[newmsxramsize]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(10, newmsxramsize);
+  EEPROM_writeAnything(MSX_RAM_SIZE, newmsxramsize);
   msxramsize = newmsxramsize;
 }
 
@@ -1295,20 +1295,20 @@ setram:
 // CHECK STATUS
 //******************************************
 void checkStatus_MSX() {
-  EEPROM_readAnything(7, msxmapper);
-  EEPROM_readAnything(8, msxsize);
-  EEPROM_readAnything(10, msxramsize);
+  EEPROM_readAnything(MSX_MAPPER, msxmapper);
+  EEPROM_readAnything(MSX_ROM_SIZE, msxsize);
+  EEPROM_readAnything(MSX_RAM_SIZE, msxramsize);
   if (msxmapper > 13) {
     msxmapper = 0;
-    EEPROM_writeAnything(7, msxmapper);
+    EEPROM_writeAnything(MSX_MAPPER, msxmapper);
   }
   if (msxsize > 8) {
     msxsize = 0;
-    EEPROM_writeAnything(8, msxsize);
+    EEPROM_writeAnything(MSX_ROM_SIZE, msxsize);
   }
   if (msxramsize > 4) {
     msxramsize = 0;
-    EEPROM_writeAnything(10, msxramsize);
+    EEPROM_writeAnything(MSX_RAM_SIZE, msxramsize);
   }
 
 #if (defined(enable_OLED) || defined(enable_LCD))
@@ -1561,9 +1561,9 @@ bool getCartListInfo_MSX() {
           newmsxmapper = strtol(msxmm, NULL, 10);
           newmsxsize = strtol(msxrr, NULL, 10);
           newmsxramsize = strtol(msxss, NULL, 10);
-          EEPROM_writeAnything(7, newmsxmapper);
-          EEPROM_writeAnything(8, newmsxsize);
-          EEPROM_writeAnything(10, newmsxramsize);
+          EEPROM_writeAnything(MSX_MAPPER, newmsxmapper);
+          EEPROM_writeAnything(MSX_ROM_SIZE, newmsxsize);
+          EEPROM_writeAnything(MSX_RAM_SIZE, newmsxramsize);
           cartselected = 1;  // SELECTION MADE
 #if (defined(enable_OLED) || defined(enable_LCD))
           println_Msg(F("SELECTION MADE"));
@@ -1639,7 +1639,7 @@ void setCart_MSX() {
   display_Update();
 #endif
   sd.chdir();
-  sprintf(folder, "MSX/CSV");
+  sprintf_P(folder, PSTR("MSX/CSV"));
   sd.chdir(folder);  // Switch Folder
   msxcsvFile = sd.open(msxcartCSV, O_READ);
   if (!msxcsvFile) {

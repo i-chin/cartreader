@@ -143,7 +143,7 @@ void setup_POKE() {
   PORTL = 0xFF;       // A16-A23
   PORTJ |= (1 << 0);  // TIME(PJ0)
 
-  strcpy(romName, "POKEMINI");
+  strcpy_P(romName, PSTR("POKEMINI"));
 
   mode = mode_POKE;
 }
@@ -241,11 +241,11 @@ void writeData_POKE(uint32_t addr, uint8_t data) {
 
 void readROM_POKE() {
   strcpy(fileName, romName);
-  strcat(fileName, ".min");
+  strcat_P(fileName, PSTR(".min"));
 
   // create a new folder for storing rom file
   EEPROM_readAnything(0, foldern);
-  sprintf(folder, "POKE/ROM/%d", foldern);
+  sprintf_P(folder, PSTR("POKE/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 

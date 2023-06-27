@@ -72,7 +72,11 @@
 #define COL_ROM_SIZE 20   // COLECOVISION ROM SIZE
 #define INTV_MAPPER 30    // INTELLIVISION MAPPER
 #define INTV_ROM_SIZE 31  // INTELLIVISION ROM SIZE
-#define WSV_ROM_SIZE 41   // WATARA SUPERVISION ROM SIZE
+#define WSV_ROM_SIZE 40   // WATARA SUPERVISION ROM SIZE
+#define MSX_MAPPER 50     // MSX MAPPER
+#define MSX_ROM_SIZE 51   // MSX ROM SIZE
+#define MSX_RAM_SIZE 52   // MSX RAM SIZE
+
 //******************************************
 // Config Revision
 //******************************************
@@ -3271,6 +3275,10 @@ void resetEEPROM() {
   EEPROM_writeAnything(COL_ROM_SIZE, (byte)0);            // COLECOVISION ROM SIZE
   EEPROM_writeAnything(INTV_MAPPER, (byte)0);             // INTELLIVISION MAPPER
   EEPROM_writeAnything(INTV_ROM_SIZE, (byte)0);           // INTELLIVISION ROM SIZE
+  EEPROM_writeAnything(WSV_ROM_SIZE, (byte)0);            // WATARA SUPERVISION ROM SIZE
+  EEPROM_writeAnything(MSX_MAPPER, (byte)0);              // MSX MAPPER
+  EEPROM_writeAnything(MSX_ROM_SIZE, (byte)0);            // MSX ROM SIZE
+  EEPROM_writeAnything(MSX_RAM_SIZE, (byte)0);            // MSX RAM SIZE
 
   delay(1000);
 }
