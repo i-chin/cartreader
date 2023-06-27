@@ -77,10 +77,14 @@ static const char *const menuOptionsAdapter[] PROGMEM = { pceAdapterMenuItem1, p
 
 // PCE start menu
 void pcsMenu(void) {
+<<<<<<< HEAD
   byte adapterSwap;
   EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
   setVoltage(VOLTS_SET_5V);
   // create menu with title and 4 options to choose from
+=======
+  // create menu with title and 3 options to choose from
+>>>>>>> 5b702249505b2cf0ac24989f66532f03d511d64a
   unsigned char pceDev;
   // Copy menuOptions out of progmem
   convertPgm(menuOptionspce, 4);
@@ -186,6 +190,9 @@ void pin_init_PCE(void) {
 }
 
 void setup_cart_PCE(void) {
+  // Request 5V
+  setVoltage(VOLTS_SET_5V);
+
   // Set cicrstPin(PG1) to Output
   DDRG |= (1 << 1);
   // Output a high to disable CIC

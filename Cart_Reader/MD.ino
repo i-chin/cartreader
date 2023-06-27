@@ -87,7 +87,7 @@ unsigned long bramSize = 0;
 boolean realtec = 0;
 
 #ifndef DEFAULT_VALUE_segaSram16bit
-  #define DEFAULT_VALUE_segaSram16bit 0
+#define DEFAULT_VALUE_segaSram16bit 0
 #endif
 int segaSram16bit = DEFAULT_VALUE_segaSram16bit;
 
@@ -185,7 +185,7 @@ void mdLoadConf() {
 #endif
 
 void pulse_clock(int n) {
-  for (int i=0; i<n; i++)
+  for (int i = 0; i < n; i++)
     PORTH ^= (1 << 1);
 }
 
@@ -217,7 +217,6 @@ static const char* const menuOptionsSCD[] PROGMEM = { SCDMenuItem1, SCDMenuItem2
 
 // Sega start menu
 void mdMenu() {
-  setVoltage(VOLTS_SET_5V);
   // create menu with title and 4 options to choose from
   unsigned char mdDev;
   // Copy menuOptions out of progmem
@@ -314,7 +313,7 @@ void mdCartMenu() {
           readRealtec_MD();
         } else {
           readROM_MD();
-          // Calculate and compare CRC32 with nointro
+          // Calculate and compare CRC32 with database
           if (is32x)
             //database, crcString, renamerom, offset
             compareCRC("32x.txt", 0, 1, 0);
@@ -464,6 +463,9 @@ void segaCDMenu() {
    Setup
  *****************************************/
 void setup_MD() {
+  // Request 5V
+  setVoltage(VOLTS_SET_5V);
+
 #ifdef use_md_conf
   mdLoadConf();
 #endif
@@ -1445,7 +1447,7 @@ void readROM_MD() {
       // Setting ASEL(PG5) LOW
       PORTG &= ~(1 << 5);
       // Pulse CLK(PH1)
-      if(isSVP)
+      if (isSVP)
         pulse_clock(10);
 
       // most MD ROMs are 200ns, comparable to SNES > use similar access delay of 6 x 62.5 = 375ns
@@ -1469,7 +1471,7 @@ void readROM_MD() {
       // Setting ASEL(PG5) HIGH
       PORTG |= (1 << 5);
       // Pulse CLK(PH1)
-      if(isSVP)
+      if (isSVP)
         pulse_clock(10);
 
       // Skip first 256 words
@@ -1509,7 +1511,7 @@ void readROM_MD() {
         // Setting ASEL(PG5) LOW
         PORTG &= ~(1 << 5);
         // Pulse CLK(PH1)
-        if(isSVP)
+        if (isSVP)
           pulse_clock(10);
 
         // most MD ROMs are 200ns, comparable to SNES > use similar access delay of 6 x 62.5 = 375ns
@@ -1533,7 +1535,7 @@ void readROM_MD() {
         // Setting ASEL(PG5) HIGH
         PORTG |= (1 << 5);
         // Pulse CLK(PH1)
-        if(isSVP)
+        if (isSVP)
           pulse_clock(10);
 
         // Skip first 256 words
@@ -1574,7 +1576,7 @@ void readROM_MD() {
         // Setting ASEL(PG5) LOW
         PORTG &= ~(1 << 5);
         // Pulse CLK(PH1)
-        if(isSVP)
+        if (isSVP)
           PORTH ^= (1 << 1);
 
         // most MD ROMs are 200ns, comparable to SNES > use similar access delay of 6 x 62.5 = 375ns
@@ -1598,7 +1600,7 @@ void readROM_MD() {
         // Setting ASEL(PG5) HIGH
         PORTG |= (1 << 5);
         // Pulse CLK(PH1)
-        if(isSVP)
+        if (isSVP)
           PORTH ^= (1 << 1);
 
         calcCKSSonic2 += ((sdBuffer[d] << 8) | sdBuffer[d + 1]);
@@ -2077,12 +2079,12 @@ void busyCheck_MD() {
 //******************************************
 // EEPROM Functions
 //******************************************
-void EepromInit(byte eepmode) {  // Acclaim Type 2
-  PORTF = 0x00;                  // ADDR A0-A7
-  PORTK = 0x00;                  // ADDR A8-A15
-  PORTL = 0x10;                  // ADDR A16-A23
-  PORTA = 0x00;                  // DATA D8-D15
-  PORTH |= (1 << 0);             // /RES HIGH
+void EepromInit(byte eepmode) {    // Acclaim Type 2
+  PORTF = 0x00;                    // ADDR A0-A7
+  PORTK = 0x00;                    // ADDR A8-A15
+  PORTL = 0x10;                    // ADDR A16-A23
+  PORTA = 0x00;                    // DATA D8-D15
+  PORTH |= (1 << 0);               // /RES HIGH
   PORTC = eepmode;                 // EEPROM Switch:  0 = Enable (Read EEPROM), 1 = Disable (Read ROM)
   PORTH &= ~(1 << 3);              // CE LOW
   PORTH &= ~(1 << 4) & ~(1 << 5);  // /UDSW + /LDSW LOW
