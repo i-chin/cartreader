@@ -529,7 +529,7 @@ void readROM_LOOPY() {
   sprintf(fileName, "%s.bin", romName);
 
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "LOOPY/ROM/%d", foldern);
+  sprintf_P(folder, PSTR("LOOPY/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 

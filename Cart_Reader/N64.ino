@@ -2268,7 +2268,7 @@ void readEeprom() {
     snprintf_P(fileName, sizeof(fileName), N64_EEP_FILENAME_FMT, romName);
 
     // create a new folder for the save file
-    EEPROM_readAnything(0, foldern);
+    EEPROM_readAnything(FOLDER_NUM, foldern);
     snprintf_P(folder, sizeof(folder), N64_SAVE_DIRNAME_FMT, romName, foldern);
     sd.mkdir(folder, true);
     sd.chdir(folder);
@@ -2859,7 +2859,7 @@ uint32_t readRom_N64() {
   strcat_P(fileName, PSTR(".Z64"));
 
   // create a new folder
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf_P(folder, PSTR("N64/ROM/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -2873,7 +2873,7 @@ uint32_t readRom_N64() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {

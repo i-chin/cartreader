@@ -401,8 +401,8 @@ void readROM_FAIRCHILD() {
   strcat(fileName, ".bin");
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
-  sprintf(folder, "FAIRCHILD/ROM/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  sprintf_P(folder, PSTR("FAIRCHILD/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -419,7 +419,7 @@ void readROM_FAIRCHILD() {
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   unsigned long cartsize = FAIRCHILD[fairchildsize] * 0x400;
   uint8_t blocks = cartsize / 0x200;
@@ -492,8 +492,8 @@ void read16K_FAIRCHILD()  // Read 16K Bytes
   strcat(fileName, ".bin");
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
-  sprintf(folder, "FAIRCHILD/ROM/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  sprintf_P(folder, PSTR("FAIRCHILD/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -510,7 +510,7 @@ void read16K_FAIRCHILD()  // Read 16K Bytes
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   unsigned long cartsize = FAIRCHILD[fairchildsize] * 0x400;
   for (int y = 0; y < 0x20; y++) {
@@ -648,15 +648,15 @@ setrom:
   Serial.print(FAIRCHILD[newfairchildsize]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(8, newfairchildsize);
+  EEPROM_writeAnything(FAIRCHILD_ROM_SIZE, newfairchildsize);
   fairchildsize = newfairchildsize;
 }
 
 void checkStatus_FAIRCHILD() {
-  EEPROM_readAnything(8, fairchildsize);
+  EEPROM_readAnything(FAIRCHILD_ROM_SIZE, fairchildsize);
   if (fairchildsize > 3) {
     fairchildsize = 0;
-    EEPROM_writeAnything(8, fairchildsize);
+    EEPROM_writeAnything(FAIRCHILD_ROM_SIZE, fairchildsize);
   }
 
 #if (defined(enable_OLED) || defined(enable_LCD))
@@ -826,7 +826,7 @@ bool getCartListInfo_FAIRCHILD() {
         }
         if (b == 3) {  // Long Press - Select Cart (hold)
           newfairchildsize = strtol(fairchildrr, NULL, 10);
-          EEPROM_writeAnything(8, newfairchildsize);
+          EEPROM_writeAnything(FAIRCHILD_ROM_SIZE, newfairchildsize);
           cartselected = 1;  // SELECTION MADE
 #if (defined(enable_OLED) || defined(enable_LCD))
           println_Msg(F("SELECTION MADE"));

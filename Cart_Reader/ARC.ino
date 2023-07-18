@@ -160,8 +160,8 @@ void readROM_ARC() {
   strcat(fileName, ".bin");
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
-  sprintf(folder, "ARC/ROM/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  sprintf_P(folder, PSTR("ARC/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -177,7 +177,7 @@ void readROM_ARC() {
   }
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   readSegment_ARC(0x0000, 0x0800);  // 2K
   if (arcsize > 0) {
@@ -308,15 +308,15 @@ setrom:
   Serial.print(ARC[newarcsize]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(8, newarcsize);
+  EEPROM_writeAnything(ARC_ROM_SIZE, newarcsize);
   arcsize = newarcsize;
 }
 
 void checkStatus_ARC() {
-  EEPROM_readAnything(8, arcsize);
+  EEPROM_readAnything(ARC_ROM_SIZE, arcsize);
   if (arcsize > 3) {
     arcsize = 0;
-    EEPROM_writeAnything(8, arcsize);
+    EEPROM_writeAnything(ARC_ROM_SIZE, arcsize);
   }
 
 #if (defined(enable_OLED) || defined(enable_LCD))
@@ -486,7 +486,7 @@ bool getCartListInfo_ARC() {
         }
         if (b == 3) {  // Long Press - Select Cart (hold)
           newarcsize = strtol(arcrr, NULL, 10);
-          EEPROM_writeAnything(8, newarcsize);
+          EEPROM_writeAnything(ARC_ROM_SIZE, newarcsize);
           cartselected = 1;  // SELECTION MADE
 #if (defined(enable_OLED) || defined(enable_LCD))
           println_Msg(F("SELECTION MADE"));

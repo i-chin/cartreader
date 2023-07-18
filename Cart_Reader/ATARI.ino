@@ -258,8 +258,8 @@ void readROM_ATARI() {
   strcat(fileName, ".a26");
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
-  sprintf(folder, "ATARI/ROM/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  sprintf_P(folder, PSTR("ATARI/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -275,7 +275,7 @@ void readROM_ATARI() {
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // ROM Start 0xF000
   // Address A12-A0 = 0x1000 = 1 0000 0000 0000 = 4KB
@@ -469,11 +469,11 @@ void readROM_ATARI() {
 //******************************************
 
 void checkStatus_ATARI() {
-  EEPROM_readAnything(7, atarimapper);
-  EEPROM_readAnything(8, atarisize);
+  EEPROM_readAnything(ATARI_MAPPER, atarimapper);
+  EEPROM_readAnything(ATARI_ROM_SIZE, atarisize);
   if (atarisize > 6) {
     atarisize = 1;  // default 4KB
-    EEPROM_writeAnything(8, atarisize);
+    EEPROM_writeAnything(ATARI_ROM_SIZE, atarisize);
   }
 
 #if (defined(enable_OLED) || defined(enable_LCD))
@@ -722,11 +722,11 @@ setmapper:
   atariindex = newmap.toInt() * 2;
   newatarimapper = pgm_read_byte(atarimapsize + atariindex);
 #endif
-  EEPROM_writeAnything(7, newatarimapper);
+  EEPROM_writeAnything(ATARI_MAPPER, newatarimapper);
   atarimapper = newatarimapper;
 
   atarisize = pgm_read_byte(atarimapsize + atariindex + 1);
-  EEPROM_writeAnything(8, atarisize);
+  EEPROM_writeAnything(ATARI_ROM_SIZE, atarisize);
 }
 
 //******************************************
@@ -878,7 +878,7 @@ bool getCartListInfo_ATARI() {
         }
         if (b == 3) {  // Long Press - Select Cart (hold)
           newatarimapper = strtol(atarimm, NULL, 10);
-          EEPROM_writeAnything(7, newatarimapper);
+          EEPROM_writeAnything(ATARI_MAPPER, newatarimapper);
           cartselected = 1;  // SELECTION MADE
 #if (defined(enable_OLED) || defined(enable_LCD))
           println_Msg(F("SELECTION MADE"));
@@ -940,12 +940,12 @@ void checkCSV_ATARI() {
 }
 
 void checkSize_ATARI() {
-  EEPROM_readAnything(7, atarimapper);
+  EEPROM_readAnything(ATARI_MAPPER, atarimapper);
   for (int i = 0; i < atarimapcount; i++) {
     atariindex = i * 2;
     if (atarimapper == pgm_read_byte(atarimapsize + atariindex)) {
       atarisize = pgm_read_byte(atarimapsize + atariindex + 1);
-      EEPROM_writeAnything(8, atarisize);
+      EEPROM_writeAnything(ATARI_ROM_SIZE, atarisize);
       break;
     }
   }

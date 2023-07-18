@@ -62,21 +62,27 @@
 
 // EEPROM Index Define
 //******************************************
-#define CONFIG_REV_NUM 0  // Config Rev #
-#define FOLDER_NUM 1      // FOLDER #
-#define PCE_ADAPTER 3     // PCE ADAPTER_SWAPT
-#define CLK_GEN_OFFSET 4  // CLK GEN ONNSET
-#define NES_MAPPER 10     // NES MAPPER
-#define NES_PRG_SIZE 11   // NES PRG SIZE
-#define NES_CHR_SIZE 12   // NES CHR SIZE
-#define NES_RAM_SIZE 13   // NES RAM SIZE
-#define COL_ROM_SIZE 20   // COLECOVISION ROM SIZE
-#define INTV_MAPPER 30    // INTELLIVISION MAPPER
-#define INTV_ROM_SIZE 31  // INTELLIVISION ROM SIZE
-#define WSV_ROM_SIZE 40   // WATARA SUPERVISION ROM SIZE
-#define MSX_MAPPER 50     // MSX MAPPER
-#define MSX_ROM_SIZE 51   // MSX ROM SIZE
-#define MSX_RAM_SIZE 52   // MSX RAM SIZE
+#define CONFIG_REV_NUM 0      // Config Rev #
+#define FOLDER_NUM 1          // FOLDER #
+#define PCE_ADAPTER 3         // PCE ADAPTER_SWAPT
+#define CLK_GEN_OFFSET 4      // CLK GEN ONNSET
+#define NES_MAPPER 10         // NES MAPPER
+#define NES_PRG_SIZE 11       // NES PRG SIZE
+#define NES_CHR_SIZE 12       // NES CHR SIZE
+#define NES_RAM_SIZE 13       // NES RAM SIZE
+#define COL_ROM_SIZE 20       // COLECOVISION ROM SIZE
+#define INTV_MAPPER 30        // INTELLIVISION MAPPER
+#define INTV_ROM_SIZE 31      // INTELLIVISION ROM SIZE
+#define WSV_ROM_SIZE 40       // WATARA SUPERVISION ROM SIZE
+#define MSX_MAPPER 50         // MSX MAPPER
+#define MSX_ROM_SIZE 51       // MSX ROM SIZE
+#define MSX_RAM_SIZE 52       // MSX RAM SIZE
+#define ARC_ROM_SIZE 60       // ARC ROM SIZE
+#define ATARI_MAPPER 70       // ATARI ROM SIZE
+#define ATARI_ROM_SIZE 71     // ATARI ROM SIZE
+#define FAIRCHILD_ROM_SIZE 80 // FAIRCHILD ROM SIZE
+#define ODY2_MAPPER 90        // ODY2 MAPPER
+#define ODY2_ROM_SIZE 91      // ODY2 ROM SIZE
 
 //******************************************
 // Config Revision
@@ -3312,6 +3318,12 @@ void resetEEPROM() {
   EEPROM_writeAnything(MSX_MAPPER, (byte)0);              // MSX MAPPER
   EEPROM_writeAnything(MSX_ROM_SIZE, (byte)0);            // MSX ROM SIZE
   EEPROM_writeAnything(MSX_RAM_SIZE, (byte)0);            // MSX RAM SIZE
+  EEPROM_writeAnything(ARC_ROM_SIZE, (byte)0);            // ARC ROM SIZE
+  EEPROM_writeAnything(ATARI_MAPPER, (byte)0);            // ATARI MAPPER
+  EEPROM_writeAnything(ATARI_ROM_SIZE, (byte)0);          // ATARI ROM SIZE
+  EEPROM_writeAnything(FAIRCHILD_ROM_SIZE, (byte)0);      // FAIRCHILD ROM SIZE
+  EEPROM_writeAnything(ODY2_MAPPER, (byte)0);             // ODY2 MAPPER
+  EEPROM_writeAnything(ODY2_ROM_SIZE, (byte)0);           // ODY2 ROM SIZE
 
   delay(1000);
 }

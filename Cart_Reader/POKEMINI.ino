@@ -244,7 +244,7 @@ void readROM_POKE() {
   strcat_P(fileName, PSTR(".min"));
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf_P(folder, PSTR("POKE/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -261,7 +261,7 @@ void readROM_POKE() {
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   for (uint32_t addr = 0; addr < 0x80000; addr += 512) {  // 512K
     for (int w = 0; w < 512; w++) {

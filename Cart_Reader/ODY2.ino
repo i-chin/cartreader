@@ -223,8 +223,8 @@ void readROM_ODY2() {
   strcat(fileName, ".bin");
 
   // create a new folder for storing rom file
-  EEPROM_readAnything(0, foldern);
-  sprintf(folder, "ODY2/ROM/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  sprintf_P(folder, PSTR("ODY2/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -241,7 +241,7 @@ void readROM_ODY2() {
 
   // write new folder number back to EEPROM
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   if (ody2mapper == 1) {  // A10 CONNECTED
     // Videopac 31:  Musician
@@ -388,20 +388,20 @@ setrom:
   Serial.print(ODY2[newody2size]);
   Serial.println(F("K"));
 #endif
-  EEPROM_writeAnything(8, newody2size);
+  EEPROM_writeAnything(ODY2_ROM_SIZE, newody2size);
   ody2size = newody2size;
 }
 
 void checkStatus_ODY2() {
-  EEPROM_readAnything(7, ody2mapper);
-  EEPROM_readAnything(8, ody2size);
+  EEPROM_readAnything(ODY2_MAPPER, ody2mapper);
+  EEPROM_readAnything(ODY2_ROM_SIZE, ody2size);
   if (ody2mapper > 1) {
     ody2mapper = 0;
-    EEPROM_writeAnything(7, ody2mapper);
+    EEPROM_writeAnything(ODY2_MAPPER, ody2mapper);
   }
   if (ody2size > 4) {
     ody2size = 0;
-    EEPROM_writeAnything(8, ody2size);
+    EEPROM_writeAnything(ODY2_ROM_SIZE, ody2size);
   }
 
 #if (defined(enable_OLED) || defined(enable_LCD))
@@ -579,8 +579,8 @@ bool getCartListInfo_ODY2() {
         if (b == 3) {  // Long Press - Select Cart (hold)
           newody2mapper = strtol(ody2mm, NULL, 10);
           newody2size = strtol(ody2rr, NULL, 10);
-          EEPROM_writeAnything(7, newody2mapper);
-          EEPROM_writeAnything(8, newody2size);
+          EEPROM_writeAnything(ODY2_MAPPER, newody2mapper);
+          EEPROM_writeAnything(ODY2_ROM_SIZE, newody2size);
           cartselected = 1;  // SELECTION MADE
 #if (defined(enable_OLED) || defined(enable_LCD))
           println_Msg(F("SELECTION MADE"));
