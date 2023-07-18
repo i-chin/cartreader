@@ -30,7 +30,7 @@
 */
 
 //#define HW5
-//#define HW4
+#define HW4
 //#define HW3
 //#define HW2
 //#define HW1
@@ -104,7 +104,7 @@
 /* [ Flashrom Programmer for SNES repros -------------------------- ]
 */
 
-#define enable_FLASH
+//#define enable_FLASH
 //#define enable_FLASH16
 
 /****/
@@ -126,7 +126,7 @@
 /* [ Neo Geo Pocket ----------------------------------------------- ]
 */
 
-//#define enable_NGP
+#define enable_NGP
 
 /****/
 
@@ -154,14 +154,14 @@
 /* [ MSX ------------------------------------------- ]
 */
 
-//#define enable_MSX
+#define enable_MSX
 
 /****/
 
 /* [ PC Engine/TurboGrafx 16 -------------------------------------- ]
 */
 
-//#define enable_PCE
+#define enable_PCE
 
 /****/
 
@@ -210,7 +210,7 @@
 /* [ Virtual Boy -------------------------------------------------- ]
 */
 
-//#define enable_VBOY
+#define enable_VBOY
 
 /****/
 
@@ -224,7 +224,7 @@
 /* [ WonderSwan and Benesse Pocket Challenge v2 ------------------- ]
 */
 
-//#define enable_WS
+#define enable_WS
 
 /****/
 
