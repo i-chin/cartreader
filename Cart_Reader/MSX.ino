@@ -1136,7 +1136,7 @@ setrom:
     Serial.println(sizeROM);
     newmsxsize = sizeROM.toInt() + msxlo;
     if (msxmapper == 11) {  // PAC/FM-PAC 0K/64K
-      if ((newmsxromsize > 0) && (newmsxromsize < 4)) {
+      if ((newmsxsize > 0) && (newmsxsize < 4)) {
         Serial.println(F("SIZE NOT SUPPORTED"));
         Serial.println(F(""));
         goto setrom;
