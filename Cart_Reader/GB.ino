@@ -2493,12 +2493,12 @@ bool writeCFI_GB() {
 // Read Pelican GBC Device - All Brainboys, MonsterBrains, Codebreakers
 void readPelican_GB() {
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, "Pelican");
-  strcat(fileName, ".GB");
+  strcpy_P(fileName, PSTR("Pelican"));
+  strcat_P(fileName, PSTR(".GB"));
 
   // create a new folder for the rom file
-  EEPROM_readAnything(0, foldern);
-  sprintf(folder, "GB/ROM/Pelican/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  sprintf_P(folder, PSTR("GB/ROM/Pelican/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -2510,7 +2510,7 @@ void readPelican_GB() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -2628,7 +2628,7 @@ void writePelican_GB() {
   display_Clear();
 
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
   // Open file on sd card
   if (myFile.open(filePath, O_READ)) {
