@@ -8,7 +8,6 @@
    Variables
  *****************************************/
 // Flashrom
-unsigned long flashSize;
 byte flashromType;
 byte secondID = 1;
 unsigned long time;

@@ -372,6 +372,7 @@ byte romVersion = 0;
 char cartID[5];
 unsigned long cartSize;
 unsigned int flashid;
+unsigned long flashSize;
 char flashid_str[5];
 char vendorID[5];
 unsigned long fileSize;
