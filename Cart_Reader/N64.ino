@@ -4546,8 +4546,7 @@ void flashXplorer_N64() {
         println_Msg(F(""));
         println_Msg(F("Turn Cart Reader off now"));
         display_Update();
-        while (1)
-          ;
+        while (1);
       } else {
         display_Clear();
         display_Update();
@@ -4584,9 +4583,7 @@ void idXplorer_N64() {
   setAddress_N64(0x10740000);
   readWord_N64();
 
-  if (flashid == 0x0808) {
-    flashSize = 262144;
-  } else {
+  if (flashid != 0x0808) {
         println_Msg(F("Check cart connection"));
         println_Msg(F("Unknown Flash ID"));
         sprintf_P(flashid_str, PSTR("%04X"), flashid);
@@ -4712,7 +4709,7 @@ void eraseXplorer_N64() {
   println_Msg(F("Erasing..."));
   display_Update();
 
-  // Send chip erase to SST 29LE010 / AMTEL AT29LV010A / SST 29EE010
+  // Send chip erase to SST 29LE010
   oddXPaddrWrite(0x1040AAAA, 0xAAAA);
   evenXPaddrWrite(0x10405555, 0x5555);
   oddXPaddrWrite(0x1040AAAA, 0x8080);
