@@ -4054,7 +4054,6 @@ unsigned long verifyFlashrom_N64() {
    N64 Gameshark Flash Functions
  *****************************************/
 void flashGameshark_N64() {
-  int flashSize = 0;
   // Check flashrom ID's
   unlockGSAddressRanges();
   idGameshark_N64();
@@ -4388,7 +4387,6 @@ void writeGameshark_N64() {
     uint32_t processedProgressBar = 0;
     uint32_t totalProgressBar = (uint32_t)(fileSize);
     draw_progressbar(0, totalProgressBar);
-    bool toggle = true;
     myFile.seek(0);
     for (unsigned long currSector = 0; currSector < fileSize; currSector += 16384) {
       for (unsigned long currSdBuffer = 0; currSdBuffer < 16384; currSdBuffer += 256) {
