@@ -4186,13 +4186,13 @@ void idGameshark_N64() {
     //Set SST 28LF040 flashrom size
     flashSize = 1048574;
   } else {
-     println_Msg(F("Check cart connection"));
-     println_Msg(F("Unknown Flash ID"));
-     sprintf(flashid_str, "%04X", flashid);
-     print_STR(press_button_STR, 1);
-     display_Update();
-     wait();
-     mainMenu();
+    println_Msg(F("Check cart connection"));
+    println_Msg(F("Unknown Flash ID"));
+    sprintf(flashid_str, "%04X", flashid);
+    print_STR(press_button_STR, 1);
+    display_Update();
+    wait();
+    mainMenu();
   }
   sprintf_P(flashid_str, PSTR("%04X"), flashid);
   // Reset flashrom
