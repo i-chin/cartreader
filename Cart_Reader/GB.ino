@@ -3364,7 +3364,7 @@ void readGameshark_GB() {
   strcat(fileName, ".GB");
 
   // create a new folder for the rom file
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "GB/ROM/Gameshark/%d", foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -3377,7 +3377,7 @@ void readGameshark_GB() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {

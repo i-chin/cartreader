@@ -4,8 +4,8 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             2023-07-19
-   Version:          12.8
+   Date:             2023-09-22
+   Version:          12.9
 
    SD lib: https://github.com/greiman/SdFat
    LCD lib: https://github.com/olikraus/u8g2
@@ -15,13 +15,13 @@
    RTC lib: https://github.com/adafruit/RTClib
    Frequency lib: https://github.com/PaulStoffregen/FreqCount
 
-   Compiled with Arduino IDE 2.1.1
+   Compiled with Arduino IDE 2.2.1
 
    Thanks to:
    MichlK - ROM Reader for Super Nintendo
    Jeff Saltzman - 4-Way Button
    Wayne and Layne - Video Game Shield menu
-   skaman - Cart ROM READER SNES ENHANCED, Famicom Cart Dumper, Coleco-, Intellivision, Virtual Boy, WSV, PCW, ARC, Atari, ODY2, Fairchild, MSX, Pokemon Mini modules
+   skaman - Cart ROM READER SNES ENHANCED, Famicom Cart Dumper, Coleco-, Intellivision, Virtual Boy, WSV, PCW, ARC, Atari 2600/5200/7800, ODY2, Fairchild, MSX, Pokemon Mini, C64, Vectrex modules
    Tamanegi_taro - PCE and Satellaview modules
    splash5 - GBSmart, Wonderswan, NGP and Super A'can modules
    partlyhuman - Casio Loopy module
@@ -39,7 +39,8 @@
    jiyunomegami, splash5, Kreeblah, ramapcsx2, PsyK0p4T, Dakkaron, majorpbx, Pickle, sdhizumi,
    Uzlopak, sakman55, Tombo89, scrap-a, borti4938, vogelfreiheit, CaitSith2, Modman,
    philenotfound, karimhadjsalem, nsx0r, ducky92, niklasweber, Lesserkuma, BacteriaMage,
-   vpelletier, Ancyker, mattiacci, RWeick, joshman196, partlyhuman
+   vpelletier, Ancyker, mattiacci, RWeick, joshman196, partlyhuman, ButThouMust, hxlnt, 
+   breyell
 
    And to nocash for figuring out the secrets of the SFC Nintendo Power cartridge.
 
@@ -62,27 +63,35 @@
 
 // EEPROM Index Define
 //******************************************
-#define CONFIG_REV_NUM 0      // Config Rev #
-#define FOLDER_NUM 1          // FOLDER #
-#define PCE_ADAPTER 3         // PCE ADAPTER_SWAPT
-#define CLK_GEN_OFFSET 4      // CLK GEN ONNSET
-#define NES_MAPPER 10         // NES MAPPER
-#define NES_PRG_SIZE 11       // NES PRG SIZE
-#define NES_CHR_SIZE 12       // NES CHR SIZE
-#define NES_RAM_SIZE 13       // NES RAM SIZE
-#define COL_ROM_SIZE 20       // COLECOVISION ROM SIZE
-#define INTV_MAPPER 30        // INTELLIVISION MAPPER
-#define INTV_ROM_SIZE 31      // INTELLIVISION ROM SIZE
-#define WSV_ROM_SIZE 40       // WATARA SUPERVISION ROM SIZE
-#define MSX_MAPPER 50         // MSX MAPPER
-#define MSX_ROM_SIZE 51       // MSX ROM SIZE
-#define MSX_RAM_SIZE 52       // MSX RAM SIZE
-#define ARC_ROM_SIZE 60       // ARC ROM SIZE
-#define ATARI_MAPPER 70       // ATARI ROM SIZE
-#define ATARI_ROM_SIZE 71     // ATARI ROM SIZE
-#define FAIRCHILD_ROM_SIZE 80 // FAIRCHILD ROM SIZE
-#define ODY2_MAPPER 90        // ODY2 MAPPER
-#define ODY2_ROM_SIZE 91      // ODY2 ROM SIZE
+#define CONFIG_REV_NUM 0        // Config Rev #
+#define FOLDER_NUM 1            // FOLDER #
+#define PCE_ADAPTER 3           // PCE ADAPTER_SWAPT
+#define CLK_GEN_OFFSET 4        // CLK GEN ONNSET
+#define NES_MAPPER 10           // NES MAPPER
+#define NES_PRG_SIZE 11         // NES PRG SIZE
+#define NES_CHR_SIZE 12         // NES CHR SIZE
+#define NES_RAM_SIZE 13         // NES RAM SIZE
+#define COL_ROM_SIZE 20         // COLECOVISION ROM SIZE
+#define INTV_MAPPER 30          // INTELLIVISION MAPPER
+#define INTV_ROM_SIZE 31        // INTELLIVISION ROM SIZE
+#define WSV_ROM_SIZE 40         // WATARA SUPERVISION ROM SIZE
+#define MSX_MAPPER 50           // MSX MAPPER
+#define MSX_ROM_SIZE 51         // MSX ROM SIZE
+#define MSX_RAM_SIZE 52         // MSX RAM SIZE
+#define ARC_ROM_SIZE 60         // ARC ROM SIZE
+#define ATARI_MAPPER 70         // ATARI MAPPER
+#define ATARI_ROM_SIZE 71       // ATARI ROM SIZE
+#define FAIRCHILD_ROM_SIZE 80   // FAIRCHILD ROM SIZE
+#define ODY2_MAPPER 90          // ODY2 MAPPER
+#define ODY2_ROM_SIZE 91        // ODY2 ROM SIZE
+#define C64_MAPPER 101          // C64_MAPPER
+#define C64_ROM_SIZE 102        // C64 ROM SIZE
+#define C64_PORT 103            // C64 PORT
+#define ATARI5200_MAPPER 101    // ATARI5200_MAPPER
+#define ATARI5200_ROM_SIZE 102  // ATARI5200 ROM SIZE
+#define ATARI7800_MAPPER 111    // ATARI7800_MAPPER
+#define ATARI7800_ROM_SIZE 112  // ATARI7800 ROM SIZE
+#define VECTREX_ROM_SIZE 121    // VECTRREX ROM SIZE
 
 //******************************************
 // Config Revision
@@ -286,6 +295,10 @@ void print_STR(byte string_number, boolean newline) {
 #define mode_MSX 33
 #define mode_POKE 34
 #define mode_LOOPY 35
+#define mode_C64 36
+#define mode_5200 37
+#define mode_7800 38
+#define mode_VECTREX 39
 
 // optimization-safe nop delay
 #define NOP __asm__ __volatile__("nop\n\t")
@@ -526,9 +539,9 @@ uint32_t calculateCRC(char* fileName, char* folder, int offset) {
 }
 
 /******************************************
-   CRC Functions for Atari, Fairchild, Ody2, Arc modules
+   CRC Functions for Atari, Fairchild, Ody2, Arc, etc. modules
  *****************************************/
-#if (defined(enable_ATARI) || defined(enable_ODY2) || defined(enable_ARC) || defined(enable_FAIRCHILD) || defined(enable_MSX) || defined(enable_POKE))
+#if (defined(enable_ATARI) || defined(enable_ODY2) || defined(enable_ARC) || defined(enable_FAIRCHILD) || defined(enable_MSX) || defined(enable_POKE) || defined(enable_5200) || defined(enable_7800) || defined(enable_C64) || defined(enable_VECTREX))
 
 inline uint32_t updateCRC(uint8_t ch, uint32_t crc) {
   uint32_t idx = ((crc) ^ (ch)) & 0xff;
@@ -920,12 +933,24 @@ static const char modeItem21[] PROGMEM = "Pokemon Mini (3V)";
 #ifdef enable_LOOPY
 static const char modeItem22[] PROGMEM = "Casio Loopy";
 #endif
-#ifdef enable_FLASH
-static const char modeItem23[] PROGMEM = "Flashrom Programmer";
+#ifdef enable_C64
+static const char modeItem23[] PROGMEM = "Commodore 64";
 #endif
-static const char modeItem24[] PROGMEM = "Self Test (3V)";
-static const char modeItem25[] PROGMEM = "About";
-//static const char modeItem25[] PROGMEM = "Reset"; (stored in common strings array)
+#ifdef enable_5200
+static const char modeItem24[] PROGMEM = "Atari 5200";
+#endif
+#ifdef enable_7800
+static const char modeItem25[] PROGMEM = "Atari 7800";
+#endif
+#ifdef enable_VECTREX
+static const char modeItem26[] PROGMEM = "Vectrex";
+#endif
+#ifdef enable_FLASH
+static const char modeItem27[] PROGMEM = "Flashrom Programmer";
+#endif
+static const char modeItem28[] PROGMEM = "Self Test (3V)";
+static const char modeItem29[] PROGMEM = "About";
+//static const char modeItem30[] PROGMEM = "Reset"; (stored in common strings array)
 static const char* const modeOptions[] PROGMEM = {
 #ifdef enable_GBX
   modeItem1,
@@ -993,10 +1018,22 @@ static const char* const modeOptions[] PROGMEM = {
 #ifdef enable_LOOPY
   modeItem22,
 #endif
-#ifdef enable_FLASH
+#ifdef enable_C64
   modeItem23,
 #endif
-  modeItem24, modeItem25, string_reset2
+#ifdef enable_5200
+  modeItem24,
+#endif
+#ifdef enable_7800
+  modeItem25,
+#endif
+#ifdef enable_VECTREX
+  modeItem26,
+#endif
+#ifdef enable_FLASH
+  modeItem27,
+#endif
+  modeItem28, modeItem29, string_reset2
 };
 
 // Count menu entries
@@ -1066,6 +1103,18 @@ byte countMenuEntries() {
   count++;
 #endif
 #ifdef enable_LOOPY
+  count++;
+#endif
+#ifdef enable_C64
+  count++;
+#endif
+#ifdef enable_5200
+  count++;
+#endif
+#ifdef enable_7800
+  count++;
+#endif
+#ifdef enable_VECTREX
   count++;
 #endif
 #ifdef enable_FLASH
@@ -1189,21 +1238,41 @@ unsigned char fixMenuOrder(unsigned char modeMenu) {
   currentEntry++;
 #endif
 
-#if defined(enable_FLASH)
+#if defined(enable_C64)
   translationMatrix[currentEntry] = 22;
   currentEntry++;
 #endif
 
-  // Self Test
+#if defined(enable_5200)
   translationMatrix[currentEntry] = 23;
+  currentEntry++;
+#endif
+
+#if defined(enable_7800)
+  translationMatrix[currentEntry] = 24;
+  currentEntry++;
+#endif
+
+#if defined(enable_VECTREX)
+  translationMatrix[currentEntry] = 25;
+  currentEntry++;
+#endif
+
+#if defined(enable_FLASH)
+  translationMatrix[currentEntry] = 26;
+  currentEntry++;
+#endif
+
+  // Self Test
+  translationMatrix[currentEntry] = 27;
   currentEntry++;
 
   // About
-  translationMatrix[currentEntry] = 24;
+  translationMatrix[currentEntry] = 28;
   currentEntry++;
 
   // Reset
-  translationMatrix[currentEntry] = 25;
+  translationMatrix[currentEntry] = 29;
   currentEntry++;
 
   return translationMatrix[modeMenu];
@@ -1246,9 +1315,15 @@ void mainMenu() {
         num_answers = menuCount - 14;
       else
         num_answers = 7;
-    } else {  // currPage == 4
+    } else if (currPage == 4) {
       option_offset = 21;
-      num_answers = menuCount - 21;
+      if (menuCount < 28)
+        num_answers = menuCount - 21;
+      else
+        num_answers = 7;
+    } else {  // currPage == 5
+      option_offset = 28;
+      num_answers = menuCount - 28;
     }
     // Copy menuOptions out of progmem
     convertPgm(modeOptions + option_offset, num_answers);
@@ -1424,8 +1499,36 @@ void mainMenu() {
       break;
 #endif
 
-#ifdef enable_FLASH
+#ifdef enable_C64
     case 22:
+      setup_C64(); 
+      c64Menu();
+      break;
+#endif
+
+#ifdef enable_5200
+    case 23:
+      setup_5200(); 
+      a5200Menu();
+      break;
+#endif
+
+#ifdef enable_7800
+    case 24:
+      setup_7800(); 
+      a7800Menu();
+      break;
+#endif
+
+#ifdef enable_VECTREX
+    case 25:
+      setup_VECTREX(); 
+      vectrexMenu();
+      break;
+#endif
+
+#ifdef enable_FLASH
+    case 26:
 #ifdef ENABLE_VSELECT
       setup_FlashVoltage();
 #endif
@@ -1434,16 +1537,16 @@ void mainMenu() {
 #endif
 
 #ifdef enable_selftest
-    case 23:
+    case 27:
       selfTest();
       break;
 #endif
 
-    case 24:
+    case 28:
       aboutScreen();
       break;
 
-    case 25:
+    case 29:
       resetArduino();
       break;
 
@@ -3281,6 +3384,14 @@ void resetEEPROM() {
   EEPROM_writeAnything(FAIRCHILD_ROM_SIZE, (byte)0);      // FAIRCHILD ROM SIZE
   EEPROM_writeAnything(ODY2_MAPPER, (byte)0);             // ODY2 MAPPER
   EEPROM_writeAnything(ODY2_ROM_SIZE, (byte)0);           // ODY2 ROM SIZE
+  EEPROM_writeAnything(C64_MAPPER, (byte)0);              // C64 MAPPER
+  EEPROM_writeAnything(C64_ROM_SIZE, (byte)0);            // C64 ROM SIZE
+  EEPROM_writeAnything(C64_PORT, (byte)0);                // C64 PORT
+  EEPROM_writeAnything(ATARI5200_MAPPER, (byte)0);        // ATARI5200 MAPPER
+  EEPROM_writeAnything(ATARI5200_ROM_SIZE, (byte)0);      // ATARI5200 ROM SIZE
+  EEPROM_writeAnything(ATARI7800_MAPPER, (byte)0);        // ATARI7800 MAPPER
+  EEPROM_writeAnything(ATARI7800_ROM_SIZE, (byte)0);      // ATARI7800 ROM SIZE
+  EEPROM_writeAnything(VECTREX_ROM_SIZE, (byte)0);        // VECTRREX ROM SIZE
 
   delay(1000);
 }
@@ -3624,7 +3735,26 @@ void loop() {
     loopyMenu();
   }
 #endif
-
+#ifdef enable_C64
+  else if (mode == mode_C64) {
+    c64Menu();
+  }
+#endif
+#ifdef enable_5200
+  else if (mode == mode_5200) {
+    a5200Menu();
+  }
+#endif
+#ifdef enable_7800
+  else if (mode == mode_7800) {
+    a7800Menu();
+  }
+#endif
+#ifdef enable_VECTREX
+  else if (mode == mode_VECTREX) {
+    vectrexMenu();
+  }
+#endif
   else {
     display_Clear();
     println_Msg(F("Menu Error"));
