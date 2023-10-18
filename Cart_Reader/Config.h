@@ -30,7 +30,7 @@
 */
 
 //#define HW5
-//#define HW4
+#define HW4
 //#define HW3
 //#define HW2
 //#define HW1
@@ -127,7 +127,7 @@
 /* [ Flashrom Programmer for SNES repros -------------------------- ]
 */
 
-//#define enable_FLASH
+#define enable_FLASH
 //#define enable_FLASH16
 
 /****/
@@ -335,10 +335,11 @@
 /****/
 
 /* [ SNES Core/CLOCKGEN: Read Clock Generator Calibration Data ---- ]
-    Toggle to use calibration data from snes_clk.txt
+    Toggle clock calibration menu and whether or not to use calibration data from snes_clk.txt
 */
 
 //#define clockgen_calibration
+//#define use_clockgen_calibration
 
 /****/
 
