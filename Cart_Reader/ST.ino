@@ -122,7 +122,7 @@ bool getHeader(unsigned int bank) {
   buildRomName(romName, &snesHeader[0], 14);
 
   // Check if 'BANDAI' header is present
-  if (strncmp(romName, "BANDAI SFC-ADX", 14) == 0)
+  if (strncmp_P(romName, PSTR("BANDAI SFC-ADX"), 14) == 0)
     return(1);
   else
     return(0);
@@ -167,9 +167,9 @@ void readSlot(bool cartSlot) {
 // Read ST rom to SD card
 void readRom_ST(unsigned int bankStart, unsigned int bankEnd) {
   // create a new folder to save rom file
-  EEPROM_readAnything(0, foldern);
-  strcpy(fileName, "SUFAMI_TURBO.st");
-  sprintf(folder, "ST/%s/%d", romName, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  strcpy_P(fileName, PSTR("SUFAMI_TURBO.st"));
+  sprintf_P(folder, PSTR("ST/%s/%d"), romName, foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -181,7 +181,7 @@ void readRom_ST(unsigned int bankStart, unsigned int bankEnd) {
 
   // write new folder number back to eeprom
   foldern++;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
