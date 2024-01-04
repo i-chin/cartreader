@@ -79,8 +79,8 @@
 #define MSX_ROM_SIZE 51         // MSX ROM SIZE
 #define MSX_RAM_SIZE 52         // MSX RAM SIZE
 #define ARC_ROM_SIZE 60         // ARC ROM SIZE
-#define ATARI_MAPPER 70         // ATARI MAPPER
-#define ATARI_ROM_SIZE 71       // ATARI ROM SIZE
+#define ATARI2600_MAPPER 70     // ATARI2600 MAPPER
+#define ATARI2600_ROM_SIZE 71   // ATARI2600 ROM SIZE
 #define FAIRCHILD_ROM_SIZE 80   // FAIRCHILD ROM SIZE
 #define ODY2_MAPPER 90          // ODY2 MAPPER
 #define ODY2_ROM_SIZE 91        // ODY2 ROM SIZE
@@ -287,7 +287,7 @@ void print_STR(byte string_number, boolean newline) {
 #define mode_VBOY 25
 #define mode_WSV 26
 #define mode_PCW 27
-#define mode_ATARI 28
+#define mode_2600 28
 #define mode_ODY2 29
 #define mode_ARC 30
 #define mode_FAIRCHILD 31
@@ -542,7 +542,7 @@ uint32_t calculateCRC(char* fileName, char* folder, int offset) {
 /******************************************
    CRC Functions for Atari, Fairchild, Ody2, Arc, etc. modules
  *****************************************/
-#if (defined(enable_ATARI) || defined(enable_ODY2) || defined(enable_ARC) || defined(enable_FAIRCHILD) || defined(enable_MSX) || defined(enable_POKE) || defined(enable_5200) || defined(enable_7800) || defined(enable_C64) || defined(enable_VECTREX))
+#if (defined(enable_ODY2) || defined(enable_ARC) || defined(enable_FAIRCHILD) || defined(enable_MSX) || defined(enable_POKE) || defined(enable_2600) || defined(enable_5200) || defined(enable_7800) || defined(enable_C64) || defined(enable_VECTREX))
 
 inline uint32_t updateCRC(uint8_t ch, uint32_t crc) {
   uint32_t idx = ((crc) ^ (ch)) & 0xff;
@@ -910,7 +910,7 @@ static const char modeItem13[] PROGMEM = "Watara Supervision (3V)";
 #ifdef enable_PCW
 static const char modeItem14[] PROGMEM = "Pocket Challenge W";
 #endif
-#ifdef enable_ATARI
+#ifdef enable_2600
 static const char modeItem15[] PROGMEM = "Atari 2600";
 #endif
 #ifdef enable_ODY2
@@ -997,7 +997,7 @@ static const char* const modeOptions[] PROGMEM = {
 #ifdef enable_PCW
   modeItem14,
 #endif
-#ifdef enable_ATARI
+#ifdef enable_2600
   modeItem15,
 #endif
 #ifdef enable_ODY2
@@ -1087,7 +1087,7 @@ byte countMenuEntries() {
 #ifdef enable_PCW
   count++;
 #endif
-#ifdef enable_ATARI
+#ifdef enable_2600
   count++;
 #endif
 #ifdef enable_ODY2
@@ -1207,7 +1207,7 @@ unsigned char fixMenuOrder(unsigned char modeMenu) {
   currentEntry++;
 #endif
 
-#if defined(enable_ATARI)
+#if defined(enable_2600)
   translationMatrix[currentEntry] = 14;
   currentEntry++;
 #endif
@@ -1454,10 +1454,10 @@ void mainMenu() {
       break;
 #endif
 
-#ifdef enable_ATARI
+#ifdef enable_2600
     case 14:
-      setup_ATARI();
-      atariMenu();
+      setup_2600();
+      a2600Menu();
       break;
 #endif
 
@@ -3386,8 +3386,8 @@ void resetEEPROM() {
   EEPROM_writeAnything(MSX_ROM_SIZE, (byte)0);            // MSX ROM SIZE
   EEPROM_writeAnything(MSX_RAM_SIZE, (byte)0);            // MSX RAM SIZE
   EEPROM_writeAnything(ARC_ROM_SIZE, (byte)0);            // ARC ROM SIZE
-  EEPROM_writeAnything(ATARI_MAPPER, (byte)0);            // ATARI MAPPER
-  EEPROM_writeAnything(ATARI_ROM_SIZE, (byte)0);          // ATARI ROM SIZE
+  EEPROM_writeAnything(ATARI2600_MAPPER, (byte)0);        // ATARI2600 MAPPER
+  EEPROM_writeAnything(ATARI2600_ROM_SIZE, (byte)0);      // ATARI2600 ROM SIZE
   EEPROM_writeAnything(FAIRCHILD_ROM_SIZE, (byte)0);      // FAIRCHILD ROM SIZE
   EEPROM_writeAnything(ODY2_MAPPER, (byte)0);             // ODY2 MAPPER
   EEPROM_writeAnything(ODY2_ROM_SIZE, (byte)0);           // ODY2 ROM SIZE
@@ -3707,11 +3707,6 @@ void loop() {
     pcwMenu();
   }
 #endif
-#ifdef enable_ATARI
-  else if (mode == mode_ATARI) {
-    atariMenu();
-  }
-#endif
 #ifdef enable_ODY2
   else if (mode == mode_ODY2) {
     ody2Menu();
@@ -3750,6 +3745,11 @@ void loop() {
 #ifdef enable_C64
   else if (mode == mode_C64) {
     c64Menu();
+  }
+#endif
+#ifdef enable_2600
+  else if (mode == mode_2600) {
+    a2600Menu();
   }
 #endif
 #ifdef enable_5200
