@@ -557,7 +557,7 @@ void readROM_SMS() {
   strcpy(fileName, romName);
   if (system_sms) {
     strcat_P(fileName, PSTR(".sms"));
-    sprintf(folder, "SMS/ROM/%s/%d", romName, foldern);
+    sprintf_P(folder, PSTR("SMS/ROM/%s/%d"), romName, foldern);
   } else if (system_gg) {
     strcat_P(fileName, PSTR(".gg"));
     sprintf_P(folder, PSTR("GG/ROM/%s/%d"), romName, foldern);

@@ -890,7 +890,7 @@ void setCart_FAIRCHILD() {
   display_Update();
 #endif
   sd.chdir();
-  sprintf(folder, "FAIRCHILD/CSV");
+  sprintf_P(folder, PSTR("FAIRCHILD/CSV"));
   sd.chdir(folder);  // Switch Folder
   fairchildcsvFile = sd.open(fairchildcartCSV, O_READ);
   if (!fairchildcsvFile) {

@@ -206,7 +206,7 @@ void readROM_VECTREX() {
 
   // create a new folder for storing rom file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "VECTREX/ROM/%d", foldern);
+  sprintf_P(folder, PSTR("VECTREX/ROM/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -610,7 +610,7 @@ void setCart_VECTREX() {
   display_Update();
 #endif
   sd.chdir();
-  sprintf(folder, "VECTREX/CSV");
+  sprintf_P(folder, PSTR("VECTREX/CSV"));
   sd.chdir(folder);  // Switch Folder
   vectrexcsvFile = sd.open(vectrexcartCSV, O_READ);
   if (!vectrexcsvFile) {

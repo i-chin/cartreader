@@ -951,7 +951,7 @@ void getCartInfo_GB() {
   // Get Checksum as string
   eepbit[6] = sdBuffer[0x14E];
   eepbit[7] = sdBuffer[0x14F];
-  sprintf(checksumStr, "%02X%02X", eepbit[6], eepbit[7]);
+  sprintf_P(checksumStr, PSTR("%02X%02X"), eepbit[6], eepbit[7]);
 
   // ROM banks
   switch (romSize) {
@@ -3144,7 +3144,7 @@ void writeMegaMem_GB() {
   display_Clear();
 
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
   // Open file on sd card
   if (myFile.open(filePath, O_READ)) {
@@ -3412,8 +3412,8 @@ void readGameshark_GB() {
   }
 
   // create a new folder for the rom file
-  EEPROM_readAnything(0, foldern);
-  sprintf(folder, "GB/ROM/Gameshark/%d", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  sprintf_P(folder, PSTR("GB/ROM/Gameshark/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -3424,7 +3424,7 @@ void readGameshark_GB() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -3511,7 +3511,7 @@ void writeGameshark_GB() {
   bool toggle = true;
 
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
   // Open file on sd card
   myFile.open(filePath, O_READ);

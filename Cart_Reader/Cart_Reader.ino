@@ -574,7 +574,7 @@ void calcCRC(char* checkFile, unsigned long filesize, uint32_t* crcCopy, unsigne
   crcFile.seek(offset);
   crc = crc32(crcFile, filesize);
   crcFile.close();
-  sprintf(tempCRC, "%08lX", crc);
+  sprintf_P(tempCRC, PSTR("%08lX"), crc);
 
   if (crcCopy != NULL) {
     *crcCopy = crc;
@@ -673,7 +673,7 @@ boolean compareCRC(const char* database, uint32_t crc32sum, boolean renamerom, i
     sprintf_P(crcStr, PSTR("%08lX"), calculateCRC(fileName, folder, offset));
   } else {
     // Convert precalculated crc to string
-    sprintf(crcStr, "%08lX", ~crc32sum);
+    sprintf_P(crcStr, PSTR("%08lX"), ~crc32sum);
   }
   // Print checksum
   print_Msg(crcStr);

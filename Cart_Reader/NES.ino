@@ -301,7 +301,7 @@ void nesMenu() {
     // Read RAM
     case 2:
       sd.chdir();
-      sprintf(folder, "NES/SAVE");
+      sprintf_P(folder, PSTR("NES/SAVE"));
       sd.mkdir(folder, true);
       sd.chdir(folder);
       readRAM();
@@ -1163,7 +1163,7 @@ void CreateRAMFileInSD() {
       myFile = sd.open(fileName, O_RDWR | O_CREAT);
       break;
     }
-    sprintf(fileCount, "%02d", i);
+    sprintf_P(fileCount, PSTR("%02d"), i);
     strcpy(fileName, "RAM.");
     strcat(fileName, fileCount);
     strcat(fileName, ".bin");

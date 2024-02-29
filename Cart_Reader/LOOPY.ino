@@ -489,7 +489,7 @@ void getCartInfo_LOOPY() {
 
   // Get internal checksum from header
   loopyChecksum = ((uint32_t)readWord_LOOPY(0x8) << 16) | (uint32_t)readWord_LOOPY(0xA);
-  sprintf(checksumStr, "%08lX", loopyChecksum);
+  sprintf_P(checksumStr, PSTR("%08lX"), loopyChecksum);
 
   // Look up in database
   strcpy(loopyRomNameLong, "LOOPY");
@@ -526,7 +526,7 @@ void getCartInfo_LOOPY() {
 void readROM_LOOPY() {
   dataIn_LOOPY();
 
-  sprintf(fileName, "%s.bin", romName);
+  sprintf_P(fileName, PSTR("%s.bin"), romName);
 
   EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf_P(folder, PSTR("LOOPY/ROM/%d"), foldern);

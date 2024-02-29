@@ -652,7 +652,7 @@ void setCart_ODY2() {
   display_Update();
 #endif
   sd.chdir();
-  sprintf(folder, "ODY2/CSV");
+  sprintf_P(folder, PSTR("ODY2/CSV"));
   sd.chdir(folder);  // Switch Folder
   ody2csvFile = sd.open(ody2cartCSV, O_READ);
   if (!ody2csvFile) {

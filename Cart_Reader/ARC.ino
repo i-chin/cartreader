@@ -554,7 +554,7 @@ void setCart_ARC() {
   display_Update();
 #endif
   sd.chdir();
-  sprintf(folder, "ARC/CSV");
+  sprintf_P(folder, PSTR("ARC/CSV"));
   sd.chdir(folder);  // Switch Folder
   arccsvFile = sd.open(arccartCSV, O_READ);
   if (!arccsvFile) {

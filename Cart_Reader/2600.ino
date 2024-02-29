@@ -1080,7 +1080,7 @@ void setCart_2600() {
   display_Update();
 #endif
   sd.chdir();
-  sprintf(folder, "2600/CSV");
+  sprintf_P(folder, PSTR("2600/CSV"));
   sd.chdir(folder);  // Switch Folder
   a2600csvFile = sd.open(a2600cartCSV, O_READ);
   if (!a2600csvFile) {

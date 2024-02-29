@@ -269,11 +269,11 @@ void readRAM_GPC() {
   controlIn_SNES();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, "GPC4M.sfc");
+  strcpy_P(fileName, PSTR("GPC4M.sfc"));
 
   // create a new folder for the save file
-  EEPROM_readAnything(0, foldern);
-  sprintf(folder, "SNES/ROM/%s/%d", "GPC4M", foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  sprintf_P(folder, PSTR("SNES/ROM/GPC4M/%d"), foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
@@ -286,7 +286,7 @@ void readRAM_GPC() {
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
-  EEPROM_writeAnything(0, foldern);
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -319,7 +319,7 @@ void writeRAM_GPC(void) {
   sd.chdir("/");
   fileBrowser(F("Select SFC file"));
   // Create filepath
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
   display_Clear();
 
   //open file on sd card
