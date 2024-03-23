@@ -10,6 +10,7 @@
 word sramBanks;
 word romBanks;
 word lastByte = 0;
+boolean audioWE = 0;
 
 /******************************************
    Menu

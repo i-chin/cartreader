@@ -55,7 +55,7 @@ uint8_t tennokoe_bank_index = 0;
 static const char pceMenuItem1[] PROGMEM = "HuCARD";
 static const char pceMenuItem2[] PROGMEM = "Turbochip";
 static const char pceMenuItem3[] PROGMEM = "AdapterSetting";
-static const char *const menuOptionspce[] PROGMEM = { pceMenuItem1, pceMenuItem2, pceMenuItem3, string_reset2 };
+static const char *const menuOptionspce[] PROGMEM = { pceMenuItem1, pceMenuItem2, pceMenuItem3, FSTRING_RESET };
 
 // PCE card menu items
 static const char menuOptionspceCart_1[] PROGMEM = "Read RAM Bank %d";
@@ -71,7 +71,7 @@ static const char *const menuOptionspceTC[] PROGMEM = { FSTRING_READ_ROM, FSTRIN
 // Adapter Setting Menu items
 static const char pceAdapterMenuItem1[] PROGMEM = "Swap Adapter";
 static const char pceAdapterMenuItem2[] PROGMEM = "No Swap Adapter";
-static const char *const menuOptionsAdapter[] PROGMEM = { pceAdapterMenuItem1, pceAdapterMenuItem2, string_reset2 };
+static const char *const menuOptionsAdapter[] PROGMEM = { pceAdapterMenuItem1, pceAdapterMenuItem2, FSTRING_RESET };
 
 // PCE start menu
 void pcsMenu(void) {
