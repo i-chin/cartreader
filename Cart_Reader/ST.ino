@@ -1,7 +1,7 @@
 /******************************************
   SUPER FAMICOM SUFAMI TURBO MODULE
 ******************************************/
-#ifdef enable_ST
+#ifdef ENABLE_ST
 
 /******************************************
   Menu
@@ -9,7 +9,7 @@
 // Sufami Turbo menu items
 static const char stMenuItem1[] PROGMEM = "Read cart in Slot A";
 static const char stMenuItem2[] PROGMEM = "Read cart in Slot B";
-static const char* const menuOptionsST[] PROGMEM = { stMenuItem1, stMenuItem2, string_reset2 };
+static const char* const menuOptionsST[] PROGMEM = { stMenuItem1, stMenuItem2, FSTRING_RESET };
 
 void stMenu() {
   // Create ST menu with title and 3 options to choose from
@@ -194,6 +194,10 @@ void readRom_ST(unsigned int bankStart, unsigned int bankEnd) {
   // Close file:
   myFile.close();
 
+  // Compare dump CRC with db values
+  compareCRC("st.txt", 0, 1, 0);
+  
+  println_Msg(FS(FSTRING_EMPTY));
   print_STR(press_button_STR, 1);
   display_Update();
   wait();

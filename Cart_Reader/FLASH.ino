@@ -2,7 +2,7 @@
 // FLASHROM MODULE
 // (also includes SNES repro functions)
 //******************************************
-#ifdef enable_FLASH
+#ifdef ENABLE_FLASH
 
 /******************************************
    Variables
@@ -26,16 +26,14 @@ static const char flash8MenuItem3[] PROGMEM = "Read";
 static const char flash8MenuItem4[] PROGMEM = "Write";
 static const char flash8MenuItem5[] PROGMEM = "ID";
 static const char flash8MenuItem6[] PROGMEM = "Print";
-//static const char flash8MenuItem7[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const menuOptionsFLASH8[] PROGMEM = { flash8MenuItem1, flash8MenuItem2, flash8MenuItem3, flash8MenuItem4, flash8MenuItem5, flash8MenuItem6, string_reset2 };
+static const char* const menuOptionsFLASH8[] PROGMEM = { flash8MenuItem1, flash8MenuItem2, flash8MenuItem3, flash8MenuItem4, flash8MenuItem5, flash8MenuItem6, FSTRING_RESET };
 
-#ifdef enable_FLASH16
+#ifdef ENABLE_FLASH16
 // Flash start menu
 static const char flashMenuItem1[] PROGMEM = "8bit Flash adapter";
 static const char flashMenuItem2[] PROGMEM = "Eprom adapter";
 static const char flashMenuItem3[] PROGMEM = "16bit Flash adapter";
-// static const char flashMenuItem4[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const menuOptionsFlash[] PROGMEM = { flashMenuItem1, flashMenuItem2, flashMenuItem3, string_reset2 };
+static const char* const menuOptionsFlash[] PROGMEM = { flashMenuItem1, flashMenuItem2, flashMenuItem3, FSTRING_RESET };
 
 // 16bit Flash menu items
 static const char flash16MenuItem1[] PROGMEM = "Blankcheck";
@@ -44,8 +42,7 @@ static const char flash16MenuItem3[] PROGMEM = "Read";
 static const char flash16MenuItem4[] PROGMEM = "Write";
 static const char flash16MenuItem5[] PROGMEM = "ID";
 static const char flash16MenuItem6[] PROGMEM = "Print";
-//static const char flash16MenuItem7[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const menuOptionsFLASH16[] PROGMEM = { flash16MenuItem1, flash16MenuItem2, flash16MenuItem3, flash16MenuItem4, flash16MenuItem5, flash16MenuItem6, string_reset2 };
+static const char* const menuOptionsFLASH16[] PROGMEM = { flash16MenuItem1, flash16MenuItem2, flash16MenuItem3, flash16MenuItem4, flash16MenuItem5, flash16MenuItem6, FSTRING_RESET };
 
 // Eprom menu items
 static const char epromMenuItem1[] PROGMEM = "Blankcheck";
@@ -53,8 +50,7 @@ static const char epromMenuItem2[] PROGMEM = "Read";
 static const char epromMenuItem3[] PROGMEM = "Write";
 static const char epromMenuItem4[] PROGMEM = "Verify";
 static const char epromMenuItem5[] PROGMEM = "Print";
-// static const char epromMenuItem6[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const menuOptionsEprom[] PROGMEM = { epromMenuItem1, epromMenuItem2, epromMenuItem3, epromMenuItem4, epromMenuItem5, string_reset2 };
+static const char* const menuOptionsEprom[] PROGMEM = { epromMenuItem1, epromMenuItem2, epromMenuItem3, epromMenuItem4, epromMenuItem5, FSTRING_RESET };
 
 void flashMenu() {
   // create menu with title and 3 options to choose from
@@ -72,14 +68,14 @@ void flashMenu() {
       setup_Flash8();
       id_Flash8();
       wait();
-      mode = mode_FLASH8;
+      mode = CORE_FLASH8;
       break;
 
     case 1:
       display_Clear();
       display_Update();
       setup_Eprom();
-      mode = mode_EPROM;
+      mode = CORE_EPROM;
       break;
 
     case 2:
@@ -88,7 +84,7 @@ void flashMenu() {
       setup_Flash16();
       id_Flash16();
       wait();
-      mode = mode_FLASH16;
+      mode = CORE_FLASH16;
       break;
 
     case 3:
@@ -107,7 +103,7 @@ void flashMenu() {
   setup_Flash8();
   id_Flash8();
   wait();
-  mode = mode_FLASH8;
+  mode = CORE_FLASH8;
 }
 #endif
 
@@ -203,9 +199,9 @@ void flashromMenu8() {
         case 3: idFlash28FXXX(); break;
       }
 
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       printFlash(40);
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       display_Update();
 
       resetFlash8();
@@ -240,7 +236,7 @@ void flashromMenu8() {
   wait();
 }
 
-#ifdef enable_FLASH16
+#ifdef ENABLE_FLASH16
 void flashromMenu16() {
   // create menu with title "Flashrom Writer 16" and 7 options to choose from
   unsigned char mainMenu;
@@ -301,9 +297,9 @@ void flashromMenu16() {
       display_Clear();
       println_Msg(F("ID Flashrom"));
       idFlash16();
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       printFlash16(40);
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       display_Update();
       resetFlash16();
       break;
@@ -591,9 +587,9 @@ idtheflash:
     // print first 40 bytes of flash
     display_Clear();
     println_Msg(F("First 40 bytes:"));
-    println_Msg(F(""));
+    println_Msg(FS(FSTRING_EMPTY));
     printFlash(40);
-    println_Msg(F(""));
+    println_Msg(FS(FSTRING_EMPTY));
     display_Update();
     resetFlash8();
     print_FatalError(F("Press Button to reset"));
@@ -606,7 +602,7 @@ idtheflash:
   resetFlash8();
 }
 
-#ifdef enable_FLASH16
+#ifdef ENABLE_FLASH16
 void id_Flash16() {
   // ID flash
   idFlash16();
@@ -682,8 +678,7 @@ void id_Flash16() {
 #if defined(ENABLE_VSELECT) || defined(ENABLE_3V3FIX)
 static const char flashvoltItem1[] PROGMEM = "3.3V";
 static const char flashvoltItem2[] PROGMEM = "5V";
-//static const char flashvoltItem3[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const flashvoltOptions[] PROGMEM = { flashvoltItem1, flashvoltItem2, string_reset2 };
+static const char* const flashvoltOptions[] PROGMEM = { flashvoltItem1, flashvoltItem2, FSTRING_RESET };
 
 void setup_FlashVoltage() {
   // create menu with title and 3 options to choose from
@@ -736,7 +731,7 @@ void setup_Flash8() {
   PORTC = 0x00;
 }
 
-#ifdef enable_FLASH16
+#ifdef ENABLE_FLASH16
 void setup_Flash16() {
   // Set Address Pins to Output
   //A0-A7
@@ -802,7 +797,7 @@ void dataIn8() {
   DDRC = 0x00;
 }
 
-#ifdef enable_FLASH16
+#ifdef ENABLE_FLASH16
 // Switch data pins to write
 void dataOut16() {
   DDRC = 0xFF;
@@ -985,7 +980,7 @@ byte readByte_Flash(unsigned long myAddress) {
   return tempByte;
 }
 
-#ifdef enable_FLASH16
+#ifdef ENABLE_FLASH16
 void writeWord_Flash(unsigned long myAddress, word myData) {
   PORTF = myAddress & 0xFF;
   PORTK = (myAddress >> 8) & 0xFF;
@@ -1143,9 +1138,9 @@ void writeFlash29F032() {
     for (unsigned long currByte = 0; currByte < fileSize; currByte += 512) {
       // if (currByte >= 0) {
       //   print_Msg(currByte);
-      //   print_Msg(F(" "));
+      //   print_Msg(FS(FSTRING_SPACE));
       //   print_Msg(dq5failcnt);
-      //   println_Msg(F(""));
+      //   println_Msg(FS(FSTRING_EMPTY));
       // }
       if (!noread) {
         myFile.read(sdBuffer, 512);
@@ -1181,7 +1176,7 @@ void writeFlash29F032() {
         print_Msg(currByte);
         print_Msg(F(": "));
         print_Msg(blockfailcnt);
-        println_Msg(F(""));
+        println_Msg(FS(FSTRING_EMPTY));
         dq5failcnt -= blockfailcnt;
         currByte -= 512;
         delay(100);
@@ -1899,7 +1894,7 @@ void resetFlash8() {
   }
 }
 
-#ifdef enable_FLASH16
+#ifdef ENABLE_FLASH16
 /******************************************
   29L3211 16bit flashrom functions
 *****************************************/

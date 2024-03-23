@@ -2,7 +2,7 @@
 // SEGA MEGA DRIVE MODULE
 //******************************************
 // Writes to Sega CD Backup RAM Cart require an extra wire from MRES (B02) to VRES (B27)
-#ifdef enable_MD
+#ifdef ENABLE_MD
 
 /******************************************
    Variables
@@ -87,10 +87,19 @@ unsigned long bramSize = 0;
 // REALTEC MAPPER
 boolean realtec = 0;
 
-#ifndef DEFAULT_VALUE_segaSram16bit
-#define DEFAULT_VALUE_segaSram16bit 0
-#endif
-int segaSram16bit = DEFAULT_VALUE_segaSram16bit;
+#if defined(ENABLED_CONFIG)
+
+int segaSram16bit = 0;
+
+#else /* !ENABLED_CONFIG */
+
+# ifndef OPTION_MD_DEFAULT_SAVE_TYPE
+#   define OPTION_MD_DEFAULT_SAVE_TYPE 0
+# endif /* !OPTION_MD_DEFAULT_SAVE_TYPE */
+
+int segaSram16bit = OPTION_MD_DEFAULT_SAVE_TYPE;
+
+#endif /* ENABLED_CONFIG */
 
 //*****************************************
 // SONIC & KNUCKLES LOCK-ON MODE VARIABLES
@@ -111,12 +120,15 @@ static word chksumSonic2 = 0x0635;
 /******************************************
    Configuration
  *****************************************/
-#ifdef use_md_conf
+#if defined(use_md_conf) && !defined(ENABLE_CONFIG)
+
+#warning "DEPRECATED: use_md_conf is deprecated. You should use ENABLE_CONFIG instead."
+
 void mdLoadConf() {
   if (myFile.open("mdconf.txt", O_READ)) {
     char line[64];
-    int n;
-    int i;
+    unsigned int n;
+    unsigned int i;
     while ((n = myFile.fgets(line, sizeof(line) - 1)) > 0) {
       // preprocess
       for (i = 0; i < n; i++) {
@@ -173,7 +185,7 @@ void mdLoadConf() {
           // 2: Duplicate each byte. Pad with 0xFF so that the file size is 64KB.
           segaSram16bit = atoi(value);
           if (segaSram16bit != 0 && segaSram16bit != 1 && segaSram16bit != 2) {
-            segaSram16bit = DEFAULT_VALUE_segaSram16bit;
+            segaSram16bit = DEFAULT_VALUE_SAVE_TYPE;
           }
           print_Msg(F("segaSram16bit: "));
           println_Msg(segaSram16bit);
@@ -197,24 +209,17 @@ void pulse_clock(int n) {
 static const char MDMenuItem1[] PROGMEM = "Game Cartridge";
 static const char MDMenuItem2[] PROGMEM = "SegaCD RamCart";
 static const char MDMenuItem3[] PROGMEM = "Flash Repro";
-//static const char MDMenuItem4[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const menuOptionsMD[] PROGMEM = { MDMenuItem1, MDMenuItem2, MDMenuItem3, string_reset2 };
+static const char* const menuOptionsMD[] PROGMEM = { MDMenuItem1, MDMenuItem2, MDMenuItem3, FSTRING_RESET };
 
 // Cart menu items
-static const char MDCartMenuItem1[] PROGMEM = "Read Rom";
-static const char MDCartMenuItem2[] PROGMEM = "Read Sram";
-static const char MDCartMenuItem3[] PROGMEM = "Write Sram";
 static const char MDCartMenuItem4[] PROGMEM = "Read EEPROM";
 static const char MDCartMenuItem5[] PROGMEM = "Write EEPROM";
-static const char MDCartMenuItem6[] PROGMEM = "Cycle cart";
-//static const char MDCartMenuItem7[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const menuOptionsMDCart[] PROGMEM = { MDCartMenuItem1, MDCartMenuItem2, MDCartMenuItem3, MDCartMenuItem4, MDCartMenuItem5, MDCartMenuItem6, string_reset2 };
+static const char* const menuOptionsMDCart[] PROGMEM = { FSTRING_READ_ROM, FSTRING_READ_SAVE, FSTRING_WRITE_SAVE, MDCartMenuItem4, MDCartMenuItem5, FSTRING_REFRESH_CART, FSTRING_RESET };
 
 // Sega CD Ram Backup Cartridge menu items
 static const char SCDMenuItem1[] PROGMEM = "Read Backup RAM";
 static const char SCDMenuItem2[] PROGMEM = "Write Backup RAM";
-//static const char SCDMenuItem3[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const menuOptionsSCD[] PROGMEM = { SCDMenuItem1, SCDMenuItem2, string_reset2 };
+static const char* const menuOptionsSCD[] PROGMEM = { SCDMenuItem1, SCDMenuItem2, FSTRING_RESET };
 
 // Sega start menu
 void mdMenu() {
@@ -230,22 +235,22 @@ void mdMenu() {
       display_Clear();
       display_Update();
       setup_MD();
-      mode = mode_MD_Cart;
+      mode = CORE_MD_CART;
       break;
 
     case 1:
       display_Clear();
       display_Update();
       setup_MD();
-      mode = mode_SEGA_CD;
+      mode = CORE_SEGA_CD;
       break;
 
-#ifdef enable_FLASH
+#ifdef ENABLE_FLASH
     case 2:
       display_Clear();
       display_Update();
       setup_MD();
-      mode = mode_MD_Cart;
+      mode = CORE_MD_CART;
       // Change working dir to root
       filePath[0] = '\0';
       sd.chdir("/");
@@ -279,7 +284,7 @@ void mdMenu() {
       verifyFlash_MD();
       // Set CS(PH3) HIGH
       PORTH |= (1 << 3);
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       // Prints string out of the common strings array either with or without newline
       print_STR(press_button_STR, 1);
       display_Update();
@@ -324,7 +329,7 @@ void mdCartMenu() {
       } else {
         print_Error(F("Cart has no ROM"));
       }
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
       save_log();
 #endif
       break;
@@ -453,7 +458,7 @@ void segaCDMenu() {
       asm volatile("  jmp 0");
       break;
   }
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   // Prints string out of the common strings array either with or without newline
   print_STR(press_button_STR, 1);
   display_Update();
@@ -467,9 +472,11 @@ void setup_MD() {
   // Request 5V
   setVoltage(VOLTS_SET_5V);
 
-#ifdef use_md_conf
+#if defined(ENABLE_CONFIG)
+  segaSram16bit = configGetLong(F("md.saveType"));
+#elif defined(use_md_conf)
   mdLoadConf();
-#endif
+#endif /*ENABLE_CONFIG*/
 
   // Set Address Pins to Output
   //A0-A7
@@ -746,7 +753,7 @@ void getCartInfo_MD() {
   }
 
   //Identify games using SVP chip
-  if (!strncmp_P(PSTR("GM MK-1229 "), id, 11) || !strncmp_P(PSTR("GM G-7001  "), id, 11)) // Virtua Racing (E/U/J)
+  if (!strncmp_P(PSTR("GM MK-1229 "), id, 11) || !strncmp_P(PSTR("GM G-7001  "), id, 11))  // Virtua Racing (E/U/J)
     isSVP = 1;
   else
     isSVP = 0;
@@ -770,48 +777,48 @@ void getCartInfo_MD() {
   }
   if (cartSize == 0x300000) {
     switch (chksum) {
-      case 0xBC5F:  //Batman Forever (World)
-      case 0x3CDD:  //Donald in Maui Mallard (Brazil) (En)
-      case 0x44AD:  //Donald in Maui Mallard (Europe) (Rev A)
-      case 0x2D9A:  //Foreman for Real (World)
-      case 0x5648:  //Justice League Task Force (World)
-      case 0x0A29:  //Mega 6 Vol. 3 (Europe)
-      case 0x7651:  //NFL Quarterback Club (World)
-      case 0x74CA:  //WWF RAW (World)
+      case 0xBC5F:  // Batman Forever (World)
+      case 0x3CDD:  // Donald in Maui Mallard (Brazil) (En)
+      case 0x44AD:  // Donald in Maui Mallard (Europe) (Rev A)
+      case 0x2D9A:  // Foreman for Real (World)
+      case 0x5648:  // Justice League Task Force (World)
+      case 0x0A29:  // Mega 6 Vol. 3 (Europe)
+      case 0x7651:  // NFL Quarterback Club (World)
+      case 0x74CA:  // WWF RAW (World)
         cartSize = 0x400000;
         break;
     }
   }
   if (cartSize == 0x200000) {
     switch (chksum) {
-      case 0x2078:  //Dynamite Headdy (USA, Europe)
+      case 0x2078:  // Dynamite Headdy (USA, Europe)
         chksum = 0x9877;
         break;
-      case 0xAE95:  //Winter Olympic Games (USA)
+      case 0xAE95:  // Winter Olympic Games (USA)
         chksum = 0x56A0;
         break;
     }
   }
   if (cartSize == 0x180000) {
     switch (chksum) {
-      case 0xFFE2:  //Cannon Fodder (Europe)
-      case 0xF418:  //Chaos Engine, The (Europe)
-      case 0xF71D:  //Fatal Fury (Europe, Korea) (En)
-      case 0xA884:  //Flashback (Europe) (En,Fr)
-      case 0x7D68:  //Flashback - The Quest for Identity (USA) (En,Fr)
-      case 0x030D:  //Shining Force (Europe)
-      case 0xE975:  //Shining Force (USA)
+      case 0xFFE2:  // Cannon Fodder (Europe)
+      case 0xF418:  // Chaos Engine, The (Europe)
+      case 0xF71D:  // Fatal Fury (Europe, Korea) (En)
+      case 0xA884:  // Flashback (Europe) (En,Fr)
+      case 0x7D68:  // Flashback - The Quest for Identity (USA) (En,Fr)
+      case 0x030D:  // Shining Force (Europe)
+      case 0xE975:  // Shining Force (USA)
         cartSize = 0x200000;
         break;
     }
   }
   if (cartSize == 0x100000) {
     switch (chksum) {
-      case 0xCDF5:  //Life on Mars (Aftermarket)
+      case 0xCDF5:  // Life on Mars (Aftermarket)
         cartSize = 0x400000;
         chksum = 0x603A;
         break;
-      case 0xF85F:  //Metal Dragon (Aftermarket)
+      case 0xF85F:  // Metal Dragon (Aftermarket)
         cartSize = 0x200000;
         chksum = 0x6965;
         break;
@@ -819,62 +826,66 @@ void getCartInfo_MD() {
   }
   if (cartSize == 0xC0000) {
     switch (chksum) {
-      case 0x9D79:  //Wonder Boy in Monster World (USA, Europe)
+      case 0x9D79:  // Wonder Boy in Monster World (USA, Europe)
         cartSize = 0x100000;
         break;
     }
   }
   if (cartSize == 0x80000) {
     switch (chksum) {
-      case 0x5B3A:  //NHL 98 (USA)
+      case 0x06C1:  // Madden NFL 98 (USA)
+        cartSize = 0x200000;
+        chksum = 0x8473;
+        break;
+      case 0x5B3A:  // NHL 98 (USA)
         cartSize = 0x200000;
         chksum = 0x5613;
         break;
-      case 0xD07D:  //Zero Wing (Japan)
+      case 0xD07D:  // Zero Wing (Japan)
         cartSize = 0x100000;
         chksum = 0xF204;
         break;
-      case 0x95C9:  //Zero Wing (Europe)
-      case 0x9144:  //Zoop (Europe)
-      case 0xB8D4:  //Zoop (USA)
+      case 0x95C9:  // Zero Wing (Europe)
+      case 0x9144:  // Zoop (Europe)
+      case 0xB8D4:  // Zoop (USA)
         cartSize = 0x100000;
         break;
-      case 0xC422:  //Jeopardy! (USA)
+      case 0xC422:  // Jeopardy! (USA)
         chksum = 0xC751;
         break;
-      case 0x0C6A:  //Monopoly (USA)
+      case 0x0C6A:  // Monopoly (USA)
         chksum = 0xE1AA;
         break;
-      case 0xA760:  //Gain Ground (USA)
+      case 0xA760:  // Gain Ground (USA)
         chksum = 0x97CD;
         break;
-      case 0x1404:  //Wonder Boy III - Monster Lair (Japan, Europe) (En)
+      case 0x1404:  // Wonder Boy III - Monster Lair (Japan, Europe) (En)
         chksum = 0x53B9;
         break;
     }
   }
   if (cartSize == 0x40000) {
     switch (chksum) {
-      case 0x8BC6:  //Pac-Attack (USA)
-      case 0xB344:  //Pac-Panic (Europe)
+      case 0x8BC6:  // Pac-Attack (USA)
+      case 0xB344:  // Pac-Panic (Europe)
         cartSize = 0x100000;
         break;
     }
   }
   if (cartSize == 0x20000) {
     switch (chksum) {
-      case 0x7E50:  //Micro Machines 2 - Turbo Tournament (Europe)
+      case 0x7E50:  // Micro Machines 2 - Turbo Tournament (Europe)
         cartSize = 0x100000;
         chksum = 0xD074;
         break;
-      case 0x168B:  //Micro Machines - Military (Europe)
+      case 0x168B:  // Micro Machines - Military (Europe)
         cartSize = 0x100000;
         chksum = 0xCEE0;
         break;
     }
   }
 
-  // Fatman (Japan)
+  // Fatman (Japan).md
   if (!strncmp_P(PSTR("GM T-44013 "), id, 11) && (chksum == 0xFFFF)) {
     chksum = 0xC560;
     cartSize = 0xA0000;
@@ -925,7 +936,7 @@ void getCartInfo_MD() {
     cartSize = 0x400000;
   }
 
-  //Enryuu Seiken Xiao-Mei (Aftermarket)
+  // Enryuu Seiken Xiao-Mei (Aftermarket)
   if (!strncmp("GM 00000000-00", id, 14) && (chksum == 0x1E0C)) {
     chksum = 0xE7E5;
     cartSize = 0x400000;
@@ -946,6 +957,34 @@ void getCartInfo_MD() {
   // Sasha Darko's Sacred Line II (Aftermarket)
   if (!strncmp("GM 00000005-00", id, 14) && (chksum == 0x0E9B)) {
     chksum = 0x6B4B;
+    cartSize = 0x400000;
+  }
+
+  // Sasha Darko's Sacred Line (Watermelon Release) (Aftermarket)
+  if (!strncmp("GM T-574323-00", id, 14) && (chksum == 0xAEDD)) {
+    cartSize = 0x400000;
+  }
+
+  // Kromasphere (Aftermarket)
+   if (!strncmp("GM MK-0000 -00", id, 14) && (chksum == 0xC536)) {
+    chksum = 0xFAB1;
+    cartSize = 0x200000;
+   }
+
+  // YM2017 (Aftermarket)
+   if (!strncmp("GM CSET0001-02", id, 14) && (chksum == 0x0000)) {
+    chksum = 0xE3A9;
+   }
+
+  // The Curse of Illmore Bay (Aftermarket)
+  if (!strncmp("1774          ", id, 14) && (chksum == 0x0000)) {
+    chksum = 0x6E34;
+    cartSize = 0x400000;
+  }
+
+  // Coffee Crisis (Aftermarket)
+  if (!strncmp("JN-20160131-03", id, 14) && (chksum == 0x0000)) {
+    chksum = 0x8040;
     cartSize = 0x400000;
   }
 
@@ -1095,13 +1134,13 @@ void getCartInfo_MD() {
         } else {
           print_Msg(("sramType: "));
           print_Msg_PaddedHex16(sramType);
-          println_Msg(F(""));
+          println_Msg(FS(FSTRING_EMPTY));
           print_Msg(("sramBase: "));
           print_Msg_PaddedHex32(sramBase);
-          println_Msg(F(""));
+          println_Msg(FS(FSTRING_EMPTY));
           print_Msg(("sramEnd: "));
           print_Msg_PaddedHex32(sramEnd);
-          println_Msg(F(""));
+          println_Msg(FS(FSTRING_EMPTY));
           print_FatalError(F("Unknown Sram Base"));
         }
       } else if (sramType == 0xE020) {  // SRAM BOTH BYTES
@@ -1123,13 +1162,13 @@ void getCartInfo_MD() {
         }else {
           print_Msg(("sramType: "));
           print_Msg_PaddedHex16(sramType);
-          println_Msg(F(""));
+          println_Msg(FS(FSTRING_EMPTY));
           print_Msg(("sramBase: "));
           print_Msg_PaddedHex32(sramBase);
-          println_Msg(F(""));
+          println_Msg(FS(FSTRING_EMPTY));
           print_Msg(("sramEnd: "));
           print_Msg_PaddedHex32(sramEnd);
-          println_Msg(F(""));
+          println_Msg(FS(FSTRING_EMPTY));
           print_FatalError(F("Unknown Sram Base"));
         }
       }
@@ -1247,13 +1286,13 @@ void getCartInfo_MD() {
 
   display_Clear();
   println_Msg(F("Cart Info"));
-  println_Msg(F(" "));
+  println_Msg(FS(FSTRING_SPACE));
   print_Msg(F("Name: "));
   println_Msg(romName);
   if (bramCheck != 0x00FF) {
     print_Msg(F("bramCheck: "));
     print_Msg_PaddedHex16(bramCheck);
-    println_Msg(F(""));
+    println_Msg(FS(FSTRING_EMPTY));
   }
   if (bramSize > 0) {
     print_Msg(F("bramSize(KB): "));
@@ -1296,7 +1335,7 @@ void getCartInfo_MD() {
       print_Msg_PaddedHexByte((chksumSonic2 & 0x00ff));
       break;
   }
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   if (saveType == 4) {
     print_Msg(F("Serial EEPROM: "));
     print_Msg(eepSize * 8 / 1024);
@@ -1309,10 +1348,10 @@ void getCartInfo_MD() {
     } else
       println_Msg(F("None"));
   }
-  println_Msg(F(" "));
+  println_Msg(FS(FSTRING_SPACE));
 
   // Wait for user input
-#if (defined(enable_LCD) || defined(enable_OLED))
+#if (defined(ENABLE_LCD) || defined(ENABLE_OLED))
   // Prints string out of the common strings array either with or without newline
   print_STR(press_button_STR, 1);
   display_Update();
@@ -1673,14 +1712,14 @@ void readROM_MD() {
   print_Msg(F("Internal checksum..."));
   display_Update();
   if (chksum == calcCKS) {
-    println_Msg(F("OK"));
+    println_Msg(FS(FSTRING_OK));
     display_Update();
   } else {
     println_Msg(F("Error"));
     char calcsumStr[5];
     sprintf_P(calcsumStr, PSTR("%04X"), calcCKS);
     println_Msg(calcsumStr);
-    print_Error(F(""));
+    print_Error(FS(FSTRING_EMPTY));
     display_Update();
   }
 
@@ -1688,28 +1727,28 @@ void readROM_MD() {
   if (SnKmode >= 2) {
     print_Msg(F("Lock-on checksum..."));
     if (chksumLockon == calcCKSLockon) {
-      println_Msg(F("OK"));
+      println_Msg(FS(FSTRING_OK));
       display_Update();
     } else {
       print_Msg(F("Error"));
       char calcsumStr[5];
       sprintf_P(calcsumStr, PSTR("%04X"), calcCKSLockon);
       println_Msg(calcsumStr);
-      print_Error(F(""));
+      print_Error(FS(FSTRING_EMPTY));
       display_Update();
     }
   }
   if (SnKmode == 3) {
     print_Msg(F("Adittional checksum..."));
     if (chksumSonic2 == calcCKSSonic2) {
-      println_Msg(F("OK"));
+      println_Msg(FS(FSTRING_OK));
       display_Update();
     } else {
       print_Msg(F("Error"));
       char calcsumStr[5];
       sprintf_P(calcsumStr, PSTR("%04X"), calcCKSSonic2);
       println_Msg(calcsumStr);
-      print_Error(F(""));
+      print_Error(FS(FSTRING_EMPTY));
       display_Update();
     }
   }
@@ -1919,7 +1958,7 @@ unsigned long verifySram_MD() {
   return writeErrors;
 }
 
-#ifdef enable_FLASH
+#ifdef ENABLE_FLASH
 //******************************************
 // Flashrom Functions
 //******************************************
@@ -2707,7 +2746,7 @@ void readEEP_MD() {
   }
   // Close the file:
   myFile.close();
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   display_Clear();
   print_Msg(F("Saved to "));
   print_Msg(folder);
@@ -2742,13 +2781,13 @@ void writeEEP_MD() {
         writeEepromByte(currByte);
         print_Msg(F("."));
         if ((currByte != 0) && ((currByte + 1) % 64 == 0))
-          println_Msg(F(""));
+          println_Msg(FS(FSTRING_EMPTY));
         display_Update();  // ON SERIAL = delay(100)
       }
     }
     // Close the file:
     myFile.close();
-    println_Msg(F(""));
+    println_Msg(FS(FSTRING_EMPTY));
     display_Clear();
     print_STR(done_STR, 1);
     display_Update();
@@ -2795,7 +2834,7 @@ void readBram_MD() {
 
   // Close the file:
   myFile.close();
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   display_Clear();
   print_Msg(F("Saved to "));
   print_Msg(folder);
@@ -2827,7 +2866,7 @@ void writeBram_MD() {
     writeWord_MD(0x380000, 0);  // Disable BRAM Writes
     // Close the file:
     myFile.close();
-    println_Msg(F(""));
+    println_Msg(FS(FSTRING_EMPTY));
     display_Clear();
     print_STR(done_STR, 1);
     display_Update();

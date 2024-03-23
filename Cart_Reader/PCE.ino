@@ -10,7 +10,7 @@
 // Chris Covell - Tennokoe bank support
 //
 //******************************************
-#ifdef enable_PCE
+#ifdef ENABLE_PCE
 
 /******************************************
   Defines
@@ -58,7 +58,6 @@ static const char pceMenuItem3[] PROGMEM = "AdapterSetting";
 static const char *const menuOptionspce[] PROGMEM = { pceMenuItem1, pceMenuItem2, pceMenuItem3, string_reset2 };
 
 // PCE card menu items
-static const char menuOptionspceCart_0[] PROGMEM = "Read ROM";
 static const char menuOptionspceCart_1[] PROGMEM = "Read RAM Bank %d";
 static const char menuOptionspceCart_2[] PROGMEM = "Write RAM Bank %d";
 static const char menuOptionspceCart_3[] PROGMEM = "Inc Bank Number";
@@ -67,8 +66,7 @@ static const char menuOptionspceCart_5[] PROGMEM = "Set %dK ROM size";
 static const char menuOptionspceCart_5_fmt[] PROGMEM = "ROM size now %dK";
 
 // Turbochip menu items
-static const char pceTCMenuItem1[] PROGMEM = "Read ROM";
-static const char *const menuOptionspceTC[] PROGMEM = { pceTCMenuItem1, string_reset2 };
+static const char *const menuOptionspceTC[] PROGMEM = { FSTRING_READ_ROM, FSTRING_RESET };
 
 // Adapter Setting Menu items
 static const char pceAdapterMenuItem1[] PROGMEM = "Swap Adapter";
@@ -97,7 +95,7 @@ void pcsMenu(void) {
         pce_internal_mode = HUCARD_NOSWAP;
       }
       setup_cart_PCE();
-      mode = mode_PCE;
+      mode = CORE_PCE;
       break;
 
     case 1:
@@ -110,7 +108,7 @@ void pcsMenu(void) {
         pce_internal_mode = TURBOCHIP_NOSWAP;
       }
       setup_cart_PCE();
-      mode = mode_PCE;
+      mode = CORE_PCE;
       break;
 
     case 2:
@@ -118,6 +116,7 @@ void pcsMenu(void) {
       display_Clear();
       display_Update();
       adapter_Setting();
+      mode = CORE_PCE;
       break;
 
     case 3:
@@ -329,9 +328,10 @@ uint32_t detect_rom_size_PCE(void) {
   uint32_t rom_size;
   uint8_t read_byte;
   uint8_t current_byte;
-  uint8_t detect_32, detect_128, detect_256, detect_512, detect_768;
+  uint8_t detect_16, detect_32, detect_128, detect_256, detect_512, detect_768;
 
   //Initialize variables
+  detect_16 = 0;
   detect_32 = 0;
   detect_128 = 0;
   detect_256 = 0;
@@ -341,15 +341,22 @@ uint32_t detect_rom_size_PCE(void) {
   //Set pins to read PC Engine cart
   pin_read_write_PCE();
 
-  //Confirm where mirror address start from (32KB, 128KB, 256KB, 512KB, 768KB, or 1024KB)
+  //Confirm where mirror address start from (16KB, 32KB, 128KB, 256KB, 512KB, 768KB, or 1024KB)
   for (current_byte = 0; current_byte < DETECTION_SIZE; current_byte++) {
-    if ((current_byte != detect_32) && (current_byte != detect_128) && (current_byte != detect_256) && (current_byte != detect_512) && (current_byte != detect_768)) {
+    if ((current_byte != detect_16) && (current_byte != detect_32) && (current_byte != detect_128) && (current_byte != detect_256) && (current_byte != detect_512) && (current_byte != detect_768)) {
       //If none matched, it is 1024KB
       break;
     }
 
-    //read byte for 32KB, 128KB, 256KB, 512KB detection
+    //read byte for 16KB, 32KB, 128KB, 256KB, 512KB detection
     read_byte = read_byte_PCE(current_byte);
+
+    //16KB detection
+    if (current_byte == detect_16) {
+      if (read_byte_PCE(current_byte + 16UL * 1024UL) == read_byte) {
+        detect_16++;
+      }
+    }
 
     //32KB detection
     if (current_byte == detect_32) {
@@ -389,11 +396,13 @@ uint32_t detect_rom_size_PCE(void) {
   }
 
   //debug
-  //sprintf_P(fileName, PSTR("%d %d %d %d %d"), detect_32, detect_128, detect_256, detect_512, detect_768); //using filename global variable as string. Initialzed in below anyways.
+  //sprintf_P(fileName, PSTR("%d %d %d %d %d"), detect_16, detect_32, detect_128, detect_256, detect_512, detect_768); //using filename global variable as string. Initialzed in below anyways.
   //println_Msg(fileName);
 
   //ROM size detection by result
-  if (detect_32 == DETECTION_SIZE) {
+  if (detect_16 == DETECTION_SIZE) {
+    rom_size = 16;
+  } else if (detect_32 == DETECTION_SIZE) {
     rom_size = 32;
   } else if (detect_128 == DETECTION_SIZE) {
     rom_size = 128;
@@ -423,7 +432,7 @@ uint32_t detect_rom_size_PCE(void) {
     if (read_byte_PCE(0x1F26) == 'P' && read_byte_PCE(0x1F27) == 'O' && read_byte_PCE(0x1F28) == 'P' && read_byte_PCE(0x1F29) == 'U' && read_byte_PCE(0x1F2A) == 'L' && read_byte_PCE(0x1F2B) == 'O' && read_byte_PCE(0x1F2C) == 'U' && read_byte_PCE(0x1F2D) == 'S') {
       rom_size = 512;
     }
-    //Dinoforce (World)
+    //Dinoforce (Japan)
     if (read_byte_PCE(0x15A) == 'D' && read_byte_PCE(0x15B) == 'I' && read_byte_PCE(0x15C) == 'N' && read_byte_PCE(0x15D) == 'O' && read_byte_PCE(0x15E) == '-' && read_byte_PCE(0x15F) == 'F' && read_byte_PCE(0x160) == 'O' && read_byte_PCE(0x161) == 'R' && read_byte_PCE(0x162) == 'C' && read_byte_PCE(0x163) == 'E') {
       rom_size = 512;
     }
@@ -605,9 +614,9 @@ void read_tennokoe_bank_PCE(int bank_index) {
     //   for (int i = 0; i < 16; i++) {
     //     uint8_t b = sdBuffer[c + i];
     //     print_Msg_PaddedHexByte(b);
-    //     //print_Msg(F(" "));
+    //     //print_Msg(FS(FSTRING_SPACE));
     //   }
-    //   println_Msg(F(""));
+    //   println_Msg(FS(FSTRING_EMPTY));
     // }
 
     if (block_index == 0) {
@@ -616,7 +625,7 @@ void read_tennokoe_bank_PCE(int bank_index) {
         uint8_t b = sdBuffer[i];
         print_Msg_PaddedHexByte(b);
       }
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
     }
     if (block_index == 0 && sdBuffer[2] == 0x42 && sdBuffer[3] == 0x4D) {
       if (sdBuffer[0] != 0x48 || sdBuffer[1] != 0x55) {
@@ -635,7 +644,7 @@ void read_tennokoe_bank_PCE(int bank_index) {
   //Close the file:
   myFile.close();
 
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   print_STR(press_button_STR, 1);
   display_Update();
   wait();
@@ -735,7 +744,7 @@ void write_tennokoe_bank_PCE(int bank_index) {
     print_Error(F("File doesn't exist"));
   }
 
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   print_STR(press_button_STR, 1);
   display_Update();
   wait();
@@ -825,7 +834,7 @@ void read_rom_PCE(void) {
   //CRC search and rename ROM
   crc_search(fileName, folder, rom_size, crc);
 
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   print_STR(press_button_STR, 1);
   display_Update();
   wait();
@@ -839,7 +848,7 @@ void pceMenu() {
   EEPROM_readAnything(PCE_ADAPTER, adapterSwap);
 
   if (pce_internal_mode == HUCARD || pce_internal_mode == HUCARD_NOSWAP) {
-    strcpy_P(menuOptions[0], menuOptionspceCart_0);
+    strcpy_P(menuOptions[0], FSTRING_READ_ROM);
     sprintf_P(menuOptions[1], menuOptionspceCart_1, tennokoe_bank_index + 1);
     sprintf_P(menuOptions[2], menuOptionspceCart_2, tennokoe_bank_index + 1);
     strcpy_P(menuOptions[3], menuOptionspceCart_3);
@@ -849,7 +858,7 @@ void pceMenu() {
     } else {
       sprintf_P(menuOptions[5], menuOptionspceCart_5, FORCED_SIZE);
     }
-    strcpy_P(menuOptions[6], string_reset2);
+    strcpy_P(menuOptions[6], FSTRING_RESET);
     mainMenu = question_box(adapterSwap == 1 ? F("PCE HuCARD menu(SWAP)") : F("PCE HuCARD menu(NOSWAP)"), menuOptions, 7, 0);
 
     // wait for user choice to come back from the question box menu

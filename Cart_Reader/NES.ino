@@ -5,7 +5,7 @@
 // also based on "CoolArduino" by HardWareMan
 // Pinout changes: LED and CIRAM_A10
 
-#ifdef enable_NES
+#ifdef ENABLE_NES
 
 //Line Content
 //28   Supported Mappers
@@ -253,12 +253,9 @@ uint8_t newramsize;
 // NES start menu
 static const char nesMenuItem1[] PROGMEM = "Read iNES Rom";
 static const char nesMenuItem2[] PROGMEM = "Read PRG/CHR";
-static const char nesMenuItem3[] PROGMEM = "Read Sram";
-static const char nesMenuItem4[] PROGMEM = "Write Sram";
 static const char nesMenuItem5[] PROGMEM = "Change Mapper";
 static const char nesMenuItem6[] PROGMEM = "Flash NESMaker";
-//static const char nesMenuItem7[] PROGMEM = "Reset"; (stored in common strings array)
-static const char* const menuOptionsNES[] PROGMEM = { nesMenuItem1, nesMenuItem2, nesMenuItem3, nesMenuItem4, nesMenuItem5, nesMenuItem6, string_reset2 };
+static const char* const menuOptionsNES[] PROGMEM = { nesMenuItem1, nesMenuItem2, FSTRING_READ_SAVE, FSTRING_WRITE_SAVE, nesMenuItem5, nesMenuItem6, FSTRING_RESET };
 
 // NES chips menu
 static const char nesChipsMenuItem1[] PROGMEM = "Combined PRG+CHR";
@@ -283,10 +280,10 @@ void nesMenu() {
       // Change working dir to root
       sd.chdir("/");
       readRom_NES();
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       // Prints string out of the common strings array either with or without newline
       print_STR(press_button_STR, 1);
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
       save_log();
 #endif
       display_Update();
@@ -306,7 +303,7 @@ void nesMenu() {
       sd.chdir(folder);
       readRAM();
       resetROM();
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       // Prints string out of the common strings array either with or without newline
       print_STR(press_button_STR, 1);
       display_Update();
@@ -317,7 +314,7 @@ void nesMenu() {
     case 3:
       writeRAM();
       resetROM();
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       // Prints string out of the common strings array either with or without newline
       print_STR(press_button_STR, 1);
       display_Update();
@@ -344,7 +341,7 @@ void nesMenu() {
         display_Clear();
         println_Msg(F("Error:"));
         println_Msg(F("Can't write to this cartridge"));
-        println_Msg(F(""));
+        println_Msg(FS(FSTRING_EMPTY));
         // Prints string out of the common strings array either with or without newline
         print_STR(press_button_STR, 1);
         display_Update();
@@ -372,10 +369,10 @@ void nesChipMenu() {
       // Change working dir to root
       sd.chdir("/");
       readRaw_NES();
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       // Prints string out of the common strings array either with or without newline
       print_STR(press_button_STR, 1);
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
       save_log();
 #endif
       display_Update();
@@ -387,7 +384,7 @@ void nesChipMenu() {
       CreateROMFolderInSD();
       readPRG(false);
       resetROM();
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       // Prints string out of the common strings array either with or without newline
       print_STR(press_button_STR, 1);
       display_Update();
@@ -399,7 +396,7 @@ void nesChipMenu() {
       CreateROMFolderInSD();
       readCHR(false);
       resetROM();
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       // Prints string out of the common strings array either with or without newline
       print_STR(press_button_STR, 1);
       display_Update();
@@ -578,7 +575,7 @@ void getMapping() {
       browseDatabase = true;
     } else {
       // File searched until end but nothing found
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       println_Msg(F("CRC not found in database"));
       println_Msg(F("Using manual selection"));
       display_Update();
@@ -597,7 +594,7 @@ void getMapping() {
 
     // Display database
     while (database.available()) {
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
       // Disable log to prevent unnecessary logging
       dont_log = true;
 #endif
@@ -669,14 +666,14 @@ void getMapping() {
 
       println_Msg(entry.filename);
       printNESSettings();
-#if defined(enable_OLED)
+#if defined(ENABLE_OLED)
       print_STR(press_to_change_STR, 0);
       if (fastScrolling > 1)
         println_Msg(F(" (fast)"));
       else
         println_Msg("");
       print_STR(right_to_select_STR, 1);
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
       print_STR(rotate_to_change_STR, 0);
       if (fastScrolling > 1)
         println_Msg(F(" (fast)"));
@@ -689,11 +686,11 @@ void getMapping() {
 #endif
       display_Update();
 
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
       // Enable log again
       dont_log = false;
 #endif
-      int b = 0;
+      uint8_t b = 0;
       do {
         b = checkButton();
       } while (b == 0);
@@ -770,7 +767,7 @@ bool selectMapping(FsFile& database) {
     setRAMSize();
     return 0;
   } else {
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
     // Disable log to prevent unnecessary logging
     println_Log(F("Select Mapping from List"));
     dont_log = true;
@@ -786,7 +783,7 @@ bool selectMapping(FsFile& database) {
       } while (database.available() && entry.filename[0] != myLetter);
       rewind_line(database, 3);
     }
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
     // Enable log again
     dont_log = false;
 #endif
@@ -1185,14 +1182,14 @@ void CreateRAMFileInSD() {
  *****************************************/
 void setMapper() {
   uint8_t newmapper;
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
   // Disable log to prevent unnecessary logging
   println_Log(F("Set Mapper manually"));
   dont_log = true;
 #endif
 
   // OLED
-#if defined(enable_OLED)
+#if defined(ENABLE_OLED)
 chooseMapper:
   // Read stored mapper
   EEPROM_readAnything(NES_MAPPER, newmapper);
@@ -1250,7 +1247,7 @@ chooseMapper:
          2 doubleClick
          3 hold
          4 longHold */
-      int b = checkButton();
+      uint8_t b = checkButton();
 
       if (b == 1) {
         if (digit == 0) {
@@ -1329,20 +1326,20 @@ chooseMapper:
   }
 
   // LCD
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
   int i = 0;
 
   display_Clear();
   mapselect = pgm_read_byte(mapsize + i * 7);
   print_Msg(F("Mapper: "));
   println_Msg(mapselect);
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   print_STR(rotate_to_change_STR, 1);
   print_STR(press_to_select_STR, 1);
   display_Update();
 
   while (1) {
-    int b = checkButton();
+    uint8_t b = checkButton();
 
     if (b == 2) {  // Previous Mapper
       if (i == 0)
@@ -1354,7 +1351,7 @@ chooseMapper:
       mapselect = pgm_read_byte(mapsize + i * 7);
       print_Msg(F("Mapper: "));
       println_Msg(mapselect);
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       print_STR(rotate_to_change_STR, 1);
       print_STR(press_to_select_STR, 1);
       display_Update();
@@ -1370,7 +1367,7 @@ chooseMapper:
       mapselect = pgm_read_byte(mapsize + i * 7);
       print_Msg(F("Mapper: "));
       println_Msg(mapselect);
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       print_STR(rotate_to_change_STR, 1);
       print_STR(press_to_select_STR, 1);
       display_Update();
@@ -1390,7 +1387,7 @@ chooseMapper:
   delay(500);
 
   // Serial Monitor
-#elif defined(enable_serial)
+#elif defined(ENABLE_SERIAL)
 setmapper:
   String newmap;
   bool mapfound = false;
@@ -1403,11 +1400,11 @@ setmapper:
     Serial.print("]");
     if (i < mapcount - 1) {
       if ((i != 0) && ((i + 1) % 10 == 0))
-        Serial.println(F(""));
+        Serial.println(FS(FSTRING_EMPTY));
       else
         Serial.print(F("\t"));
     } else
-      Serial.println(F(""));
+      Serial.println(FS(FSTRING_EMPTY));
   }
   Serial.print(F("Enter Mapper: "));
   while (Serial.available() == 0) {}
@@ -1422,7 +1419,7 @@ setmapper:
   }
   if (mapfound == false) {
     Serial.println(F("MAPPER NOT SUPPORTED!"));
-    Serial.println(F(""));
+    Serial.println(FS(FSTRING_EMPTY));
     newmapper = 0;
     goto setmapper;
   }
@@ -1431,7 +1428,7 @@ setmapper:
   EEPROM_writeAnything(NES_MAPPER, newmapper);
   mapper = newmapper;
 
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
   // Enable log again
   dont_log = false;
 #endif
@@ -1454,13 +1451,13 @@ void checkMapperSize() {
 }
 
 void setPRGSize() {
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
   // Disable log to prevent unnecessary logging
   println_Log(F("Set PRG Size"));
   dont_log = true;
 #endif
 
-#if (defined(enable_LCD) || defined(enable_OLED))
+#if (defined(ENABLE_LCD) || defined(ENABLE_OLED))
   display_Clear();
   if (prglo == prghi)
     newprgsize = prglo;
@@ -1470,18 +1467,18 @@ void setPRGSize() {
     display_Clear();
     print_Msg(F("PRG Size: "));
     println_Msg(pgm_read_word(&(PRG[i])));
-    println_Msg(F(""));
-#if defined(enable_OLED)
+    println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
     print_STR(press_to_change_STR, 1);
     println_Msg(F("Press right to select"));
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
     print_STR(rotate_to_change_STR, 1);
     print_STR(press_to_select_STR, 1);
 #endif
     display_Update();
 
     while (1) {
-      int b = checkButton();
+      uint8_t b = checkButton();
 
       if (b == doubleclick) {  // Previous
         if (i == prglo)
@@ -1492,11 +1489,11 @@ void setPRGSize() {
         display_Clear();
         print_Msg(F("PRG Size: "));
         println_Msg(pgm_read_word(&(PRG[i])));
-        println_Msg(F(""));
-#if defined(enable_OLED)
+        println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
         print_STR(press_to_change_STR, 1);
         println_Msg(F("Press right to select"));
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
         print_STR(rotate_to_change_STR, 1);
         print_STR(press_to_select_STR, 1);
 #endif
@@ -1511,11 +1508,11 @@ void setPRGSize() {
         display_Clear();
         print_Msg(F("PRG Size: "));
         println_Msg(pgm_read_word(&(PRG[i])));
-        println_Msg(F(""));
-#if defined(enable_OLED)
+        println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
         print_STR(press_to_change_STR, 1);
         println_Msg(F("Press right to select"));
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
         print_STR(rotate_to_change_STR, 1);
         print_STR(press_to_select_STR, 1);
 #endif
@@ -1535,7 +1532,7 @@ void setPRGSize() {
   display_Update();
   delay(500);
 
-#elif defined(enable_serial)
+#elif defined(ENABLE_SERIAL)
   if (prglo == prghi)
     newprgsize = prglo;
   else {
@@ -1555,7 +1552,7 @@ setprg:
     newprgsize = sizePRG.toInt() + prglo;
     if (newprgsize > prghi) {
       Serial.println(F("SIZE NOT SUPPORTED"));
-      Serial.println(F(""));
+      Serial.println(FS(FSTRING_EMPTY));
       goto setprg;
     }
   }
@@ -1566,20 +1563,20 @@ setprg:
   EEPROM_writeAnything(NES_PRG_SIZE, newprgsize);
   prgsize = newprgsize;
 
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
   // Enable log again
   dont_log = false;
 #endif
 }
 
 void setCHRSize() {
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
   // Disable log to prevent unnecessary logging
   println_Log(F("Set CHR Size"));
   dont_log = true;
 #endif
 
-#if (defined(enable_LCD) || defined(enable_OLED))
+#if (defined(ENABLE_LCD) || defined(ENABLE_OLED))
   display_Clear();
   if (chrlo == chrhi)
     newchrsize = chrlo;
@@ -1589,18 +1586,18 @@ void setCHRSize() {
     display_Clear();
     print_Msg(F("CHR Size: "));
     println_Msg(pgm_read_word(&(CHR[i])));
-    println_Msg(F(""));
-#if defined(enable_OLED)
+    println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
     print_STR(press_to_change_STR, 1);
     println_Msg(F("Press right to select"));
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
     print_STR(rotate_to_change_STR, 1);
     print_STR(press_to_select_STR, 1);
 #endif
     display_Update();
 
     while (1) {
-      int b = checkButton();
+      uint8_t b = checkButton();
 
       if (b == doubleclick) {  // Previous
         if (i == chrlo)
@@ -1611,11 +1608,11 @@ void setCHRSize() {
         display_Clear();
         print_Msg(F("CHR Size: "));
         println_Msg(pgm_read_word(&(CHR[i])));
-        println_Msg(F(""));
-#if defined(enable_OLED)
+        println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
         print_STR(press_to_change_STR, 1);
         println_Msg(F("Press right to select"));
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
         print_STR(rotate_to_change_STR, 1);
         print_STR(press_to_select_STR, 1);
 #endif
@@ -1631,11 +1628,11 @@ void setCHRSize() {
         display_Clear();
         print_Msg(F("CHR Size: "));
         println_Msg(pgm_read_word(&(CHR[i])));
-        println_Msg(F(""));
-#if defined(enable_OLED)
+        println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
         print_STR(press_to_change_STR, 1);
         println_Msg(F("Press right to select"));
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
         print_STR(rotate_to_change_STR, 1);
         print_STR(press_to_select_STR, 1);
 #endif
@@ -1655,7 +1652,7 @@ void setCHRSize() {
   display_Update();
   delay(500);
 
-#elif defined(enable_serial)
+#elif defined(ENABLE_SERIAL)
   if (chrlo == chrhi)
     newchrsize = chrlo;
   else {
@@ -1675,7 +1672,7 @@ setchr:
     newchrsize = sizeCHR.toInt() + chrlo;
     if (newchrsize > chrhi) {
       Serial.println(F("SIZE NOT SUPPORTED"));
-      Serial.println(F(""));
+      Serial.println(FS(FSTRING_EMPTY));
       goto setchr;
     }
   }
@@ -1686,20 +1683,20 @@ setchr:
   EEPROM_writeAnything(NES_CHR_SIZE, newchrsize);
   chrsize = newchrsize;
 
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
   // Enable log again
   dont_log = false;
 #endif
 }
 
 void setRAMSize() {
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
   // Disable log to prevent unnecessary logging
   println_Log(F("Set RAM Size"));
   dont_log = true;
 #endif
 
-#if (defined(enable_LCD) || defined(enable_OLED))
+#if (defined(ENABLE_LCD) || defined(ENABLE_OLED))
   display_Clear();
   if (ramlo == ramhi)
     newramsize = ramlo;
@@ -1723,18 +1720,18 @@ void setRAMSize() {
       println_Msg(i * 5);
     else
       println_Msg(pgm_read_byte(&(RAM[i])));
-    println_Msg(F(""));
-#if defined(enable_OLED)
+    println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
     print_STR(press_to_change_STR, 1);
     println_Msg(F("Press right to select"));
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
     print_STR(rotate_to_change_STR, 1);
     print_STR(press_to_select_STR, 1);
 #endif
     display_Update();
 
     while (1) {
-      int b = checkButton();
+      uint8_t b = checkButton();
 
       if (b == doubleclick) {  // Previous Mapper
         if (i == 0)
@@ -1759,11 +1756,11 @@ void setRAMSize() {
           println_Msg(i * 5);
         else
           println_Msg(pgm_read_byte(&(RAM[i])));
-        println_Msg(F(""));
-#if defined(enable_OLED)
+        println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
         print_STR(press_to_change_STR, 1);
         println_Msg(F("Press right to select"));
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
         print_STR(rotate_to_change_STR, 1);
         print_STR(press_to_select_STR, 1);
 #endif
@@ -1793,11 +1790,11 @@ void setRAMSize() {
           println_Msg(i * 5);
         else
           println_Msg(pgm_read_byte(&(RAM[i])));
-        println_Msg(F(""));
-#if defined(enable_OLED)
+        println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
         print_STR(press_to_change_STR, 1);
         println_Msg(F("Press right to select"));
-#elif defined(enable_LCD)
+#elif defined(ENABLE_LCD)
         print_STR(rotate_to_change_STR, 1);
         print_STR(press_to_select_STR, 1);
 #endif
@@ -1846,7 +1843,7 @@ void setRAMSize() {
   display_Update();
   delay(500);
 
-#elif defined(enable_serial)
+#elif defined(ENABLE_SERIAL)
   if (ramlo == ramhi)
     newramsize = ramlo;
   else {
@@ -1884,7 +1881,7 @@ setram:
     newramsize = sizeRAM.toInt() + ramlo;
     if (newramsize > ramhi) {
       Serial.println(F("SIZE NOT SUPPORTED"));
-      Serial.println(F(""));
+      Serial.println(FS(FSTRING_EMPTY));
       goto setram;
     }
   }
@@ -1897,7 +1894,7 @@ setram:
       sizeEEP = pgm_read_byte(&(RAM[newramsize])) * 16;
     Serial.print(sizeEEP);
     Serial.println(F("B"));
-    Serial.println(F(""));
+    Serial.println(FS(FSTRING_EMPTY));
   } else if (mapper == 19) {
     Serial.print(F("RAM Size =  "));
     if (newramsize == 2)
@@ -1906,12 +1903,12 @@ setram:
       Serial.print(pgm_read_byte(&(RAM[newramsize])));
       Serial.println(F("K"));
     }
-    Serial.println(F(""));
+    Serial.println(FS(FSTRING_EMPTY));
   } else if (mapper == 80) {
     Serial.print(F("RAM Size = "));
     Serial.print(pgm_read_byte(&(RAM[newramsize])) * 16);
     Serial.println(F("B"));
-    Serial.println(F(""));
+    Serial.println(FS(FSTRING_EMPTY));
   } else {
     Serial.print(F("RAM Size = "));
     if (mapper == 0)
@@ -1921,13 +1918,13 @@ setram:
     else
       Serial.print(pgm_read_byte(&(RAM[newramsize])));
     Serial.println(F("K"));
-    Serial.println(F(""));
+    Serial.println(FS(FSTRING_EMPTY));
   }
 #endif
   EEPROM_writeAnything(NES_RAM_SIZE, newramsize);
   ramsize = newramsize;
 
-#ifdef global_log
+#ifdef ENABLE_GLOBAL_LOG
   // Enable log again
   dont_log = false;
 #endif
@@ -1975,11 +1972,11 @@ void checkStatus_NES() {
 
   display_Clear();
   println_Msg(F("NES CART READER"));
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   println_Msg(F("CURRENT SETTINGS"));
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   printNESSettings();
-  println_Msg(F(""));
+  println_Msg(FS(FSTRING_EMPTY));
   // Prints string out of the common strings array either with or without newline
   print_STR(press_button_STR, 1);
   display_Update();
@@ -3285,7 +3282,7 @@ void readPRG(bool readrom) {
       myFile.close();
 
       println_Msg(F("PRG FILE DUMPED!"));
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       display_Update();
     }
   }
@@ -4264,7 +4261,7 @@ void readCHR(bool readrom) {
         myFile.close();
 
         println_Msg(F("CHR FILE DUMPED!"));
-        println_Msg(F(""));
+        println_Msg(FS(FSTRING_EMPTY));
         display_Update();
       }
     }
@@ -4449,7 +4446,7 @@ void readRAM() {
       myFile.close();
 
       println_Msg(F("RAM FILE DUMPED!"));
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       display_Update();
 
       if ((mapper == 16) || (mapper == 159))
@@ -4680,7 +4677,7 @@ void writeRAM() {
       myFile.close();
       LED_GREEN_ON;
 
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       println_Msg(F("RAM FILE WRITTEN!"));
       display_Update();
 
@@ -4945,9 +4942,9 @@ void writeFLASH() {
   } else {
     print_Msg(F("Flash ID: "));
     println_Msg(flashid_str);
-    println_Msg(F(""));
+    println_Msg(FS(FSTRING_EMPTY));
     println_Msg(F("NESmaker Flash Found"));
-    println_Msg(F(""));
+    println_Msg(FS(FSTRING_EMPTY));
     display_Update();
     delay(100);
 
@@ -4995,19 +4992,19 @@ void writeFLASH() {
           }
         }
 
-#if (defined(enable_LCD) || defined(enable_OLED))
+#if (defined(ENABLE_LCD) || defined(ENABLE_OLED))
         display.print(F("*"));
         display.updateDisplay();
 #else
         Serial.print(F("*"));
         if ((i != 0) && ((i + 1) % 16 == 0))
-          Serial.println(F(""));
+          Serial.println(FS(FSTRING_EMPTY));
 #endif
       }
       myFile.close();
       LED_GREEN_ON;
 
-      println_Msg(F(""));
+      println_Msg(FS(FSTRING_EMPTY));
       println_Msg(F("FLASH FILE WRITTEN!"));
       display_Update();
     } else {
