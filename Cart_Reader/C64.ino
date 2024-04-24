@@ -105,7 +105,6 @@ byte c64lo = 0;  // Lowest Entry
 byte c64hi = 9;  // Highest Entry
 
 byte c64mapcount = 22;  // (sizeof(mapsize)/sizeof(mapsize[0])) / 3;
-boolean c64mapfound = false;
 byte c64mapselect;
 int c64index;
 
@@ -179,8 +178,8 @@ void setup_C64() {
   DDRL = 0xFF;
 
   // Set Control Pins to Output
-  //       /RST(PH0)  PHI2(PH1) /GAME(PH3) /EXROM(PH4) ---(PH5)   R/W(PH6)
-  DDRH |= (1 << 0) | (1 << 1) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6);
+  //       /RST(PH0) /GAME(PH3) /EXROM(PH4) ---(PH5)   R/W(PH6)
+  DDRH |= (1 << 0) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6);
 
   // Set TIME(PJ0) to Output (UNUSED)
   DDRJ |= (1 << 0);
@@ -189,8 +188,8 @@ void setup_C64() {
   DDRC = 0x00;
 
   // Setting Control Pins to HIGH
-  //       /RST(PH0)  PHI2(PH1) /GAME(PH3) /EXROM(PH4) ---(PH5)   R/W(PH6)
-  PORTH |= (1 << 0) | (1 << 1) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6);
+  //       /RST(PH0)  /GAME(PH3) /EXROM(PH4) ---(PH5)   R/W(PH6)
+  PORTH |= (1 << 0) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6);
 
   // Set /GAME(PH3) and /EXROM(PH4) to LOW
   PORTH &= ~(1 << 3) & ~(1 << 4);
@@ -204,6 +203,32 @@ void setup_C64() {
   // Set Unused Pins HIGH
   PORTA = 0xFF;
   PORTJ |= (1 << 0);  // TIME(PJ0)
+
+#ifdef ENABLE_CLOCKGEN
+  // Adafruit Clock Generator
+
+  initializeClockOffset();
+
+  if (!i2c_found) {
+    display_Clear();
+    print_FatalError(F("Clock Generator not found"));
+  }
+
+  // Set Eeprom clock to 1Mhz
+  clockgen.set_freq(100000000ULL, SI5351_CLK1);
+
+  // Start outputting Eeprom clock
+  clockgen.output_enable(SI5351_CLK1, 1);  // Eeprom clock
+
+  // Wait for clock generator
+  clockgen.update_status();
+
+#else
+  // Set PHI2(PH1 to Output 
+  DDRH |= (1 << 1);
+  // Setting Control Pins to HIGH for PHI2(PH1)
+  PHI2_ENABLE;
+#endif
 
   checkStatus_C64();
   strcpy_P(romName, PSTR("C64"));
@@ -716,6 +741,30 @@ void readROM_C64() {
 //******************************************
 // MAPPER CODE
 //******************************************
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+void displayMapperSelect_C64(int index, boolean printInstructions) {
+  display_Clear();
+  print_Msg(F("Mapper: "));
+  c64index = index * 3;
+  c64mapselect = pgm_read_byte(c64mapsize + c64index);
+  println_Msg(c64mapselect);
+  printMapper_C64(c64mapselect);
+
+  if(printInstructions) {
+    println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
+    print_STR(press_to_change_STR, 1);
+    print_STR(right_to_select_STR, 1);
+#elif defined(ENABLE_LCD)
+    print_STR(rotate_to_change_STR, 1);
+    print_STR(press_to_select_STR, 1);
+#endif
+  }
+  display_Update();
+}
+#endif
+
+
 void setMapper_C64() {
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   uint8_t b = 0;
@@ -741,13 +790,7 @@ void setMapper_C64() {
           i--;
         break;
       }
-      display_Clear();
-      print_Msg(F("Mapper: "));
-      c64index = i * 3;
-      c64mapselect = pgm_read_byte(c64mapsize + c64index);
-      println_Msg(c64mapselect);
-      printMapper_C64(c64mapselect);
-      display_Update();
+      displayMapperSelect_C64(i, false);
       if (i == (c64mapcount - 1))
         i = 0;
       else
@@ -756,21 +799,7 @@ void setMapper_C64() {
     }
   }
 
-  display_Clear();
-  print_Msg(F("Mapper: "));
-  c64index = i * 3;
-  c64mapselect = pgm_read_byte(c64mapsize + c64index);
-  println_Msg(c64mapselect);
-  printMapper_C64(c64mapselect);
-  println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-  print_STR(press_to_change_STR, 1);
-  print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-  print_STR(rotate_to_change_STR, 1);
-  print_STR(press_to_select_STR, 1);
-#endif
-  display_Update();
+  displayMapperSelect_C64(i, true);
 
   while (1) {
     b = checkButton();
@@ -780,22 +809,7 @@ void setMapper_C64() {
       else
         i--;
 
-      display_Clear();
-      print_Msg(F("Mapper: "));
-      c64index = i * 3;
-      c64mapselect = pgm_read_byte(c64mapsize + c64index);
-      println_Msg(c64mapselect);
-      printMapper_C64(c64mapselect);
-      println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-      print_STR(press_to_change_STR, 1);
-      print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-      print_STR(rotate_to_change_STR, 1);
-      print_STR(press_to_select_STR, 1);
-#endif
-      display_Update();
-
+      displayMapperSelect_C64(i, true);
     }
     if (b == 1) {  // Next Mapper (press)
       if (i == (c64mapcount - 1))
@@ -803,22 +817,7 @@ void setMapper_C64() {
       else
         i++;
 
-      display_Clear();
-      print_Msg(F("Mapper: "));
-      c64index = i * 3;
-      c64mapselect = pgm_read_byte(c64mapsize + c64index);
-      println_Msg(c64mapselect);
-      printMapper_C64(c64mapselect);
-      println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-      print_STR(press_to_change_STR, 1);
-      print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-      print_STR(rotate_to_change_STR, 1);
-      print_STR(press_to_select_STR, 1);
-#endif
-      display_Update();
-
+      displayMapperSelect_C64(i, true);
     }
     if (b == 3) {  // Long Press - Execute (hold)
       newc64mapper = c64mapselect;
@@ -834,7 +833,7 @@ void setMapper_C64() {
 #else
 setmapper:
   String newmap;
-  c64mapfound = false;
+  boolean c64mapfound = false;
   printMapper_C64(0);
   Serial.print(F("Enter Mapper [0-22]: "));
   while (Serial.available() == 0) {}
@@ -982,31 +981,40 @@ setrom:
 //******************************************
 // SET PORT STATE
 //******************************************
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+void println_C64_PortState(int state)
+{ 
+  display_Clear();
+  print_Msg(F("Port State: "));
+  println_Msg(state);
+  switch (state) {
+    case 0:
+      println_Msg(F("EXROM LOW/GAME LOW"));
+      break;
+    case 1:
+      println_Msg(F("EXROM LOW/GAME HIGH"));
+      break;
+    case 2:
+      println_Msg(F("EXROM HIGH/GAME LOW"));
+      break;
+    case 3:
+      println_Msg(F("EXROM HIGH/GAME HIGH"));
+      break;
+  }
+  println_Msg(FS(FSTRING_EMPTY));
+  println_Msg(F("Press to Change"));
+  println_Msg(F("Hold to Select"));
+  display_Update();
+}
+#endif
+
 void setPorts_C64()
 {
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   uint8_t b = 0;
   int i = 0;
 
-  display_Clear();
-  print_Msg(F("Port State: "));
-  println_Msg(i);
-  if (i == 0) {
-    println_Msg(F("EXROM LOW/GAME LOW"));
-  }
-  else if (i == 1) {
-    println_Msg(F("EXROM LOW/GAME HIGH"));
-  }
-  else if (i == 2) {
-    println_Msg(F("EXROM HIGH/GAME LOW"));
-  }
-  else if (i == 3) {
-    println_Msg(F("EXROM HIGH/GAME HIGH"));
-  }
-  println_Msg(FS(FSTRING_EMPTY));
-  println_Msg(F("Press to Change"));
-  println_Msg(F("Hold to Select"));
-  display_Update();
+  println_C64_PortState(i);
 
   while (1) {
     b = checkButton();
@@ -1016,26 +1024,7 @@ void setPorts_C64()
       else
         i--;
 
-      display_Clear();
-      print_Msg(F("Port State: "));
-      println_Msg(i);
-      if (i == 0) {
-        println_Msg(F("EXROM LOW/GAME LOW"));
-      }
-      else if (i == 1) {
-        println_Msg(F("EXROM LOW/GAME HIGH"));
-      }
-      else if (i == 2) {
-        println_Msg(F("EXROM HIGH/GAME LOW"));
-      }
-      else if (i == 3) {
-        println_Msg(F("EXROM HIGH/GAME HIGH"));
-      }
-      println_Msg(FS(FSTRING_EMPTY));
-      println_Msg(F("Press to Change"));
-      println_Msg(F("Hold to Select"));
-      display_Update();
-
+      println_C64_PortState(i);
     }
     if (b == 1) { // Next (press)
       if (i == 3)
@@ -1043,26 +1032,7 @@ void setPorts_C64()
       else
         i++;
 
-      display_Clear();
-      print_Msg(F("Port State: "));
-      println_Msg(i);
-      if (i == 0) {
-        println_Msg(F("EXROM LOW/GAME LOW"));
-      }
-      else if (i == 1) {
-        println_Msg(F("EXROM LOW/GAME HIGH"));
-      }
-      else if (i == 2) {
-        println_Msg(F("EXROM HIGH/GAME LOW"));
-      }
-      else if (i == 3) {
-        println_Msg(F("EXROM HIGH/GAME HIGH"));
-      }
-      println_Msg(FS(FSTRING_EMPTY));
-      println_Msg(F("Press to Change"));
-      println_Msg(F("Hold to Select"));
-      display_Update();
-
+      println_C64_PortState(i);
     }
     if (b == 3) { // Long Press - Execute (hold)
       newc64port = i;
@@ -1122,7 +1092,7 @@ void checkStatus_C64() {
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   display_Clear();
   println_Msg(F("C64 READER"));
-  println_Msg(F("CURRENT SETTINGS"));
+  println_Msg(FS(FSTRING_CURRENT_SETTINGS));
   println_Msg(FS(FSTRING_EMPTY));
   print_Msg(F("MAPPER:     "));
   println_Msg(c64mapper);
@@ -1419,10 +1389,10 @@ bool getCartListInfo_C64() {
   }
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   println_Msg(FS(FSTRING_EMPTY));
-  println_Msg(F("END OF FILE"));
+  println_Msg(FS(FSTRING_END_OF_FILE));
   display_Update();
 #else
-  Serial.println(F("END OF FILE"));
+  Serial.println(FS(FSTRING_END_OF_FILE));
 #endif
 
   return false;
@@ -1432,7 +1402,7 @@ void checkCSV_C64() {
   if (getCartListInfo_C64()) {
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
     display_Clear();
-    println_Msg(F("CART SELECTED"));
+    println_Msg(FS(FSTRING_CART_SELECTED));
     println_Msg(FS(FSTRING_EMPTY));
     println_Msg(c64game);
     display_Update();
@@ -1447,7 +1417,7 @@ void checkCSV_C64() {
     display_Update();
 #else
     Serial.println(FS(FSTRING_EMPTY));
-    Serial.println(F("CART SELECTED"));
+    Serial.println(FS(FSTRING_CART_SELECTED));
     Serial.println(c64game);
     // Display Settings
     Serial.print(F("CODE: M"));
@@ -1461,10 +1431,10 @@ void checkCSV_C64() {
   } else {
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
     display.setCursor(0, 56);
-    println_Msg(F("NO SELECTION"));
+    println_Msg(FS(FSTRING_NO_SELECTION));
     display_Update();
 #else
-    Serial.println(F("NO SELECTION"));
+    Serial.println(FS(FSTRING_NO_SELECTION));
 #endif
   }
 }
