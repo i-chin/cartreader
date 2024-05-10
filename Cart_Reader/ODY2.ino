@@ -50,9 +50,7 @@ byte ody2lo = 0;  // Lowest Entry
 byte ody2hi = 4;  // Highest Entry
 
 byte ody2mapper;
-byte newody2mapper;
 byte ody2size;
-byte newody2size;
 
 // EEPROM MAPPING
 // 07 MAPPER
@@ -116,7 +114,6 @@ void ody2Menu() {
     case 0:
       // Select Cart
       setCart_ODY2();
-      wait();
       setup_ODY2();
       break;
 
@@ -267,8 +264,7 @@ void readROM_ODY2() {
   }
   myFile.close();
 
-  unsigned long crcsize = ODY2[ody2size] * 0x400;
-  calcCRC(fileName, crcsize, NULL, 0);
+  printCRC(fileName, NULL, 0);
 
   println_Msg(FS(FSTRING_EMPTY));
   print_STR(press_button_STR, 1);
@@ -280,75 +276,23 @@ void readROM_ODY2() {
 // ROM SIZE
 //******************************************
 
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+void printRomSize_ODY2(int index) {
+    display_Clear();
+    print_Msg(F("ROM Size: "));
+    println_Msg(ODY2[index]);
+}
+#endif
+
 void setROMSize_ODY2() {
+  byte newody2size;
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   display_Clear();
   if (ody2lo == ody2hi)
     newody2size = ody2lo;
   else {
-    uint8_t b = 0;
-    int i = ody2lo;
+    newody2size = navigateMenu(ody2lo, ody2hi, &printRomSize_ODY2);
 
-    display_Clear();
-    print_Msg(F("ROM Size: "));
-    println_Msg(ODY2[i]);
-    println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-    print_STR(press_to_change_STR, 1);
-    print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-    print_STR(rotate_to_change_STR, 1);
-    print_STR(press_to_select_STR, 1);
-#endif
-    display_Update();
-
-    while (1) {
-      b = checkButton();
-      if (b == 2) {  // Previous (doubleclick)
-        if (i == ody2lo)
-          i = ody2hi;
-        else
-          i--;
-
-        // Only update display after input because of slow LCD library
-        display_Clear();
-        print_Msg(F("ROM Size: "));
-        println_Msg(ODY2[i]);
-        println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-        print_STR(press_to_change_STR, 1);
-        print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-        print_STR(rotate_to_change_STR, 1);
-        print_STR(press_to_select_STR, 1);
-#endif
-        display_Update();
-      }
-      if (b == 1) {  // Next (press)
-        if (i == ody2hi)
-          i = ody2lo;
-        else
-          i++;
-
-        // Only update display after input because of slow LCD library
-        display_Clear();
-        print_Msg(F("ROM Size: "));
-        println_Msg(ODY2[i]);
-        println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-        print_STR(press_to_change_STR, 1);
-        print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-        print_STR(rotate_to_change_STR, 1);
-        print_STR(press_to_select_STR, 1);
-#endif
-        display_Update();
-      }
-      if (b == 3) {  // Long Press - Execute (hold)
-        newody2size = i;
-        break;
-      }
-    }
     display.setCursor(0, 56);  // Display selection at bottom
   }
   print_Msg(F("ROM SIZE "));
@@ -425,248 +369,26 @@ void checkStatus_ODY2() {
 //******************************************
 // CART SELECT CODE
 //******************************************
-
-FsFile ody2csvFile;
-char ody2game[51];                    // title
-char ody2mm[3];                       // mapper (A10)
-char ody2rr[3];                       // romsize
-char ody2ll[4];                       // linelength (previous line)
-unsigned long ody2csvpos;             // CSV File Position
-char ody2cartCSV[] = "ody2cart.txt";  // CSV List
-char ody2csvEND[] = "EOF";            // CSV End Marker for scrolling
-
-bool readLine_ODY2(FsFile& f, char* line, size_t maxLen) {
-  for (size_t n = 0; n < maxLen; n++) {
-    int c = f.read();
-    if (c < 0 && n == 0) return false;  // EOF
-    if (c < 0 || c == '\n') {
-      line[n] = 0;
-      return true;
-    }
-    line[n] = c;
-  }
-  return false;  // line too long
-}
-
-bool readVals_ODY2(char* ody2game, char* ody2mm, char* ody2rr, char* ody2ll) {
-  char line[59];
-  ody2csvpos = ody2csvFile.position();
-  if (!readLine_ODY2(ody2csvFile, line, sizeof(line))) {
-    return false;  // EOF or too long
-  }
-  char* comma = strtok(line, ",");
-  int x = 0;
-  while (comma != NULL) {
-    if (x == 0)
-      strcpy(ody2game, comma);
-    else if (x == 1)
-      strcpy(ody2mm, comma);
-    else if (x == 2)
-      strcpy(ody2rr, comma);
-    else if (x == 3)
-      strcpy(ody2ll, comma);
-    comma = strtok(NULL, ",");
-    x += 1;
-  }
-  return true;
-}
-
-bool getCartListInfo_ODY2() {
-  bool buttonreleased = 0;
-  bool cartselected = 0;
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display_Clear();
-  println_Msg(F(" HOLD TO FAST CYCLE"));
-  display_Update();
-#else
-  Serial.println(F("HOLD BUTTON TO FAST CYCLE"));
-#endif
-  delay(2000);
-#if defined(ENABLE_OLED)
-  buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-  boolean buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-  if (buttonVal1 == LOW) {  // Button Held - Fast Cycle
-    while (1) {             // Scroll Game List
-      while (readVals_ODY2(ody2game, ody2mm, ody2rr, ody2ll)) {
-        if (strcmp(ody2csvEND, ody2game) == 0) {
-          ody2csvFile.seek(0);  // Restart
-        } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-          display_Clear();
-          println_Msg(F("CART TITLE:"));
-          println_Msg(FS(FSTRING_EMPTY));
-          println_Msg(ody2game);
-          display_Update();
-#else
-          Serial.print(F("CART TITLE:"));
-          Serial.println(ody2game);
-#endif
-#if defined(ENABLE_OLED)
-          buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-          buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-          if (buttonVal1 == HIGH) {  // Button Released
-            buttonreleased = 1;
-            break;
-          }
-          if (buttonreleased) {
-            buttonreleased = 0;  // Reset Flag
-            break;
-          }
-        }
-      }
-#if defined(ENABLE_OLED)
-      buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-      buttonVal1 = (PING & (1 << 2));      //PG2
-#endif
-      if (buttonVal1 == HIGH)  // Button Released
-        break;
-    }
-  }
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display.setCursor(0, 56);
-  println_Msg(F("FAST CYCLE OFF"));
-  display_Update();
-#else
-  Serial.println(FS(FSTRING_EMPTY));
-  Serial.println(F("FAST CYCLE OFF"));
-  Serial.println(F("PRESS BUTTON TO STEP FORWARD"));
-  Serial.println(F("DOUBLE CLICK TO STEP BACK"));
-  Serial.println(F("HOLD TO SELECT"));
-  Serial.println(FS(FSTRING_EMPTY));
-#endif
-  while (readVals_ODY2(ody2game, ody2mm, ody2rr, ody2ll)) {
-    if (strcmp(ody2csvEND, ody2game) == 0) {
-      ody2csvFile.seek(0);  // Restart
-    } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-      display_Clear();
-      println_Msg(F("CART TITLE:"));
-      println_Msg(FS(FSTRING_EMPTY));
-      println_Msg(ody2game);
-      display.setCursor(0, 48);
-#if defined(ENABLE_OLED)
-      print_STR(press_to_change_STR, 1);
-      print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-      print_STR(rotate_to_change_STR, 1);
-      print_STR(press_to_select_STR, 1);
-#endif
-      display_Update();
-#else
-      Serial.print(F("CART TITLE:"));
-      Serial.println(ody2game);
-#endif
-      while (1) {  // Single Step
-        uint8_t b = checkButton();
-        if (b == 1) {  // Continue (press)
-          break;
-        }
-        if (b == 2) {  // Reset to Start of List (doubleclick)
-          byte prevline = strtol(ody2ll, NULL, 10);
-          ody2csvpos -= prevline;
-          ody2csvFile.seek(ody2csvpos);
-          break;
-        }
-        if (b == 3) {  // Long Press - Select Cart (hold)
-          newody2mapper = strtol(ody2mm, NULL, 10);
-          newody2size = strtol(ody2rr, NULL, 10);
-          EEPROM_writeAnything(ODY2_MAPPER, newody2mapper);
-          EEPROM_writeAnything(ODY2_ROM_SIZE, newody2size);
-          cartselected = 1;  // SELECTION MADE
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-          println_Msg(F("SELECTION MADE"));
-          display_Update();
-#else
-          Serial.println(F("SELECTION MADE"));
-#endif
-          break;
-        }
-      }
-      if (cartselected) {
-        cartselected = 0;  // Reset Flag
-        return true;
-      }
-    }
-  }
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  println_Msg(FS(FSTRING_EMPTY));
-  println_Msg(FS(FSTRING_END_OF_FILE));
-  display_Update();
-#else
-  Serial.println(FS(FSTRING_END_OF_FILE));
-#endif
-
-  return false;
-}
-
-void checkCSV_ODY2() {
-  if (getCartListInfo_ODY2()) {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display_Clear();
-    println_Msg(FS(FSTRING_CART_SELECTED));
-    println_Msg(FS(FSTRING_EMPTY));
-    println_Msg(ody2game);
-    display_Update();
-    // Display Settings
-    display.setCursor(0, 56);
-    print_Msg(F("CODE: M"));
-    print_Msg(newody2mapper);
-    print_Msg(F("/R"));
-    println_Msg(newody2size);
-    display_Update();
-#else
-    Serial.println(FS(FSTRING_EMPTY));
-    Serial.println(FS(FSTRING_CART_SELECTED));
-    Serial.println(ody2game);
-    // Display Settings
-    Serial.print(F("CODE: M"));
-    Serial.print(newody2mapper);
-    Serial.print(F("/R"));
-    Serial.println(newody2size);
-    Serial.println(FS(FSTRING_EMPTY));
-#endif
-  } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display.setCursor(0, 56);
-    println_Msg(FS(FSTRING_NO_SELECTION));
-    display_Update();
-#else
-    Serial.println(FS(FSTRING_NO_SELECTION));
-#endif
-  }
-}
-
 void setCart_ODY2() {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display_Clear();
-  println_Msg(ody2cartCSV);
-  display_Update();
-#endif
+  //go to root
   sd.chdir();
-  sprintf_P(folder, PSTR("ODY2/CSV"));
-  sd.chdir(folder);  // Switch Folder
-  ody2csvFile = sd.open(ody2cartCSV, O_READ);
-  if (!ody2csvFile) {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display_Clear();
-    println_Msg(F("CSV FILE NOT FOUND!"));
-    display_Update();
-#else
-    Serial.println(F("CSV FILE NOT FOUND!"));
-#endif
-    while (1) {
-      if (checkButton() != 0)
-        setup_ODY2();
-    }
-  }
-  checkCSV_ODY2();
 
-  ody2csvFile.close();
+  struct database_entry_mapper_size entry;
+
+  // Select starting letter
+  byte myLetter = starting_letter();
+
+  // Open database
+  if (myFile.open("ody2cart.txt", O_READ)) {
+    seek_first_letter_in_database(myFile, myLetter);
+
+    if(checkCartSelection(myFile, &readDataLineMapperSize, &entry)) {
+      EEPROM_writeAnything(ODY2_MAPPER, entry.gameMapper);
+      EEPROM_writeAnything(ODY2_ROM_SIZE, entry.gameSize);
+    }
+  } else {
+    print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));
+  }
 }
 #endif
 //******************************************

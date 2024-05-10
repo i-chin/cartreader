@@ -70,9 +70,7 @@ byte a7800[] = { 16, 32, 48, 64, 128, 144 };
 byte a7800lo = 0;  // Lowest Entry
 byte a7800hi = 5;  // Highest Entry
 byte a7800mapper = 0;
-byte new7800mapper;
 byte a7800size;
-byte new7800size;
 
 // EEPROM MAPPING
 // 07 MAPPER
@@ -159,7 +157,6 @@ void a7800Menu() {
     case 0:
       // Select Cart
       setCart_7800();
-      wait();
       setup_7800();
       break;
 
@@ -427,8 +424,7 @@ void readROM_7800() {
   }
   myFile.close();
 
-  unsigned long crcsize = a7800[a7800size] * 0x400;
-  calcCRC(fileName, crcsize, NULL, 0);
+  printCRC(fileName, NULL, 0);
 
   println_Msg(FS(FSTRING_EMPTY));
   // Prints string out of the common strings array either with or without newline
@@ -504,75 +500,24 @@ void println_Mapper7800(byte mapper) {
   else if (mapper == 7)
     println_Msg(F("BANKSET"));
 }
+
+void printRomSize_7800(int index) {
+    display_Clear();
+    print_Msg(F("ROM Size: "));
+    println_Msg(a7800[index]);
+}
 #endif
 
 void setROMSize_7800() {
+  byte new7800size;
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   display_Clear();
   if (a7800lo == a7800hi)
     new7800size = a7800lo;
   else {
-    uint8_t b = 0;
-    int i = a7800lo;
-
     display_Clear();
-    print_Msg(F("ROM Size: "));
-    println_Msg(a7800[i]);
-    println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-    print_STR(press_to_change_STR, 1);
-    print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-    print_STR(rotate_to_change_STR, 1);
-    print_STR(press_to_select_STR, 1);
-#endif
-    display_Update();
 
-    while (1) {
-      b = checkButton();
-      if (b == 2) {  // Previous (doubleclick)
-        if (i == a7800lo)
-          i = a7800hi;
-        else
-          i--;
-
-        display_Clear();
-        print_Msg(F("ROM Size: "));
-        println_Msg(a7800[i]);
-        println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-        print_STR(press_to_change_STR, 1);
-        print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-        print_STR(rotate_to_change_STR, 1);
-        print_STR(press_to_select_STR, 1);
-#endif
-        display_Update();
-      }
-      if (b == 1) {  // Next (press)
-        if (i == a7800hi)
-          i = a7800lo;
-        else
-          i++;
-
-        display_Clear();
-        print_Msg(F("ROM Size: "));
-        println_Msg(a7800[i]);
-        println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-        print_STR(press_to_change_STR, 1);
-        print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-        print_STR(rotate_to_change_STR, 1);
-        print_STR(press_to_select_STR, 1);
-#endif
-        display_Update();
-      }
-      if (b == 3) {  // Long Press - Execute (hold)
-        new7800size = i;
-        break;
-      }
-    }
+    new7800size = navigateMenu(a7800lo, a7800hi, &printRomSize_7800);
     display.setCursor(0, 56);  // Display selection at bottom
   }
   print_Msg(F("ROM SIZE "));
@@ -615,7 +560,7 @@ setrom:
 void checkStatus_7800() {
   EEPROM_readAnything(ATARI7800_MAPPER, a7800mapper);
   EEPROM_readAnything(ATARI7800_ROM_SIZE, a7800size);
-  if (a7800mapper > 6) {
+  if (a7800mapper > 7) {
     a7800mapper = 0;  // default
     EEPROM_writeAnything(ATARI7800_MAPPER, a7800mapper);
   }
@@ -668,85 +613,22 @@ void checkStatus_7800() {
 //******************************************
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-void displayMapperSelect_7800(int index, boolean printInstructions) {
+void printMapperSelection_7800(int index) {
   display_Clear();
   print_Msg(F("Mapper: "));
   a7800index = index * 3;
   a7800mapselect = pgm_read_byte(a7800mapsize + a7800index);
   println_Msg(a7800mapselect);
   println_Mapper7800(a7800mapselect);
-
-  if(printInstructions) {
-    println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-    print_STR(press_to_change_STR, 1);
-    print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-    print_STR(rotate_to_change_STR, 1);
-    print_STR(press_to_select_STR, 1);
-#endif
-  }
-  display_Update();
 }
 #endif
 
 void setMapper_7800() {
+  byte new7800mapper = 0;
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  uint8_t b = 0;
-  int i = 0;
-  // Check Button Status
-#if defined(ENABLE_OLED)
-  buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-  boolean buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-  if (buttonVal1 == LOW) {             // Button Pressed
-    while (1) {                        // Scroll Mapper List
-#if defined(ENABLE_OLED)
-      buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-      boolean buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-      if (buttonVal1 == HIGH) {        // Button Released
-        // Correct Overshoot
-        if (i == 0)
-          i = a7800mapcount - 1;
-        else
-          i--;
-        break;
-      }
-      displayMapperSelect_7800(i, false);
-      if (i == (a7800mapcount - 1))
-        i = 0;
-      else
-        i++;
-      delay(250);
-    }
-  }
+  navigateMenu(0, a7800mapcount - 1, &printMapperSelection_7800);
+  new7800mapper = a7800mapselect;
 
-  displayMapperSelect_7800(i, true);
-  
-  while (1) {
-    b = checkButton();
-    if (b == 2) {  // Previous Mapper (doubleclick)
-      if (i == 0)
-        i = a7800mapcount - 1;
-      else
-        i--;
-      displayMapperSelect_7800(i, true);
-    }
-    if (b == 1) {  // Next Mapper (press)
-      if (i == (a7800mapcount - 1))
-        i = 0;
-      else
-        i++;
-      displayMapperSelect_7800(i, true);
-    }
-    if (b == 3) {  // Long Press - Execute (hold)
-      new7800mapper = a7800mapselect;
-      break;
-    }
-  }
   display.setCursor(0, 56);
   print_Msg(F("MAPPER "));
   print_Msg(new7800mapper);
@@ -783,257 +665,26 @@ setmapper:
 // CART SELECT CODE
 //******************************************
 
-FsFile a7800csvFile;
-char a7800game[36];                    // title
-char a7800mm[3];                       // mapper
-char a7800rr[3];                       // mapper
-char a7800ll[4];                       // linelength (previous line)
-unsigned long a7800csvpos;             // CSV File Position
-char a7800cartCSV[] = "7800.txt";      // CSV List
-char a7800csvEND[] = "EOF";            // CSV End Marker for scrolling
-
-bool readLine_7800(FsFile& f, char* line, size_t maxLen) {
-  for (size_t n = 0; n < maxLen; n++) {
-    int c = f.read();
-    if (c < 0 && n == 0) return false;  // EOF
-    if (c < 0 || c == '\n') {
-      line[n] = 0;
-      return true;
-    }
-    line[n] = c;
-  }
-  return false;  // line too long
-}
-
-bool readVals_7800(char* a7800game, char* a7800mm, char* a7800rr, char* a7800ll) {
-  char line[44];
-  a7800csvpos = a7800csvFile.position();
-  if (!readLine_7800(a7800csvFile, line, sizeof(line))) {
-    return false;  // EOF or too long
-  }
-  char* comma = strtok(line, ",");
-  int x = 0;
-  while (comma != NULL) {
-    if (x == 0)
-      strcpy(a7800game, comma);
-    else if (x == 1)
-      strcpy(a7800mm, comma);
-    else if (x == 2)
-      strcpy(a7800rr, comma);
-    else if (x == 3)
-      strcpy(a7800ll, comma);
-    comma = strtok(NULL, ",");
-    x += 1;
-  }
-  return true;
-}
-
-bool getCartListInfo_7800() {
-  bool buttonreleased = 0;
-  bool cartselected = 0;
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display_Clear();
-  println_Msg(F(" HOLD TO FAST CYCLE"));
-  display_Update();
-#else
-  Serial.println(F("HOLD BUTTON TO FAST CYCLE"));
-#endif
-  delay(2000);
-#if defined(ENABLE_OLED)
-  buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-  boolean buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-  if (buttonVal1 == LOW) {         // Button Held - Fast Cycle
-    while (1) {                    // Scroll Game List
-      while (readVals_7800(a7800game, a7800mm, a7800rr, a7800ll)) {
-        if (strcmp(a7800csvEND, a7800game) == 0) {
-          a7800csvFile.seek(0);  // Restart
-        } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-          display_Clear();
-          println_Msg(F("CART TITLE:"));
-          println_Msg(FS(FSTRING_EMPTY));
-          println_Msg(a7800game);
-          display_Update();
-#else
-          Serial.print(F("CART TITLE:"));
-          Serial.println(a7800game);
-#endif
-#if defined(ENABLE_OLED)
-          buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-          boolean buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-          if (buttonVal1 == HIGH) {        // Button Released
-            buttonreleased = 1;
-            break;
-          }
-          if (buttonreleased) {
-            buttonreleased = 0;  // Reset Flag
-            break;
-          }
-        }
-      }
-#if defined(ENABLE_OLED)
-      buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-      boolean buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-      if (buttonVal1 == HIGH)          // Button Released
-        break;
-    }
-  }
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display.setCursor(0, 56);
-  println_Msg(F("FAST CYCLE OFF"));
-  display_Update();
-#else
-  Serial.println(FS(FSTRING_EMPTY));
-  Serial.println(F("FAST CYCLE OFF"));
-  Serial.println(F("PRESS BUTTON TO STEP FORWARD"));
-  Serial.println(F("DOUBLE CLICK TO STEP BACK"));
-  Serial.println(F("HOLD TO SELECT"));
-  Serial.println(FS(FSTRING_EMPTY));
-#endif
-  while (readVals_7800(a7800game, a7800mm, a7800rr, a7800ll)) {
-    if (strcmp(a7800csvEND, a7800game) == 0) {
-      a7800csvFile.seek(0);  // Restart
-    } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-      display_Clear();
-      println_Msg(F("CART TITLE:"));
-      println_Msg(FS(FSTRING_EMPTY));
-      println_Msg(a7800game);
-      display.setCursor(0, 48);
-#if defined(ENABLE_OLED)
-      print_STR(press_to_change_STR, 1);
-      print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-      print_STR(rotate_to_change_STR, 1);
-      print_STR(press_to_select_STR, 1);
-#endif
-      display_Update();
-#else
-      Serial.print(F("CART TITLE:"));
-      Serial.println(a7800game);
-#endif
-      while (1) {  // Single Step
-        uint8_t b = checkButton();
-        if (b == 1) {  // Continue (press)
-          break;
-        }
-        if (b == 2) {  // Reset to Start of List (doubleclick)
-          byte prevline = strtol(a7800ll, NULL, 10);
-          a7800csvpos -= prevline;
-          a7800csvFile.seek(a7800csvpos);
-          break;
-        }
-        if (b == 3) {  // Long Press - Select Cart (hold)
-          new7800mapper = strtol(a7800mm, NULL, 10);
-          new7800size = strtol(a7800rr, NULL, 10);
-          EEPROM_writeAnything(ATARI7800_MAPPER, new7800mapper);
-          EEPROM_writeAnything(ATARI7800_ROM_SIZE, new7800size);
-          cartselected = 1;  // SELECTION MADE
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-          println_Msg(F("SELECTION MADE"));
-          display_Update();
-#else
-          Serial.println(F("SELECTION MADE"));
-#endif
-          break;
-        }
-      }
-      if (cartselected) {
-        cartselected = 0;  // Reset Flag
-        return true;
-      }
-    }
-  }
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  println_Msg(FS(FSTRING_EMPTY));
-  println_Msg(FS(FSTRING_END_OF_FILE));
-  display_Update();
-#else
-  Serial.println(FS(FSTRING_END_OF_FILE));
-#endif
+void setCart_7800() {
+  //go to root
+  sd.chdir();
 
   return false;
 }
 
-void checkCSV_7800() {
-  if (getCartListInfo_7800()) {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display_Clear();
-    println_Msg(FS(FSTRING_CART_SELECTED));
-    println_Msg(FS(FSTRING_EMPTY));
-    println_Msg(a7800game);
-    display_Update();
-    // Display Settings
-    display.setCursor(0, 56);
-    print_Msg(F("CODE: M"));
-    print_Msg(new7800mapper);
-    print_Msg(F("/R"));
-    println_Msg(new7800size);
-    display_Update();
-#else
-    Serial.println(FS(FSTRING_EMPTY));
-    Serial.println(FS(FSTRING_CART_SELECTED));
-    Serial.println(a7800game);
-    // Display Settings
-    Serial.print(F("CODE: M"));
-    Serial.print(new7800mapper);
-    Serial.print(F("/R"));
-    Serial.println(new7800size);
-    Serial.println(FS(FSTRING_EMPTY));
-#endif
+  // Select starting letter
+  byte myLetter = starting_letter();
+
+  // Open database
+  if (myFile.open("7800.txt", O_READ)) {
+    seek_first_letter_in_database(myFile, myLetter);
+
+    if(checkCartSelection(myFile, &readDataLineMapperSize, &entry)) {
+      EEPROM_writeAnything(ATARI7800_MAPPER, entry.gameMapper);
+      EEPROM_writeAnything(ATARI7800_ROM_SIZE, entry.gameSize);
+    }
   } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display.setCursor(0, 56);
-    println_Msg(FS(FSTRING_NO_SELECTION));
-    display_Update();
-#else
-    Serial.println(FS(FSTRING_NO_SELECTION));
-#endif
+    print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));
   }
-}
-
-void checkSize_7800() {
-  EEPROM_readAnything(ATARI7800_MAPPER, a7800mapper);
-  for (int i = 0; i < a7800mapcount; i++) {
-    a7800index = i * 3;
-    if (a7800mapper == pgm_read_byte(a7800mapsize + a7800index)) {
-      a7800size = pgm_read_byte(a7800mapsize + a7800index + 1);
-      EEPROM_writeAnything(ATARI7800_ROM_SIZE, a7800size);
-      break;
-    }
-  }
-}
-
-void setCart_7800() {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display_Clear();
-  println_Msg(a7800cartCSV);
-  display_Update();
-#endif
-  sd.chdir();
-  sprintf_P(folder, PSTR("7800/CSV"));
-  sd.chdir(folder);  // Switch Folder
-  a7800csvFile = sd.open(a7800cartCSV, O_READ);
-  if (!a7800csvFile) {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display_Clear();
-    println_Msg(F("CSV FILE NOT FOUND!"));
-    display_Update();
-#else
-    Serial.println(F("CSV FILE NOT FOUND!"));
-#endif
-    while (1) {
-      if (checkButton() != 0)
-        setup_7800();
-    }
-  }
-  checkCSV_7800();
-  a7800csvFile.close();
 }
 #endif

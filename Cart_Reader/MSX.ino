@@ -105,11 +105,8 @@ byte msxmapselect;
 int msxindex;
 
 byte msxmapper;
-byte newmsxmapper;
 byte msxsize;
-byte newmsxsize;
 byte msxramsize;
-byte newmsxramsize;
 uint8_t msxbanks;
 byte chipselect;
 
@@ -139,7 +136,6 @@ void msxMenu() {
     case 0:
       // Select Cart
       setCart_MSX();
-      wait();
       setup_MSX();
       break;
 
@@ -559,8 +555,7 @@ void readROM_MSX() {
     }
     myFile.close();
 
-    unsigned long crcsize = MSX[msxsize] * 0x400;
-    calcCRC(fileName, crcsize, NULL, 0);
+    printCRC(fileName, NULL, 0);
 
     println_Msg(FS(FSTRING_EMPTY));
     // Prints string out of the common strings array either with or without newline
@@ -719,8 +714,7 @@ void readRAM_MSX() {
     }
     myFile.close();
 
-    unsigned long crcsize = MSX[msxramsize] * 0x400;
-    calcCRC(fileName, crcsize, NULL, 0);
+    printCRC(fileName, NULL, 0);
 
     println_Msg(FS(FSTRING_EMPTY));
     // Prints string out of the common strings array either with or without newline
@@ -861,115 +855,24 @@ void writeRAM_MSX() {
 //******************************************
 // MAPPER CODE
 //******************************************
-void setMapper_MSX() {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  uint8_t b = 0;
-  int i = 0;
-// Check Button Status
-#if defined(ENABLE_OLED)
-  buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-  boolean buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-  if (buttonVal1 == LOW) {  // Button Pressed
-    while (1) {             // Scroll Mapper List
-#if defined(ENABLE_OLED)
-      buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-      buttonVal1 = (PING & (1 << 2));      //PG2
-#endif
-      if (buttonVal1 == HIGH) {  // Button Released
-        // Correct Overshoot
-        if (i == 0)
-          i = msxmapcount - 1;
-        else
-          i--;
-        break;
-      }
-      display_Clear();
-      print_Msg(F("Mapper: "));
-      msxindex = i * 5;
-      msxmapselect = pgm_read_byte(msxmapsize + msxindex);
-      println_Msg(msxmapselect);
-      printMapper(msxmapselect);
-      display_Update();
-      if (i == (msxmapcount - 1))
-        i = 0;
-      else
-        i++;
-      delay(250);
-    }
-  }
 
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+void printMapperSelection_MSX(int index) {
   display_Clear();
   print_Msg(F("Mapper: "));
-  msxindex = i * 5;
+  msxindex = index * 5;
   msxmapselect = pgm_read_byte(msxmapsize + msxindex);
   println_Msg(msxmapselect);
   printMapper(msxmapselect);
-  println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-  print_STR(press_to_change_STR, 1);
-  print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-  print_STR(rotate_to_change_STR, 1);
-  print_STR(press_to_select_STR, 1);
+}
 #endif
-  display_Update();
 
-  while (1) {
-    b = checkButton();
-    if (b == 2) {  // Previous Mapper (doubleclick)
-      if (i == 0)
-        i = msxmapcount - 1;
-      else
-        i--;
-
-      // Only update display after input because of slow LCD library
-      display_Clear();
-      print_Msg(F("Mapper: "));
-      msxindex = i * 5;
-      msxmapselect = pgm_read_byte(msxmapsize + msxindex);
-      println_Msg(msxmapselect);
-      printMapper(msxmapselect);
-      println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-      print_STR(press_to_change_STR, 1);
-      print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-      print_STR(rotate_to_change_STR, 1);
-      print_STR(press_to_select_STR, 1);
-#endif
-      display_Update();
-    }
-    if (b == 1) {  // Next Mapper (press)
-      if (i == (msxmapcount - 1))
-        i = 0;
-      else
-        i++;
-
-      // Only update display after input because of slow LCD library
-      display_Clear();
-      print_Msg(F("Mapper: "));
-      msxindex = i * 5;
-      msxmapselect = pgm_read_byte(msxmapsize + msxindex);
-      println_Msg(msxmapselect);
-      printMapper(msxmapselect);
-      println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-      print_STR(press_to_change_STR, 1);
-      print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-      print_STR(rotate_to_change_STR, 1);
-      print_STR(press_to_select_STR, 1);
-#endif
-      display_Update();
-    }
-    if (b == 3) {  // Long Press - Execute (hold)
-      newmsxmapper = msxmapselect;
-      break;
-    }
-  }
+void setMapper_MSX() {
+  byte newmsxmapper;
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+  navigateMenu(0, msxmapcount - 1, &printMapperSelection_MSX);
+  newmsxmapper = msxmapselect;
+  
   display.setCursor(0, 56);
   print_Msg(F("MAPPER "));
   print_Msg(newmsxmapper);
@@ -1020,7 +923,17 @@ void checkMapperSize_MSX() {
 //******************************************
 // SET ROM SIZE
 //******************************************
+
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+void printRomSize_MSX(uint8_t index) {
+    display_Clear();
+    print_Msg(F("ROM Size: "));
+    println_Msg(MSX[index]);
+}
+#endif
+
 void setROMSize_MSX() {
+  byte newmsxsize;
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   display_Clear();
   if (msxlo == msxhi)
@@ -1029,18 +942,8 @@ void setROMSize_MSX() {
     uint8_t b = 0;
     int i = msxlo;
 
-    display_Clear();
-    print_Msg(F("ROM Size: "));
-    println_Msg(MSX[i]);
-    println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-    print_STR(press_to_change_STR, 1);
-    print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-    print_STR(rotate_to_change_STR, 1);
-    print_STR(press_to_select_STR, 1);
-#endif
-    display_Update();
+    printRomSize_MSX(i);
+    printInstructions();
 
     while (1) {
       b = checkButton();
@@ -1057,18 +960,8 @@ void setROMSize_MSX() {
             i--;
 
           // Only update display after input because of slow LCD library
-          display_Clear();
-          print_Msg(F("ROM Size: "));
-          println_Msg(MSX[i]);
-          println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-          print_STR(press_to_change_STR, 1);
-          print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-          print_STR(rotate_to_change_STR, 1);
-          print_STR(press_to_select_STR, 1);
-#endif
-          display_Update();
+          printRomSize_MSX(i);
+          printInstructions();
         }
       }
       if (b == 1) {             // Next (press)
@@ -1084,18 +977,8 @@ void setROMSize_MSX() {
             i++;
 
           // Only update display after input because of slow LCD library
-          display_Clear();
-          print_Msg(F("ROM Size: "));
-          println_Msg(MSX[i]);
-          println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-          print_STR(press_to_change_STR, 1);
-          print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-          print_STR(rotate_to_change_STR, 1);
-          print_STR(press_to_select_STR, 1);
-#endif
-          display_Update();
+          printRomSize_MSX(i);
+          printInstructions();
         }
       }
       if (b == 3) {  // Long Press - Execute (hold)
@@ -1161,7 +1044,17 @@ setrom:
 //******************************************
 // SET RAM SIZE
 //******************************************
+
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+void printRamSize_MSX(uint8_t index) {
+    display_Clear();
+    print_Msg(F("RAM Size: "));
+    println_Msg(MSXRAM[index]);
+}
+#endif
+
 void setRAMSize_MSX() {
+  byte newmsxramsize;
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   display_Clear();
   if (msxramlo == msxramhi)
@@ -1170,18 +1063,8 @@ void setRAMSize_MSX() {
     uint8_t b = 0;
     int i = msxramlo;
 
-    display_Clear();
-    print_Msg(F("RAM Size: "));
-    println_Msg(MSXRAM[i]);
-    println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-    print_STR(press_to_change_STR, 1);
-    print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-    print_STR(rotate_to_change_STR, 1);
-    print_STR(press_to_select_STR, 1);
-#endif
-    display_Update();
+    printRamSize_MSX(i);
+    printInstructions();
 
     while (1) {
       b = checkButton();
@@ -1198,18 +1081,8 @@ void setRAMSize_MSX() {
             i--;
 
           // Only update display after input because of slow LCD library
-          display_Clear();
-          print_Msg(F("RAM Size: "));
-          println_Msg(MSXRAM[i]);
-          println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-          print_STR(press_to_change_STR, 1);
-          print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-          print_STR(rotate_to_change_STR, 1);
-          print_STR(press_to_select_STR, 1);
-#endif
-          display_Update();
+          printRamSize_MSX(i);
+          printInstructions();
         }
       }
       if (b == 1) {            // Next (press)
@@ -1225,18 +1098,8 @@ void setRAMSize_MSX() {
             i++;
 
           // Only update display after input because of slow LCD library
-          display_Clear();
-          print_Msg(F("RAM Size: "));
-          println_Msg(MSXRAM[i]);
-          println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-          print_STR(press_to_change_STR, 1);
-          print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-          print_STR(rotate_to_change_STR, 1);
-          print_STR(press_to_select_STR, 1);
-#endif
-          display_Update();
+          printRamSize_MSX(i);
+          printInstructions();
         }
       }
       if (b == 3) {  // Long Press - Execute (hold)
@@ -1412,255 +1275,53 @@ void printMapper(byte msxmaplabel) {
 //******************************************
 // CART SELECT CODE
 //******************************************
-FsFile msxcsvFile;
-char msxgame[31];                   // title
-char msxmm[3];                      // mapper
-char msxrr[3];                      // romsize
-char msxss[3];                      // ramsize
-char msxll[4];                      // linelength (previous line)
-unsigned long msxcsvpos;            // CSV File Position
-char msxcartCSV[] = "msxcart.txt";  // CSV List
-char msxcsvEND[] = "EOF";           // CSV End Marker for scrolling
+struct database_entry_MSX {
+  byte gameMapper;
+  byte gameSize;
+  byte ramSize;
+};
 
-bool readLine_MSX(FsFile& f, char* line, size_t maxLen) {
-  for (size_t n = 0; n < maxLen; n++) {
-    int c = f.read();
-    if (c < 0 && n == 0) return false;  // EOF
-    if (c < 0 || c == '\n') {
-      line[n] = 0;
-      return true;
-    }
-    line[n] = c;
-  }
-  return false;  // line too long
-}
+void readDataLine_MSX(FsFile& database, void* entry) {
+  database_entry_MSX* castEntry = (database_entry_MSX*)entry;
+  // Read mapper
+  castEntry->gameMapper = ((database.read() - 48) * 10) + (database.read() - 48);
 
-bool readVals_MSX(char* msxgame, char* msxmm, char* msxrr, char* msxss, char* msxll) {
-  char line[41];
-  msxcsvpos = msxcsvFile.position();
-  if (!readLine_MSX(msxcsvFile, line, sizeof(line))) {
-    return false;  // EOF or too long
-  }
-  char* comma = strtok(line, ",");
-  int x = 0;
-  while (comma != NULL) {
-    if (x == 0)
-      strcpy(msxgame, comma);
-    else if (x == 1)
-      strcpy(msxmm, comma);
-    else if (x == 2)
-      strcpy(msxrr, comma);
-    else if (x == 3)
-      strcpy(msxss, comma);
-    else if (x == 4)
-      strcpy(msxll, comma);
-    comma = strtok(NULL, ",");
-    x += 1;
-  }
-  return true;
-}
+  // Skip over semicolon
+  database.seekCur(1);
 
-bool getCartListInfo_MSX() {
-  bool buttonreleased = 0;
-  bool cartselected = 0;
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display_Clear();
-  println_Msg(F(" HOLD TO FAST CYCLE"));
-  display_Update();
-#else
-  Serial.println(F("HOLD BUTTON TO FAST CYCLE"));
-#endif
-  delay(2000);
-#if defined(ENABLE_OLED)
-  buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-  boolean buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-  if (buttonVal1 == LOW) {  // Button Held - Fast Cycle
-    while (1) {             // Scroll Game List
-      while (readVals_MSX(msxgame, msxmm, msxrr, msxss, msxll)) {
-        if (strcmp(msxcsvEND, msxgame) == 0) {
-          msxcsvFile.seek(0);  // Restart
-        } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-          display_Clear();
-          println_Msg(F("CART TITLE:"));
-          println_Msg(FS(FSTRING_EMPTY));
-          println_Msg(msxgame);
-          display_Update();
-#else
-          Serial.print(F("CART TITLE:"));
-          Serial.println(msxgame);
-#endif
-#if defined(ENABLE_OLED)
-          buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-          buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-          if (buttonVal1 == HIGH) {  // Button Released
-            buttonreleased = 1;
-            break;
-          }
-          if (buttonreleased) {
-            buttonreleased = 0;  // Reset Flag
-            break;
-          }
-        }
-      }
-#if defined(ENABLE_OLED)
-      buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-      buttonVal1 = (PING & (1 << 2));      //PG2
-#endif
-      if (buttonVal1 == HIGH)  // Button Released
-        break;
-    }
-  }
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display.setCursor(0, 56);
-  println_Msg(F("FAST CYCLE OFF"));
-  display_Update();
-#else
-  Serial.println(FS(FSTRING_EMPTY));
-  Serial.println(F("FAST CYCLE OFF"));
-  Serial.println(F("PRESS BUTTON TO STEP FORWARD"));
-  Serial.println(F("DOUBLE CLICK TO STEP BACK"));
-  Serial.println(F("HOLD TO SELECT"));
-  Serial.println(FS(FSTRING_EMPTY));
-#endif
-  while (readVals_MSX(msxgame, msxmm, msxrr, msxss, msxll)) {
-    if (strcmp(msxcsvEND, msxgame) == 0) {
-      msxcsvFile.seek(0);  // Restart
-    } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-      display_Clear();
-      println_Msg(F("CART TITLE:"));
-      println_Msg(FS(FSTRING_EMPTY));
-      println_Msg(msxgame);
-      display.setCursor(0, 48);
-#if defined(ENABLE_OLED)
-      print_STR(press_to_change_STR, 1);
-      print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-      print_STR(rotate_to_change_STR, 1);
-      print_STR(press_to_select_STR, 1);
-#endif
-      display_Update();
-#else
-      Serial.print(F("CART TITLE:"));
-      Serial.println(msxgame);
-#endif
-      while (1) {  // Single Step
-        uint8_t b = checkButton();
-        if (b == 1) {  // Continue (press)
-          break;
-        }
-        if (b == 2) {  // Reset to Start of List (doubleclick)
-          byte prevline = strtol(msxll, NULL, 10);
-          msxcsvpos -= prevline;
-          msxcsvFile.seek(msxcsvpos);
-          break;
-        }
-        if (b == 3) {  // Long Press - Select Cart (hold)
-          newmsxmapper = strtol(msxmm, NULL, 10);
-          newmsxsize = strtol(msxrr, NULL, 10);
-          newmsxramsize = strtol(msxss, NULL, 10);
-          EEPROM_writeAnything(MSX_MAPPER, newmsxmapper);
-          EEPROM_writeAnything(MSX_ROM_SIZE, newmsxsize);
-          EEPROM_writeAnything(MSX_RAM_SIZE, newmsxramsize);
-          cartselected = 1;  // SELECTION MADE
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-          println_Msg(F("SELECTION MADE"));
-          display_Update();
-#else
-          Serial.println(F("SELECTION MADE"));
-#endif
-          break;
-        }
-      }
-      if (cartselected) {
-        cartselected = 0;  // Reset Flag
-        return true;
-      }
-    }
-  }
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  println_Msg(FS(FSTRING_EMPTY));
-  println_Msg(FS(FSTRING_END_OF_FILE));
-  display_Update();
-#else
-  Serial.println(FS(FSTRING_END_OF_FILE));
-#endif
+  // Read rom size
+  castEntry->gameSize = database.read() - 48;
 
-  return false;
-}
+  // Skip over semicolon
+  database.seekCur(1);
 
-void checkCSV_MSX() {
-  if (getCartListInfo_MSX()) {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display_Clear();
-    println_Msg(FS(FSTRING_CART_SELECTED));
-    println_Msg(FS(FSTRING_EMPTY));
-    println_Msg(msxgame);
-    display_Update();
-    // Display Settings
-    display.setCursor(0, 56);
-    print_Msg(F("CODE: M"));
-    print_Msg(newmsxmapper);
-    print_Msg(F("/R"));
-    print_Msg(newmsxsize);
-    print_Msg(F("/S"));
-    println_Msg(newmsxramsize);
-    display_Update();
-#else
-    Serial.println(FS(FSTRING_EMPTY));
-    Serial.println(FS(FSTRING_CART_SELECTED));
-    Serial.println(msxgame);
-    // Display Settings
-    Serial.print(F("CODE: M"));
-    Serial.print(newmsxmapper);
-    Serial.print(F("/R"));
-    Serial.print(newmsxsize);
-    Serial.print(F("/S"));
-    Serial.println(newmsxramsize);
-    Serial.println(FS(FSTRING_EMPTY));
-#endif
-  } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display.setCursor(0, 56);
-    println_Msg(FS(FSTRING_NO_SELECTION));
-    display_Update();
-#else
-    Serial.println(FS(FSTRING_NO_SELECTION));
-#endif
-  }
+  // Read ram size
+  castEntry->ramSize = database.read() - 48;
+
+  // Skip rest of line
+  database.seekCur(2);
 }
 
 void setCart_MSX() {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display_Clear();
-  println_Msg(msxcartCSV);
-  display_Update();
-#endif
+  //go to root
   sd.chdir();
-  sprintf_P(folder, PSTR("MSX/CSV"));
-  sd.chdir(folder);  // Switch Folder
-  msxcsvFile = sd.open(msxcartCSV, O_READ);
-  if (!msxcsvFile) {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display_Clear();
-    println_Msg(F("CSV FILE NOT FOUND!"));
-    display_Update();
-#else
-    Serial.println(F("CSV FILE NOT FOUND!"));
-#endif
-    while (1) {
-      if (checkButton() != 0)
-        setup_MSX();
-    }
-  }
-  checkCSV_MSX();
 
-  msxcsvFile.close();
+  struct database_entry_MSX entry;
+
+  // Select starting letter
+  byte myLetter = starting_letter();
+
+  // Open database
+  if (myFile.open("msxcart.txt", O_READ)) {
+    seek_first_letter_in_database(myFile, myLetter);
+
+    if(checkCartSelection(myFile, &readDataLine_MSX, &entry)) {
+      EEPROM_writeAnything(MSX_MAPPER, entry.gameMapper);
+      EEPROM_writeAnything(MSX_ROM_SIZE, entry.gameSize);
+      EEPROM_writeAnything(MSX_RAM_SIZE, entry.ramSize);
+    }
+  } else {
+    print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));
+  }
 }
 #endif

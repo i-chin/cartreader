@@ -70,7 +70,6 @@ byte fairchildlo = 0;  // Lowest Entry
 byte fairchildhi = 3;  // Highest Entry
 
 byte fairchildsize;
-byte newfairchildsize;
 
 // EEPROM MAPPING
 // 08 ROM SIZE
@@ -427,7 +426,7 @@ void readROM_FAIRCHILD() {
   // 0x55,0x2B - most carts
   // 0x55,0xAA - alien invasion (4K)
   // 0x55,0xBB - video whizball (3K)
-  for (int y = 0; y < 0x4800; y++) {
+  for (uint16_t y = 0; y < 0x4800; y++) {
     uint8_t startbyte = readData_FAIRCHILD();
     if (startbyte == 0x55) {  // Start Byte
       sdBuffer[0] = startbyte;
@@ -455,7 +454,7 @@ void readROM_FAIRCHILD() {
             // Skip BIOS/Blocks Code for 4K Carts - Tested with Alien Invasion/Pro Football
             // Alien Invasion/Pro Football both use a DM74LS02N (Quad 2-Input NOR Gate) with two 2K ROM Chips
             uint16_t offset = z * 0x200;
-            for (int x = 0; x < 0x800 + offset; x++) {  // Skip BIOS/Previous Blocks
+            for (uint16_t x = 0; x < 0x800 + offset; x++) {  // Skip BIOS/Previous Blocks
               readData_FAIRCHILD();
             }
           }
@@ -472,7 +471,7 @@ void readROM_FAIRCHILD() {
   }
   myFile.close();
 
-  calcCRC(fileName, cartsize, NULL, 0);
+  printCRC(fileName, NULL, 0);
 
   println_Msg(FS(FSTRING_EMPTY));
   print_STR(press_button_STR, 1);
@@ -507,14 +506,14 @@ void read16K_FAIRCHILD()  // Read 16K Bytes
   EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   unsigned long cartsize = FAIRCHILD[fairchildsize] * 0x400;
-  for (int y = 0; y < 0x20; y++) {
+  for (uint16_t y = 0; y < 0x20; y++) {
     if (cartsize == 0x1000) {  // 4K
       // Skip BIOS/Blocks Code for 4K Carts - Tested with Alien Invasion/Pro Football
       // Alien Invasion/Pro Football both use a DM74LS02N (Quad 2-Input NOR Gate) with two 2K ROM Chips
       // IF CASINO POKER DOES NOT DUMP PROPERLY USING READROM
       // TEST BY SETTING ROM SIZE TO 2K AND 4K THEN COMPARE 16K DUMPS
       uint16_t offset = y * 0x200;
-      for (int x = 0; x < 0x800 + offset; x++) {  // Skip BIOS/Previous Blocks
+      for (uint16_t x = 0; x < 0x800 + offset; x++) {  // Skip BIOS/Previous Blocks
         readData_FAIRCHILD();
       }
     }
@@ -527,7 +526,7 @@ void read16K_FAIRCHILD()  // Read 16K Bytes
   }
   myFile.close();
 
-  calcCRC(fileName, 0x4000, NULL, 0);
+  printCRC(fileName, NULL, 0);
 
   println_Msg(FS(FSTRING_EMPTY));
   print_STR(press_button_STR, 1);
@@ -539,72 +538,23 @@ void read16K_FAIRCHILD()  // Read 16K Bytes
 // ROM SIZE
 //******************************************
 
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+void printRomSize_FAIRCHILD(int index) {
+    display_Clear();
+    print_Msg(F("ROM Size: "));
+    println_Msg(FAIRCHILD[index]);
+}
+#endif
+
 void setROMSize_FAIRCHILD() {
+  byte newfairchildsize;
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   display_Clear();
   if (fairchildlo == fairchildhi)
     newfairchildsize = fairchildlo;
   else {
-    uint8_t b = 0;
-    int i = fairchildlo;
-    display_Clear();
-    print_Msg(F("ROM Size: "));
-    println_Msg(FAIRCHILD[i]);
-    println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-    print_STR(press_to_change_STR, 1);
-    print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-    print_STR(rotate_to_change_STR, 1);
-    print_STR(press_to_select_STR, 1);
-#endif
-    display_Update();
-    while (1) {
-      b = checkButton();
-      if (b == 2) {  // Previous (doubleclick)
-        if (i == fairchildlo)
-          i = fairchildhi;
-        else
-          i--;
+    newfairchildsize = navigateMenu(fairchildlo, fairchildhi, &printRomSize_FAIRCHILD);
 
-        // Only update display after input because of slow LCD library
-        display_Clear();
-        print_Msg(F("ROM Size: "));
-        println_Msg(FAIRCHILD[i]);
-        println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-        print_STR(press_to_change_STR, 1);
-        print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-        print_STR(rotate_to_change_STR, 1);
-        print_STR(press_to_select_STR, 1);
-#endif
-        display_Update();
-      }
-      if (b == 1) {  // Next (press)
-        if (i == fairchildhi)
-          i = fairchildlo;
-        else
-          i++;
-        // Only update display after input because of slow LCD library
-        display_Clear();
-        print_Msg(F("ROM Size: "));
-        println_Msg(FAIRCHILD[i]);
-        println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-        print_STR(press_to_change_STR, 1);
-        print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-        print_STR(rotate_to_change_STR, 1);
-        print_STR(press_to_select_STR, 1);
-#endif
-        display_Update();
-      }
-      if (b == 3) {  // Long Press - Execute (hold)
-        newfairchildsize = i;
-        break;
-      }
-    }
     display.setCursor(0, 56);  // Display selection at bottom
   }
   print_Msg(F("ROM SIZE "));
@@ -672,239 +622,25 @@ void checkStatus_FAIRCHILD() {
 //******************************************
 // CART SELECT CODE
 //******************************************
-
-FsFile fairchildcsvFile;
-char fairchildgame[33];                         // title
-char fairchildrr[3];                            // romsize
-char fairchildll[4];                            // linelength (previous line)
-unsigned long fairchildcsvpos;                  // CSV File Position
-char fairchildcartCSV[] = "fairchildcart.txt";  // CSV List
-char fairchildcsvEND[] = "EOF";                 // CSV End Marker for scrolling
-
-bool readLine_FAIRCHILD(FsFile& f, char* line, size_t maxLen) {
-  for (size_t n = 0; n < maxLen; n++) {
-    int c = f.read();
-    if (c < 0 && n == 0) return false;  // EOF
-    if (c < 0 || c == '\n') {
-      line[n] = 0;
-      return true;
-    }
-    line[n] = c;
-  }
-  return false;  // line too long
-}
-
-bool readVals_FAIRCHILD(char* fairchildgame, char* fairchildrr, char* fairchildll) {
-  char line[39];
-  fairchildcsvpos = fairchildcsvFile.position();
-  if (!readLine_FAIRCHILD(fairchildcsvFile, line, sizeof(line))) {
-    return false;  // EOF or too long
-  }
-  char* comma = strtok(line, ",");
-  int x = 0;
-  while (comma != NULL) {
-    if (x == 0)
-      strcpy(fairchildgame, comma);
-    else if (x == 1)
-      strcpy(fairchildrr, comma);
-    else if (x == 2)
-      strcpy(fairchildll, comma);
-    comma = strtok(NULL, ",");
-    x += 1;
-  }
-  return true;
-}
-
-bool getCartListInfo_FAIRCHILD() {
-  bool buttonreleased = 0;
-  bool cartselected = 0;
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display_Clear();
-  println_Msg(F(" HOLD TO FAST CYCLE"));
-  display_Update();
-#else
-  Serial.println(F("HOLD BUTTON TO FAST CYCLE"));
-#endif
-  delay(2000);
-#if defined(ENABLE_OLED)
-  buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-  boolean buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-  if (buttonVal1 == LOW) {  // Button Held - Fast Cycle
-    while (1) {             // Scroll Game List
-      while (readVals_FAIRCHILD(fairchildgame, fairchildrr, fairchildll)) {
-        if (strcmp(fairchildcsvEND, fairchildgame) == 0) {
-          fairchildcsvFile.seek(0);  // Restart
-        } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-          display_Clear();
-          println_Msg(F("CART TITLE:"));
-          println_Msg(FS(FSTRING_EMPTY));
-          println_Msg(fairchildgame);
-          display_Update();
-#else
-          Serial.print(F("CART TITLE:"));
-          Serial.println(fairchildgame);
-#endif
-#if defined(ENABLE_OLED)
-          buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-          buttonVal1 = (PING & (1 << 2));  //PG2
-#endif
-          if (buttonVal1 == HIGH) {  // Button Released
-            buttonreleased = 1;
-            break;
-          }
-          if (buttonreleased) {
-            buttonreleased = 0;  // Reset Flag
-            break;
-          }
-        }
-      }
-#if defined(ENABLE_OLED)
-      buttonVal1 = (PIND & (1 << 7));  // PD7
-#elif defined(ENABLE_LCD)
-      buttonVal1 = (PING & (1 << 2));      //PG2
-#endif
-      if (buttonVal1 == HIGH)  // Button Released
-        break;
-    }
-  }
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display.setCursor(0, 56);
-  println_Msg(F("FAST CYCLE OFF"));
-  display_Update();
-#else
-  Serial.println(FS(FSTRING_EMPTY));
-  Serial.println(F("FAST CYCLE OFF"));
-  Serial.println(F("PRESS BUTTON TO STEP FORWARD"));
-  Serial.println(F("DOUBLE CLICK TO STEP BACK"));
-  Serial.println(F("HOLD TO SELECT"));
-  Serial.println(FS(FSTRING_EMPTY));
-#endif
-  while (readVals_FAIRCHILD(fairchildgame, fairchildrr, fairchildll)) {
-    if (strcmp(fairchildcsvEND, fairchildgame) == 0) {
-      fairchildcsvFile.seek(0);  // Restart
-    } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-      display_Clear();
-      println_Msg(F("CART TITLE:"));
-      println_Msg(FS(FSTRING_EMPTY));
-      println_Msg(fairchildgame);
-      display.setCursor(0, 48);
-#if defined(ENABLE_OLED)
-      print_STR(press_to_change_STR, 1);
-      print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-      print_STR(rotate_to_change_STR, 1);
-      print_STR(press_to_select_STR, 1);
-#endif
-      display_Update();
-#else
-      Serial.print(F("CART TITLE:"));
-      Serial.println(fairchildgame);
-#endif
-      while (1) {  // Single Step
-        uint8_t b = checkButton();
-        if (b == 1) {  // Continue (press)
-          break;
-        }
-        if (b == 2) {  // Reset to Start of List (doubleclick)
-          byte prevline = strtol(fairchildll, NULL, 10);
-          fairchildcsvpos -= prevline;
-          fairchildcsvFile.seek(fairchildcsvpos);
-          break;
-        }
-        if (b == 3) {  // Long Press - Select Cart (hold)
-          newfairchildsize = strtol(fairchildrr, NULL, 10);
-          EEPROM_writeAnything(FAIRCHILD_ROM_SIZE, newfairchildsize);
-          cartselected = 1;  // SELECTION MADE
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-          println_Msg(F("SELECTION MADE"));
-          display_Update();
-#else
-          Serial.println(F("SELECTION MADE"));
-#endif
-          break;
-        }
-      }
-      if (cartselected) {
-        cartselected = 0;  // Reset Flag
-        return true;
-      }
-    }
-  }
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  println_Msg(FS(FSTRING_EMPTY));
-  println_Msg(FS(FSTRING_END_OF_FILE));
-  display_Update();
-#else
-  Serial.println(FS(FSTRING_END_OF_FILE));
-#endif
-
-  return false;
-}
-
-void checkCSV_FAIRCHILD() {
-  if (getCartListInfo_FAIRCHILD()) {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display_Clear();
-    println_Msg(FS(FSTRING_CART_SELECTED));
-    println_Msg(FS(FSTRING_EMPTY));
-    println_Msg(fairchildgame);
-    display_Update();
-    // Display Settings
-    display.setCursor(0, 56);
-    print_Msg(F("CODE: R"));
-    println_Msg(newfairchildsize);
-    display_Update();
-#else
-    Serial.println(FS(FSTRING_EMPTY));
-    Serial.println(FS(FSTRING_CART_SELECTED));
-    Serial.println(fairchildgame);
-    // Display Settings
-    Serial.print(F("CODE: R"));
-    Serial.println(newfairchildsize);
-    Serial.println(FS(FSTRING_EMPTY));
-#endif
-  } else {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display.setCursor(0, 56);
-    println_Msg(FS(FSTRING_NO_SELECTION));
-    display_Update();
-#else
-    Serial.println(FS(FSTRING_NO_SELECTION));
-#endif
-  }
-}
-
 void setCart_FAIRCHILD() {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-  display_Clear();
-  println_Msg(fairchildcartCSV);
-  display_Update();
-#endif
+  //go to root
   sd.chdir();
-  sprintf_P(folder, PSTR("FAIRCHILD/CSV"));
-  sd.chdir(folder);  // Switch Folder
-  fairchildcsvFile = sd.open(fairchildcartCSV, O_READ);
-  if (!fairchildcsvFile) {
-#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
-    display_Clear();
-    println_Msg(F("CSV FILE NOT FOUND!"));
-    display_Update();
-#else
-    Serial.println(F("CSV FILE NOT FOUND!"));
-#endif
-    while (1) {
-      if (checkButton() != 0)
-        setup_FAIRCHILD();
-    }
-  }
-  checkCSV_FAIRCHILD();
 
-  fairchildcsvFile.close();
+  byte gameSize;
+
+  // Select starting letter
+  //byte myLetter = starting_letter();
+
+  // Open database
+  if (myFile.open("fairchildcart.txt", O_READ)) {
+    // seek_first_letter_in_database(myFile, myLetter);
+
+    if(checkCartSelection(myFile, &readDataLineSingleDigit, &gameSize)) {
+      EEPROM_writeAnything(FAIRCHILD_ROM_SIZE, gameSize);
+    }
+  } else {
+    print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));
+  }
 }
 #endif
 //******************************************

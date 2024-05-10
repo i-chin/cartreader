@@ -474,7 +474,7 @@ uint32_t calculateCRC(FsFile& infile) {
 }
 
 // Calculate rom's CRC32 from SD
-uint32_t calculateCRC(char* fileName, char* folder, int offset) {
+uint32_t calculateCRC(char* fileName, char* folder, unsigned long offset) {
   FsFile infile;
   uint32_t result;
 
@@ -498,43 +498,17 @@ uint32_t calculateCRC(char* fileName, char* folder, int offset) {
 /******************************************
    CRC Functions for Atari, Fairchild, Ody2, Arc, etc. modules
  *****************************************/
-#if (defined(ENABLE_ODY2) || defined(ENABLE_ARC) || defined(ENABLE_FAIRCHILD) || defined(ENABLE_MSX) || defined(ENABLE_POKE) || defined(ENABLE_2600) || defined(ENABLE_5200) || defined(ENABLE_7800) || defined(ENABLE_C64) || defined(ENABLE_VECTREX))
+#if (defined(ENABLE_ODY2) || defined(ENABLE_ARC) || defined(ENABLE_FAIRCHILD) || defined(ENABLE_MSX) || defined(ENABLE_POKE) || defined(ENABLE_2600) || defined(ENABLE_5200) || defined(ENABLE_7800) || defined(ENABLE_C64) || defined(ENABLE_VECTREX) || defined(ENABLE_NES))
 
-inline uint32_t updateCRC(uint8_t ch, uint32_t crc) {
-  uint32_t idx = ((crc) ^ (ch)) & 0xff;
-  uint32_t tab_value = pgm_read_dword(crc_32_tab + idx);
-  return tab_value ^ ((crc) >> 8);
-}
-
-FsFile crcFile;
-char tempCRC[9];
-
-uint32_t crc32(FsFile& file, uint32_t& charcnt) {
-  uint32_t oldcrc32 = 0xFFFFFFFF;
-  charcnt = 0;
-  while (file.available()) {
-    crcFile.read(sdBuffer, 512);
-    for (int x = 0; x < 512; x++) {
-      uint8_t c = sdBuffer[x];
-      charcnt++;
-      oldcrc32 = updateCRC(c, oldcrc32);
-    }
-  }
-  return ~oldcrc32;
-}
-
-void calcCRC(char* checkFile, unsigned long filesize, uint32_t* crcCopy, unsigned long offset) {
-  uint32_t crc;
-  crcFile = sd.open(checkFile);
-  crcFile.seek(offset);
-  crc = crc32(crcFile, filesize);
-  crcFile.close();
-  sprintf_P(tempCRC, PSTR("%08lX"), crc);
+void printCRC(char* checkFile, uint32_t* crcCopy, unsigned long offset) {
+  uint32_t crc = calculateCRC(checkFile, folder, offset);
+  char tempCRC[9];
 
   if (crcCopy != NULL) {
     *crcCopy = crc;
   }
 
+  sprintf_P(tempCRC, PSTR("%08lX"), crc);
   print_Msg(F("CRC: "));
   println_Msg(tempCRC);
   display_Update();
@@ -703,7 +677,7 @@ boolean compareCRC(const char* database, uint32_t crc32sum, boolean renamerom, i
             myFile.close();
           }
         } else {
-          println_Msg("OK");
+          println_Msg(FS(FSTRING_OK));
         }
         return 1;
         break;
@@ -720,6 +694,262 @@ boolean compareCRC(const char* database, uint32_t crc32sum, boolean renamerom, i
   }
   return 0;
 }
+
+// move file pointer to first game line with matching letter. If no match is found the last database entry is selected
+void seek_first_letter_in_database(FsFile& database, byte myLetter) {
+    char gamename_str[3];
+#ifdef ENABLE_GLOBAL_LOG
+    // Disable log to prevent unnecessary logging
+    println_Log(F("Select Mapping from List"));
+    dont_log = true;
+#endif
+    database.rewind();
+    // Skip ahead to selected starting letter
+    if ((myLetter > 0) && (myLetter <= 26)) {
+      myLetter += 'A' - 1;
+      do {
+        // Read current name
+        get_line(gamename_str, &database, 2);
+        // Skip data line
+        skip_line(&database);
+        // Skip empty line
+        skip_line(&database);
+
+      } while (database.available() && gamename_str[0] != myLetter);
+      rewind_line(database, 3);
+    }
+#ifdef ENABLE_GLOBAL_LOG
+    // Enable log again
+    dont_log = false;
+#endif
+}
+
+#if (defined(ENABLE_ARC) || defined(ENABLE_FAIRCHILD) || defined(ENABLE_VECTREX))
+// read single digit data line as byte
+void readDataLineSingleDigit(FsFile& database, void* byteData) {
+  // Read rom size
+  (*(byte*)byteData) = database.read() - 48;
+
+  // Skip rest of line
+  database.seekCur(2);
+}
+#endif
+
+#if (defined(ENABLE_ODY2) || defined(ENABLE_5200) || defined(ENABLE_7800) || defined(ENABLE_C64))
+struct database_entry_mapper_size {
+  byte gameMapper;
+  byte gameSize;
+};
+
+// read database entry with mapper and size digits
+void readDataLineMapperSize(FsFile& database, void* entry) {
+  struct database_entry_mapper_size* castEntry = (database_entry_mapper_size*)entry;
+  // Read mapper
+  castEntry->gameMapper = database.read() - 48;
+
+  // if next char is not a semicolon expect an additional digit
+  char temp = database.read();
+  if(temp != ',') {
+    castEntry->gameMapper = (castEntry->gameMapper * 10) + (temp - 48);
+    // Skip over semicolon
+    database.seekCur(1);
+  }
+
+  // Read rom size
+  castEntry->gameSize = database.read() - 48;
+
+  // Skip rest of line
+  database.seekCur(2);
+}
+#endif
+
+// navigate through the database file using OSSC input buttons. Requires function pointer readData for reading device specific data line from database
+// printDataLine - optional callback for printing device specific data informations about the currently browsed game
+// setRomName - callback function to set rom name if game is selected
+// returns true if a game was selected, false otherwise
+boolean checkCartSelection(FsFile& database, void (*readData)(FsFile&, void*), void* data, void (*printDataLine)(void*) = NULL, void (*setRomName)(const char* input) = NULL) {
+  char gamename[128];
+  uint8_t fastScrolling = 1;
+
+  // Display database
+  while (database.available()) {
+#ifdef ENABLE_GLOBAL_LOG
+    // Disable log to prevent unnecessary logging
+    dont_log = true;
+#endif
+    display_Clear();
+
+    get_line(gamename, &database, sizeof(gamename));   
+
+    readData(database, data);
+
+    skip_line(&database); 
+
+    println_Msg(F("Select your cartridge"));
+    println_Msg(FS(FSTRING_EMPTY));
+    println_Msg(gamename);
+
+    if(printDataLine) {
+      printDataLine(data);
+    }
+    println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
+    print_STR(press_to_change_STR, 0);
+    if (fastScrolling > 1)
+      println_Msg(F(" (fast)"));
+    else
+      println_Msg("");
+    print_STR(right_to_select_STR, 1);
+#elif defined(ENABLE_LCD)
+    print_STR(rotate_to_change_STR, 0);
+    if (fastScrolling > 1)
+      println_Msg(F(" (fast)"));
+    else
+      println_Msg("");
+    print_STR(press_to_select_STR, 1);
+#elif defined(SERIAL_MONITOR)
+    println_Msg(F("U/D to Change"));
+    println_Msg(F("Space to Select"));
+#endif
+    display_Update();
+
+#ifdef ENABLE_GLOBAL_LOG
+      // Enable log again
+      dont_log = false;
+#endif
+    uint8_t b = 0;
+    while (1) {
+      // Check button input
+      b = checkButton();
+
+      // Next
+      if (b == 1) {
+        // 1: Next record
+        if (fastScrolling > 1) {
+          for (uint8_t skipped = 0; skipped < fastScrolling * 3; skipped++) {
+            skip_line(&database);
+          }
+        }
+        break;
+      }
+
+      // Previous
+      else if (b == 2) {
+        // 2: Previous record
+        if (fastScrolling > 1)
+          rewind_line(database, fastScrolling * 3 + 3);
+        else
+          rewind_line(database, 6);
+        break;
+      }
+
+      // Selection
+      else if (b == 3) {
+        if(setRomName) {
+          setRomName(gamename);
+        }
+        database.close();
+        return true;
+      }
+
+      else if (b == 4) {
+        // 4: Toggle Fast Scrolling
+        if (fastScrolling == 1)
+          fastScrolling = 30;
+        else
+          fastScrolling = 1;
+        continue;
+      }
+    }
+  }
+  return false;
+}
+
+#if (defined(ENABLE_ODY2) || defined(ENABLE_ARC) || defined(ENABLE_FAIRCHILD) || defined(ENABLE_MSX) || defined(ENABLE_POKE) || defined(ENABLE_2600) || defined(ENABLE_5200) || defined(ENABLE_7800) || defined(ENABLE_C64) || defined(ENABLE_VECTREX) || defined(ENABLE_NES))
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD)) || defined(ENABLE_GBX)
+void printInstructions() {
+    println_Msg(FS(FSTRING_EMPTY));
+#if defined(ENABLE_OLED)
+    print_STR(press_to_change_STR, 1);
+    print_STR(right_to_select_STR, 1);
+#elif defined(ENABLE_LCD)
+    print_STR(rotate_to_change_STR, 1);
+    print_STR(press_to_select_STR, 1);
+#elif defined(SERIAL_MONITOR)
+    println_Msg(F("U/D to Change"));
+    println_Msg(F("Space to Select"));
+#endif
+    display_Update();
+}
+
+int navigateMenu(int min, int max, void (*printSelection)(int)) {
+  uint8_t b = 0;
+  int i = min;
+  // Check Button Status
+#if defined(ENABLE_OLED)
+  buttonVal1 = (PIND & (1 << 7));  // PD7
+#elif defined(ENABLE_LCD)
+  boolean buttonVal1 = (PING & (1 << 2));  //PG2
+#endif
+
+  if (buttonVal1 == LOW) {  // Button Pressed
+    while (1) {             // Scroll Mapper List
+#if defined(ENABLE_OLED)
+      buttonVal1 = (PIND & (1 << 7));  // PD7
+#elif defined(ENABLE_LCD)
+      buttonVal1 = (PING & (1 << 2));      //PG2
+#endif
+      if (buttonVal1 == HIGH) {  // Button Released
+        // Correct Overshoot
+        if (i == min)
+          i = max;
+        else
+          i--;
+        break;
+      }
+      printSelection(i);
+      display_Update();
+      if (i == max)
+        i = min;
+      else
+        i++;
+      delay(250);
+    }
+  }
+  b = 0;
+
+  printSelection(i);
+  printInstructions();
+
+  while (1) {
+    b = checkButton();
+    if (b == 2) {  // Previous Mapper (doubleclick)
+      if (i == min)
+        i = max;
+      else
+        i--;
+
+      // Only update display after input because of slow LCD library
+      printSelection(i);
+      printInstructions();
+    }
+    if (b == 1) {  // Next Mapper (press)
+      if (i == max)
+        i = min;
+      else
+        i++;
+
+      // Only update display after input because of slow LCD library
+      printSelection(i);
+      printInstructions();
+    }
+    if (b == 3) {  // Long Press - Execute (hold)
+      return i;
+    }
+  }
+}
+#endif
+#endif
 
 void starting_letter__subDraw(byte selection, byte line) {
       display.setDrawColor(0);
@@ -2309,7 +2539,7 @@ void println_Msg(const __FlashStringHelper* string) {
   char myBuffer[15];
   strlcpy_P(myBuffer, (char*)string, 15);
   if ((strncmp_P(myBuffer, PSTR("Press Button..."), 14) != 0) && (strncmp_P(myBuffer, PSTR("Select file"), 10) != 0)) {
-    if (!dont_log) myLog.println(string);
+    if (!dont_log && loggingEnabled) myLog.println(string);
   }
 #endif
 }
@@ -2345,7 +2575,7 @@ void display_Clear() {
   display.setCursor(0, 8);
 #endif
 #ifdef ENABLE_GLOBAL_LOG
-  if (!dont_log && loggingEnabled) myLog.println(FSTRING_EMPTY);
+  if (!dont_log && loggingEnabled) myLog.println(FS(FSTRING_EMPTY));
 #endif
 }
 

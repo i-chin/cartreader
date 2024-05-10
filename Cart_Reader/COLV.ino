@@ -39,7 +39,6 @@ byte collo = 0;  // Lowest Entry
 byte colhi = 5;  // Highest Entry
 
 byte colsize;
-byte newcolsize;
 
 // EEPROM MAPPING
 // 08 ROM SIZE
@@ -225,77 +224,26 @@ void readROM_COL() {
 // ROM SIZE
 //******************************************
 
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+void printRomSize_COL(int index) {
+    display_Clear();
+    print_Msg(F("ROM Size: "));
+    println_Msg(pgm_read_byte(&(COL[index])));
+}
+#endif
+
 void setROMSize_COL() {
+  byte newcolsize;
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   display_Clear();
   if (collo == colhi)
     newcolsize = collo;
   else {
-    uint8_t b = 0;
-    int i = collo;
-
-    display_Clear();
-    print_Msg(F("ROM Size: "));
-    println_Msg(pgm_read_byte(&(COL[i])));
-    println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-    print_STR(press_to_change_STR, 1);
-    print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-    print_STR(rotate_to_change_STR, 1);
-    print_STR(press_to_select_STR, 1);
-#endif
-    display_Update();
-
-    while (1) {
-      b = checkButton();
-      if (b == 2) {  // Previous (doubleclick)
-        if (i == collo)
-          i = colhi;
-        else
-          i--;
-
-        // Only update display after input because of slow LCD library
-        display_Clear();
-        print_Msg(F("ROM Size: "));
-        println_Msg(pgm_read_byte(&(COL[i])));
-        println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-        print_STR(press_to_change_STR, 1);
-        print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-        print_STR(rotate_to_change_STR, 1);
-        print_STR(press_to_select_STR, 1);
-#endif
-        display_Update();
-      }
-      if (b == 1) {  // Next (press)
-        if (i == colhi)
-          i = collo;
-        else
-          i++;
-
-        // Only update display after input because of slow LCD library
-        display_Clear();
-        print_Msg(F("ROM Size: "));
-        println_Msg(pgm_read_byte(&(COL[i])));
-        println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-        print_STR(press_to_change_STR, 1);
-        print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-        print_STR(rotate_to_change_STR, 1);
-        print_STR(press_to_select_STR, 1);
-#endif
-        display_Update();
-      }
-      if (b == 3) {  // Long Press - Execute (hold)
-        newcolsize = i;
-        break;
-      }
-    }
+    newcolsize = navigateMenu(collo, colhi, &printRomSize_COL);
+  
     display.setCursor(0, 56);  // Display selection at bottom
   }
+  
   print_Msg(F("ROM SIZE "));
   print_Msg(pgm_read_byte(&(COL[newcolsize])));
   println_Msg(F("K"));
@@ -364,157 +312,94 @@ void checkStatus_COL() {
 //******************************************
 // CART SELECT CODE
 //******************************************
-void setCart_COL() {
-  char gamename[100];
-  char tempStr2[2];
+struct database_entry_COL {
   char crc_search[9];
+  byte gameSize;
+};
 
+void readDataLine_COL(FsFile& database, void* entry) {
+  struct database_entry_COL* castEntry = (database_entry_COL*)entry;
+
+  // Read CRC32 checksum
+  for (byte i = 0; i < 8; i++) {
+    checksumStr[i] = char(database.read());
+  }
+
+  // Skip over semicolon
+  database.seekCur(1);
+
+  // Read CRC32 of first 512 bytes
+  for (byte i = 0; i < 8; i++) {
+    castEntry->crc_search[i] = char(database.read());
+  }
+
+  // Skip over semicolon
+  database.seekCur(1);
+
+  // Read rom size
+  // Read the next ascii character and subtract 48 to convert to decimal
+  castEntry->gameSize = ((database.read() - 48) * 10) + (database.read() - 48);
+
+  // Skip rest of line
+  database.seekCur(2);
+}
+
+void printDataLine_COL(void* entry) {
+  struct database_entry_COL* castEntry = (database_entry_COL*)entry;
+
+  print_Msg(F("Size: "));
+  print_Msg(castEntry->gameSize);
+  println_Msg(F("KB"));
+}
+
+void setCart_COL() {
   //go to root
   sd.chdir();
+
+  struct database_entry_COL entry;
 
   // Select starting letter
   byte myLetter = starting_letter();
 
   // Open database
   if (myFile.open("colv.txt", O_READ)) {
-    // Skip ahead to selected starting letter
-    if ((myLetter > 0) && (myLetter <= 26)) {
-      while (myFile.available()) {
-        // Read current name
-        get_line(gamename, &myFile, 96);
+    seek_first_letter_in_database(myFile, myLetter);
 
-        // Compare selected letter with first letter of current name until match
-        while (gamename[0] != 64 + myLetter) {
-          skip_line(&myFile);
-          skip_line(&myFile);
-          get_line(gamename, &myFile, 96);
-        }
-        break;
-      }
+    if(checkCartSelection(myFile, &readDataLine_COL, &entry, &printDataLine_COL)) {
+      //byte COL[] = {8, 12, 16, 20, 24, 32};
+      switch (entry.gameSize) {
+        case 8:
+          colsize = 0;
+          break;
 
-      // Rewind one line
-      rewind_line(myFile);
-    }
+        case 12:
+          colsize = 1;
+          break;
 
-    // Display database
-    while (myFile.available()) {
-      display_Clear();
+        case 16:
+          colsize = 2;
+          break;
 
-      // Read game name
-      get_line(gamename, &myFile, 96);
+        case 20:
+          colsize = 3;
+          break;
 
-      // Read CRC32 checksum
-      sprintf_P(checksumStr, PSTR("%c"), myFile.read());
-      for (byte i = 0; i < 7; i++) {
-        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
-        strcat(checksumStr, tempStr2);
-      }
+        case 24:
+          colsize = 4;
+          break;
 
-      // Skip over semicolon
-      myFile.seekCur(1);
+        case 32:
+          colsize = 5;
+          break;
 
-      // Read CRC32 of first 512 bytes
-      sprintf_P(crc_search, PSTR("%c"), myFile.read());
-      for (byte i = 0; i < 7; i++) {
-        sprintf_P(tempStr2, PSTR("%c"), myFile.read());
-        strcat(crc_search, tempStr2);
-      }
-
-      // Skip over semicolon
-      myFile.seekCur(1);
-
-      // Read rom size
-      // Read the next ascii character and subtract 48 to convert to decimal
-      cartSize = myFile.read() - 48;
-
-      // Remove leading 0 for single digit cart sizes
-      if (cartSize != 0) {
-        cartSize = cartSize * 10 + myFile.read() - 48;
-      } else {
-        cartSize = myFile.read() - 48;
-      }
-
-      // Skip rest of line
-      myFile.seekCur(2);
-
-      // Skip every 3rd line
-      skip_line(&myFile);
-
-      println_Msg(F("Select your cartridge"));
-      println_Msg(FS(FSTRING_EMPTY));
-      println_Msg(gamename);
-      print_Msg(F("Size: "));
-      print_Msg(cartSize);
-      println_Msg(F("KB"));
-      println_Msg(FS(FSTRING_EMPTY));
-#if defined(ENABLE_OLED)
-      print_STR(press_to_change_STR, 1);
-      print_STR(right_to_select_STR, 1);
-#elif defined(ENABLE_LCD)
-      print_STR(rotate_to_change_STR, 1);
-      print_STR(press_to_select_STR, 1);
-#elif defined(SERIAL_MONITOR)
-      println_Msg(F("U/D to Change"));
-      println_Msg(F("Space to Select"));
-#endif
-      display_Update();
-
-      uint8_t b = 0;
-      while (1) {
-        // Check button input
-        b = checkButton();
-
-        // Next
-        if (b == 1) {
+        default:
+          colsize = 0;
           break;
         }
-
-        // Previous
-        else if (b == 2) {
-          rewind_line(myFile, 6);
-          break;
-        }
-
-        // Selection
-        else if (b == 3) {
-          //byte COL[] = {8, 12, 16, 20, 24, 32};
-          switch (cartSize) {
-            case 8:
-              colsize = 0;
-              break;
-
-            case 12:
-              colsize = 1;
-              break;
-
-            case 16:
-              colsize = 2;
-              break;
-
-            case 20:
-              colsize = 3;
-              break;
-
-            case 24:
-              colsize = 4;
-              break;
-
-            case 32:
-              colsize = 5;
-              break;
-
-            default:
-              colsize = 0;
-              break;
-          }
-          EEPROM_writeAnything(COL_ROM_SIZE, colsize);
-          myFile.close();
-          break;
-        }
-      }
+        EEPROM_writeAnything(COL_ROM_SIZE, colsize);
     }
   } else {
-    print_FatalError(F("Database file not found"));
+    print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));
   }
 }
 #endif
