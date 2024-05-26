@@ -216,28 +216,13 @@ void readSegment_5200(uint16_t startaddr, uint16_t endaddr) {
 //******************************************
 
 void readROM_5200() {
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".a52"));
+  createFolder("5200", "ROM", romName, "a52");
 
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("5200/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   // open file on sdcard
   if (!myFile.open(fileName, O_RDWR | O_CREAT))
     print_FatalError(sd_error_STR);
-
-  // write new folder number back to EEPROM
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // 5200 A13-A0 = 10 0000 0000 0000
 

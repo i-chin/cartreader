@@ -288,13 +288,7 @@ void readSRAM_SV() {
   controlIn_SNES();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy_P(fileName, PSTR("BSX.srm"));
-
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("SNES/SAVE/BSX/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("SNES", "SAVE", "BSX", "srm");
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
@@ -305,17 +299,10 @@ void readSRAM_SV() {
     print_FatalError(sd_error_STR);
   }
 
-  display_Clear();
-  print_Msg(F("Saved to "));
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
   readBank_SV(0x10, 0);  // Preconfigure to fix corrupt 1st byte
 
   //startBank = 0x10; endBank = 0x17; CS low
   for (byte BSBank = 0x10; BSBank < 0x18; BSBank++) {
-    draw_progressbar(((BSBank - 0x10) * 0x1000), 32768);
     //startAddr = 0x5000
     for (long currByte = 0x5000; currByte < 0x6000; currByte += 512) {
       for (unsigned long c = 0; c < 512; c++) {
@@ -324,15 +311,14 @@ void readSRAM_SV() {
       myFile.write(sdBuffer, 512);
     }
   }
-  // Finish progressbar
-  draw_progressbar(32768, 32768);
-  delay(100);
   // Close the file:
   myFile.close();
 
   // Signal end of process
-  println_Msg("");
-  println_Msg(F("SRAM reading finished"));
+  display_Clear();
+  print_Msg(F("Saved to "));
+  print_Msg(folder);
+  println_Msg(F("/..."));
   display_Update();
   wait();
 }
@@ -359,7 +345,6 @@ void writeSRAM_SV() {
 
     // Write to sram bank
     for (byte currBank = 0x10; currBank < 0x18; currBank++) {
-      draw_progressbar(((currBank - 0x10) * 0x1000), 32768);
       //startAddr = 0x5000
       for (long currByte = 0x5000; currByte < 0x6000; currByte += 512) {
         myFile.read(sdBuffer, 512);
@@ -368,6 +353,7 @@ void writeSRAM_SV() {
           writeBank_SV(currBank, currByte + c, sdBuffer[c]);
         }
       }
+      draw_progressbar(((currBank - 0x10) * 0x1000), 32768);
     }
     // Finish progressbar
     draw_progressbar(32768, 32768);
@@ -381,7 +367,7 @@ void writeSRAM_SV() {
     println_Msg(F("SRAM writing finished"));
     display_Update();
   } else {
-    print_Error(F("File doesnt exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
   }
 }
 
@@ -427,24 +413,10 @@ void readROM_SV() {
   controlIn_SNES();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy_P(fileName, PSTR("MEMPACK.bs"));
-
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("SNES/ROM/MEMPACK/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("SNES", "ROM", "MEMPACK", "bs");
 
   //clear the screen
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -521,8 +493,8 @@ void writeROM_SV(void) {
     println_Msg(F("Blank check..."));
     display_Update();
     for (int currBank = 0xC0; currBank < 0xD0; currBank++) {
+      draw_progressbar(((currBank - 0xC0) * 0x10000), 0x100000);
       for (long currByte = 0; currByte < 65536; currByte++) {
-        draw_progressbar(((currBank - 0xC0) * 0x10000) + currByte, 0x100000);
         if (0xFF != readBank_SV(currBank, currByte)) {
           println_Msg(FS(FSTRING_EMPTY));
           println_Msg(F("Erase failed"));
@@ -541,8 +513,9 @@ void writeROM_SV(void) {
     println_Msg(F("Writing pack..."));
     display_Update();
     for (int currBank = 0xC0; currBank < 0xD0; currBank++) {
+      draw_progressbar(((currBank - 0xC0) * 0x10000), 0x100000);
       for (long currByte = 0; currByte < 65536; currByte++) {
-        draw_progressbar(((currBank - 0xC0) * 0x10000) + currByte, 0x100000);
+
         writeBank_SV(0xC0, 0x0000, 0x10);  //Program Byte
         writeBank_SV(currBank, currByte, myFile.read());
         writeBank_SV(0xC0, 0x0000, 0x70);  //Status Mode
@@ -563,8 +536,8 @@ void writeROM_SV(void) {
     print_STR(verifying_STR, 1);
     display_Update();
     for (int currBank = 0xC0; currBank < 0xD0; currBank++) {
+      draw_progressbar(((currBank - 0xC0) * 0x10000), 0x100000);
       for (long currByte = 0; currByte < 65536; currByte++) {
-        draw_progressbar(((currBank - 0xC0) * 0x10000) + currByte, 0x100000);
         if (myFile.read() != readBank_SV(currBank, currByte)) {
           println_Msg(FS(FSTRING_EMPTY));
           println_Msg(F("Verify failed"));
@@ -584,7 +557,7 @@ void writeROM_SV(void) {
     wait();
 
   } else {
-    print_Error(F("File doesn't exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
   }
 }
 

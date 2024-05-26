@@ -151,20 +151,13 @@ static void readROM_Acan() {
   EEPROM_readAnything(FOLDER_NUM, foldern);
   snprintf_P(folder, FILEPATH_LENGTH, PSTR("/ACAN/ROM/%d"), foldern);
 
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
   if (!myFile.open("rom.bin", O_RDWR | O_CREAT))
     print_FatalError(create_file_STR);
-
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   draw_progressbar(0, cartSize);
 
@@ -196,20 +189,13 @@ static void readSRAM_Acan() {
   EEPROM_readAnything(FOLDER_NUM, foldern);
   snprintf_P(folder, FILEPATH_LENGTH, PSTR("/ACAN/SAVE/%d"), foldern);
 
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
   if (!myFile.open("save.bin", O_RDWR | O_CREAT))
     print_FatalError(create_file_STR);
-
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   dataIn_MD();
   for (uint32_t i = 0; i < 0x10000; i += 1024) {
@@ -232,7 +218,7 @@ static void writeSRAM_Acan() {
   display_Clear();
 
   if (!myFile.open(filePath, O_READ)) {
-    print_Error(F("File doesn't exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
     return;
   }
 
@@ -260,7 +246,7 @@ static void verifySRAM_Acan() {
   display_Update();
 
   if (!myFile.open(filePath, O_READ)) {
-    print_Error(F("File doesn't exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
     return;
   }
 
@@ -294,20 +280,13 @@ static void readUM6650() {
   EEPROM_readAnything(FOLDER_NUM, foldern);
   snprintf_P(folder, sizeof(folder), PSTR("/ACAN/UM6650/%d"), foldern);
 
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   sd.mkdir(folder, true);
   sd.chdir(folder);
 
   if (!myFile.open("UM6650.bin", O_RDWR | O_CREAT))
     print_FatalError(create_file_STR);
-
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   for (uint16_t i = 0; i < 256; i++) {
     dataOut_MD();
@@ -328,7 +307,7 @@ static void verifyUM6650() {
   display_Update();
 
   if (!myFile.open(filePath, O_READ)) {
-    print_Error(F("File doesn't exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
     return;
   }
 
@@ -365,7 +344,7 @@ static void writeUM6650() {
   display_Clear();
 
   if (!myFile.open(filePath, O_READ)) {
-    print_Error(F("File doesn't exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
     return;
   }
 
@@ -400,7 +379,7 @@ static void flashCart_Acan() {
   display_Clear();
 
   if (!myFile.open(filePath, O_READ)) {
-    print_Error(F("File doesn't exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
     return;
   }
 

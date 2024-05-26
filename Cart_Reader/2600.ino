@@ -210,6 +210,14 @@ void readSegmentFx_2600(bool hasRAM, uint16_t size) {
   readDataArray_2600(0x1E00, size);
 }
 
+void readSegmentTigervision_2600(uint8_t banks) {
+  for (uint8_t x = 0; x < banks; x++) {
+    writeData3F_2600(0x3F, x);
+    readSegment_2600(0x1000, 0x1800);
+  }
+  readSegment_2600(0x1800, 0x2000);
+}
+
 void outputFF_2600(uint16_t size) {
   memset(sdBuffer, 0xFF, size * sizeof(sdBuffer[0]));
   myFile.write(sdBuffer, size);
@@ -288,28 +296,13 @@ boolean checkE7(uint16_t bank) {
 }
 
 void readROM_2600() {
-  strcpy(fileName, romName);
-  strcat(fileName, ".a26");
+  createFolder("ATARI", "ROM", romName, "a26");
 
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("ATARI/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_Msg(F("Saving to "));
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   // open file on sdcard
   if (!myFile.open(fileName, O_RDWR | O_CREAT))
     print_FatalError(create_file_STR);
-
-  // write new folder number back to EEPROM
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // ROM Start 0xF000
   // Address A12-A0 = 0x1000 = 1 0000 0000 0000 = 4KB
@@ -321,19 +314,11 @@ void readROM_2600() {
       break;
 
     case 0x3F:  // 3F Mapper 8KB
-      for (int x = 0; x < 0x3; x++) {
-        writeData3F_2600(0x3F, x);
-        readSegment_2600(0x1000, 0x1800);
-      }
-      readSegment_2600(0x1800, 0x2000);
+      readSegmentTigervision_2600(3);
       break;
 
     case 0x3E:  // 3E Mapper 32KB ROM 32K RAM
-      for (int x = 0; x < 15; x++) {
-        writeData3F_2600(0x3F, x);
-        readSegment_2600(0x1000, 0x1800);
-      }
-      readSegment_2600(0x1800, 0x2000);
+      readSegmentTigervision_2600(15);
       break;    
 
     case 0x40:  // 4K Default 4KB

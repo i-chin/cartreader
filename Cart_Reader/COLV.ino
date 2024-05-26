@@ -162,29 +162,13 @@ void readSegment_COL(uint32_t startaddr, uint32_t endaddr) {
 }
 
 void readROM_COL() {
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".col"));
+  createFolder("COL", "ROM", romName, "col");
 
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  //  sprintf_P(folder, PSTR("COL/ROM/%s/%d"), romName, foldern);
-  sprintf_P(folder, PSTR("COL/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   // open file on sdcard
   if (!myFile.open(fileName, O_RDWR | O_CREAT))
     print_FatalError(create_file_STR);
-
-  // write new folder number back to EEPROM
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   // RESET ALL CS PINS HIGH (DISABLE)
   PORTH |= (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6);

@@ -550,33 +550,15 @@ void getCartInfo_SMS() {
 //******************************************
 void readROM_SMS() {
   // Get name, add extension depending on the system and convert to char array for sd lib
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  strcpy(fileName, romName);
   if (system_sms) {
-    strcat_P(fileName, PSTR(".sms"));
-    sprintf_P(folder, PSTR("SMS/ROM/%s/%d"), romName, foldern);
+    createFolder("SMS", "ROM", romName, "sms");
   } else if (system_gg) {
-    strcat_P(fileName, PSTR(".gg"));
-    sprintf_P(folder, PSTR("GG/ROM/%s/%d"), romName, foldern);
+    createFolder("GG", "ROM", romName, "gg");
   } else {
-    strcat_P(fileName, PSTR(".sg"));
-    sprintf_P(folder, PSTR("SG1000/ROM/%s/%d"), romName, foldern);
+    createFolder("SG1000", "ROM", romName, "sg");
   }
 
-  // Create a new folder
-  sd.chdir("/");
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // Write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -658,30 +640,16 @@ void readROM_SMS() {
 ///*****************************************
 void readSRAM_SMS() {
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".sav"));
+  const char* system;
 
-  EEPROM_readAnything(FOLDER_NUM, foldern);
   if (system_gg) {
-    sprintf_P(folder, PSTR("GG/SAVE/%s/%d"), romName, foldern);
+    system = "GG";
   } else {
-    sprintf_P(folder, PSTR("SMS/SAVE/%s/%d"), romName, foldern);
+    system = "SMS";
   }
+  createFolder(system, "SAVE", romName, "sav");
 
-  // Create a new folder
-  sd.chdir("/");
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   // Create file on sd card
   if (myFile.open(fileName, O_RDWR | O_CREAT)) {

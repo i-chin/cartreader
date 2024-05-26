@@ -67,36 +67,41 @@
 #define FOLDER_NUM 1            // FOLDER #
 #define PCE_ADAPTER 3           // PCE ADAPTER_SWAPT
 #define CLK_GEN_OFFSET 4        // CLK GEN ONNSET
-#define NES_MAPPER 10           // NES MAPPER
-#define NES_PRG_SIZE 11         // NES PRG SIZE
-#define NES_CHR_SIZE 12         // NES CHR SIZE
-#define NES_RAM_SIZE 13         // NES RAM SIZE
-#define COL_ROM_SIZE 20         // COLECOVISION ROM SIZE
-#define INTV_MAPPER 30          // INTELLIVISION MAPPER
-#define INTV_ROM_SIZE 31        // INTELLIVISION ROM SIZE
-#define WSV_ROM_SIZE 40         // WATARA SUPERVISION ROM SIZE
-#define MSX_MAPPER 50           // MSX MAPPER
-#define MSX_ROM_SIZE 51         // MSX ROM SIZE
-#define MSX_RAM_SIZE 52         // MSX RAM SIZE
-#define ARC_ROM_SIZE 60         // ARC ROM SIZE
-#define ATARI2600_MAPPER 70     // ATARI2600 MAPPER
-#define ATARI2600_ROM_SIZE 71   // ATARI2600 ROM SIZE
-#define FAIRCHILD_ROM_SIZE 80   // FAIRCHILD ROM SIZE
-#define ODY2_MAPPER 90          // ODY2 MAPPER
-#define ODY2_ROM_SIZE 91        // ODY2 ROM SIZE
-#define C64_MAPPER 101          // C64_MAPPER
-#define C64_ROM_SIZE 102        // C64 ROM SIZE
-#define C64_PORT 103            // C64 PORT
-#define ATARI5200_MAPPER 101    // ATARI5200_MAPPER
-#define ATARI5200_ROM_SIZE 102  // ATARI5200 ROM SIZE
-#define ATARI7800_MAPPER 111    // ATARI7800_MAPPER
-#define ATARI7800_ROM_SIZE 112  // ATARI7800 ROM SIZE
-#define VECTREX_ROM_SIZE 121    // VECTRREX ROM SIZE
+#define LED_SETTING 8           // LED (RESET TO ON)
+#define CART_MODE  10           // CART_MODE(SNES/GB READER SETTINGS)
+#define READ_RETRY 11           // READ_RETRY(SNES/GB READER SETTINGS)
+#define READ_STATUS 12          // READ_STATUS(SNES/GB READER SETTINGS)
+#define READ_UNKNOWN_CRC 13     // READ_UNKNOWN_CRC(SNES/GB READER SETTINGS)
+#define NES_MAPPER 20           // NES MAPPER
+#define NES_PRG_SIZE 21         // NES PRG SIZE
+#define NES_CHR_SIZE 22         // NES CHR SIZE
+#define NES_RAM_SIZE 23         // NES RAM SIZE
+#define COL_ROM_SIZE 30         // COLECOVISION ROM SIZE
+#define INTV_MAPPER 40          // INTELLIVISION MAPPER
+#define INTV_ROM_SIZE 41        // INTELLIVISION ROM SIZE
+#define WSV_ROM_SIZE 50         // WATARA SUPERVISION ROM SIZE
+#define MSX_MAPPER 60           // MSX MAPPER
+#define MSX_ROM_SIZE 61         // MSX ROM SIZE
+#define MSX_RAM_SIZE 62         // MSX RAM SIZE
+#define ARC_ROM_SIZE 70         // ARC ROM SIZE
+#define ATARI2600_MAPPER 80     // ATARI2600 MAPPER
+#define ATARI2600_ROM_SIZE 81   // ATARI2600 ROM SIZE
+#define FAIRCHILD_ROM_SIZE 90   // FAIRCHILD ROM SIZE
+#define ODY2_MAPPER 100          // ODY2 MAPPER
+#define ODY2_ROM_SIZE 101        // ODY2 ROM SIZE
+#define C64_MAPPER 111          // C64_MAPPER
+#define C64_ROM_SIZE 112        // C64 ROM SIZE
+#define C64_PORT 113            // C64 PORT
+#define ATARI5200_MAPPER 121    // ATARI5200_MAPPER
+#define ATARI5200_ROM_SIZE 122  // ATARI5200 ROM SIZE
+#define ATARI7800_MAPPER 131    // ATARI7800_MAPPER
+#define ATARI7800_ROM_SIZE 132  // ATARI7800 ROM SIZE
+#define VECTREX_ROM_SIZE 141    // VECTRREX ROM SIZE
 
 //******************************************
 // Config Revision
 //******************************************
-#define ConfigRev 2
+#define ConfigRev 3
 
 /******************************************
    Libraries
@@ -693,6 +698,46 @@ boolean compareCRC(const char* database, uint32_t crc32sum, boolean renamerom, i
     return 0;
   }
   return 0;
+}
+
+//******************************************
+// Math Functions
+//******************************************
+#if (defined(ENABLE_NES) || defined(ENABLE_MSX) || defined(ENABLE_GBX))
+int int_pow(int base, int exp) {  // Power for int
+  int result = 1;
+  while (exp) {
+    if (exp & 1)
+      result *= base;
+    exp /= 2;
+    base *= base;
+  }
+  return result;
+}
+#endif
+
+void createFolder(const char* system, const char* subfolder, const char* gameName, const char* fileSuffix) {
+  snprintf(fileName, FILENAME_LENGTH, "%s.%s", gameName, fileSuffix);
+
+  // create a new folder for the rom file
+  EEPROM_readAnything(FOLDER_NUM, foldern);
+  sprintf(folder, "%s/%s/%s/%d", system, subfolder, gameName, foldern);
+  sd.mkdir(folder, true);
+  sd.chdir(folder);
+}
+
+void printAndIncrementFolder(bool displayClear = false) {
+  // Save location
+  if(displayClear) {
+    display_Clear();
+  }
+  print_STR(saving_to_STR, 0);
+  print_Msg(folder);
+  println_Msg(F("/..."));
+  display_Update();
+  // write new folder number back to eeprom
+  foldern = foldern + 1;
+  EEPROM_writeAnything(FOLDER_NUM, foldern);
 }
 
 // move file pointer to first game line with matching letter. If no match is found the last database entry is selected
@@ -1404,6 +1449,10 @@ void mainMenu() {
   Self Test
 *****************************************/
 #ifdef ENABLE_SELFTEST
+// Check if given pin number is one of pins 2-9, 14-17, 22-37, 42-49, 54-69
+bool isPin_2t9_14t17_22t37_42t49_54t69(byte pinNumber) {
+  return ((2 <= pinNumber) && (pinNumber <= 9)) || ((14 <= pinNumber) && (pinNumber <= 17)) || ((22 <= pinNumber) && (pinNumber <= 37)) || ((42 <= pinNumber) && (pinNumber <= 49)) || ((54 <= pinNumber) && (pinNumber <= 69));
+}
 
 void selfTest() {
 #ifdef ENABLE_VSELECT
@@ -1455,14 +1504,14 @@ void selfTest() {
 
   // Set pins 2-9, 14-17, 22-37, 42-49, 54-69 to input and activate internal pull-up resistors
   for (byte pinNumber = 2; pinNumber <= 69; pinNumber++) {
-    if (((2 <= pinNumber) && (pinNumber <= 9)) || ((14 <= pinNumber) && (pinNumber <= 17)) || ((22 <= pinNumber) && (pinNumber <= 37)) || ((42 <= pinNumber) && (pinNumber <= 49)) || ((54 <= pinNumber) && (pinNumber <= 69))) {
+    if (isPin_2t9_14t17_22t37_42t49_54t69(pinNumber)) {
       pinMode(pinNumber, INPUT_PULLUP);
     }
   }
 
   // Tests pins 2-9, 14-17, 22-37, 42-49, 54-69 for short to GND
   for (byte pinNumber = 2; pinNumber <= 69; pinNumber++) {
-    if (((2 <= pinNumber) && (pinNumber <= 9)) || ((14 <= pinNumber) && (pinNumber <= 17)) || ((22 <= pinNumber) && (pinNumber <= 37)) || ((42 <= pinNumber) && (pinNumber <= 49)) || ((54 <= pinNumber) && (pinNumber <= 69))) {
+    if (isPin_2t9_14t17_22t37_42t49_54t69(pinNumber)) {
       if (!digitalRead(pinNumber)) {
         setColor_RGB(255, 0, 0);
         errorLvl = 1;
@@ -1488,11 +1537,11 @@ void selfTest() {
 
   // Test for short between pins 2-9, 14-17, 22-37, 42-49, 54-69
   for (byte pinNumber = 2; pinNumber <= 69; pinNumber++) {
-    if (((2 <= pinNumber) && (pinNumber <= 9)) || ((14 <= pinNumber) && (pinNumber <= 17)) || ((22 <= pinNumber) && (pinNumber <= 37)) || ((42 <= pinNumber) && (pinNumber <= 49)) || ((54 <= pinNumber) && (pinNumber <= 69))) {
+    if (isPin_2t9_14t17_22t37_42t49_54t69(pinNumber)) {
       pinMode(pinNumber, OUTPUT);
       digitalWrite(pinNumber, LOW);
       for (byte pinNumber2 = 2; pinNumber2 <= 69; pinNumber2++) {
-        if ((((2 <= pinNumber2) && (pinNumber2 <= 9)) || ((14 <= pinNumber2) && (pinNumber2 <= 17)) || ((22 <= pinNumber2) && (pinNumber2 <= 37)) || ((42 <= pinNumber2) && (pinNumber2 <= 49)) || ((54 <= pinNumber2) && (pinNumber2 <= 69))) && (pinNumber != pinNumber2)) {
+        if (isPin_2t9_14t17_22t37_42t49_54t69(pinNumber2) && (pinNumber != pinNumber2)) {
           pinMode(pinNumber2, INPUT_PULLUP);
           if (!digitalRead(pinNumber2)) {
             setColor_RGB(255, 0, 0);
@@ -2115,6 +2164,17 @@ void setup() {
 #   if defined(ENABLE_3V3FIX)
   setClockScale(CLKSCALE_8MHZ); // Set clock back to low after setup
 #   endif /* ENABLE_3V3FIX */
+
+  byte configRev = 0;
+  EEPROM_readAnything(CONFIG_REV_NUM, configRev);
+  if(ConfigRev != configRev){
+     println_Msg(F("Update Config Rev."));
+     resetEEPROM();
+     print_STR(press_button_STR, 1);
+     display_Update();
+     wait();
+     resetArduino();
+  }
 
   // Start menu system
   mainMenu();
@@ -2860,8 +2920,8 @@ unsigned char questionBox_Display(const __FlashStringHelper* question, char answ
 }
 #endif
 
-#if !defined(ENABLE_SERIAL) && defined(ENABLE_UPDATER)
 void checkUpdater() {
+#if !defined(ENABLE_SERIAL) && defined(ENABLE_UPDATER)
   if (ClockedSerial.available() > 0) {
     String cmd = ClockedSerial.readStringUntil('\n');
     cmd.trim();
@@ -2914,10 +2974,8 @@ void checkUpdater() {
       ClockedSerial.println(F(": Unknown Command"));
     }
   }
-}
-#else
-void checkUpdater() {}
 #endif
+}
 
 /******************************************
   User Control
@@ -3257,6 +3315,11 @@ void resetEEPROM() {
   EEPROM_writeAnything(FOLDER_NUM, (int)0);               // FOLDER #
   EEPROM_writeAnything(PCE_ADAPTER, (byte)1);             // PCE ADAPTER_SWAPT
   EEPROM_writeAnything(CLK_GEN_OFFSET, (int32_t)0);       // CLK GEE OFFSET
+  EEPROM_writeAnything(LED_SETTING, (byte)0);             // LED (RESET TO ON)
+  EEPROM_writeAnything(CART_MODE, (byte)0);               // CART_MODE(SNES/GB READER SETTINGS)
+  EEPROM_writeAnything(READ_RETRY, (byte)0);              // READ_RETRY(SNES/GB READER SETTINGS)
+  EEPROM_writeAnything(READ_STATUS, (byte)0);             // READ_STATUS(SNES/GB READER SETTINGS)
+  EEPROM_writeAnything(READ_UNKNOWN_CRC, (byte)0);        // READ_UNKNOWN_CRC(SNES/GB READER SETTINGS)
   EEPROM_writeAnything(NES_MAPPER, (byte)0);              // NES MAPPER
   EEPROM_writeAnything(NES_PRG_SIZE, (byte)0);            // NES PRG SIZE
   EEPROM_writeAnything(NES_CHR_SIZE, (byte)0);            // NES CHR SIZE

@@ -53,6 +53,32 @@ static const char GameSharkRead[] PROGMEM = "Read GBC GameShark";
 static const char GameSharkWrite[] PROGMEM = "Write GBC GameShark";
 static const char* const menuOptionsGBDatel[] PROGMEM = { MegaMemRead, MegaMemWrite, GameSharkRead, GameSharkWrite };
 
+bool gbxFlashCFI() {
+  // Flash CFI
+  display_Clear();
+  display_Update();
+  setup_GB();
+  mode = CORE_GB;
+
+  // Change working dir to root
+  sd.chdir("/");
+  // Launch filebrowser
+  filePath[0] = '\0';
+  sd.chdir("/");
+  fileBrowser(F("Select file"));
+  display_Clear();
+  identifyCFI_GB();
+  if (!writeCFI_GB()) {
+    display_Clear();
+    println_Msg(F("Flashing failed, time out!"));
+    // Prints string out of the common strings array either with or without newline
+    print_STR(press_button_STR, 1);
+    display_Update();
+    return false;
+  }
+  return true;
+}
+
 // Start menu for both GB and GBA
 void gbxMenu() {
   // create menu with title and 5 options to choose from
@@ -212,53 +238,14 @@ void gbxMenu() {
 
         case 1:
           // Flash CFI
-          display_Clear();
-          display_Update();
-          setup_GB();
-          mode = CORE_GB;
-
-          // Change working dir to root
-          sd.chdir("/");
-          // Launch filebrowser
-          filePath[0] = '\0';
-          sd.chdir("/");
-          fileBrowser(F("Select file"));
-          display_Clear();
-          identifyCFI_GB();
-          if (!writeCFI_GB()) {
-            display_Clear();
-            println_Msg(F("Flashing failed, time out!"));
-            // Prints string out of the common strings array either with or without newline
-            print_STR(press_button_STR, 1);
-            display_Update();
-            wait();
-          }
-          // Reset
+          gbxFlashCFI();
           wait();
           resetArduino();
           break;
 
         case 2:
-          // Flash CFI and Save
-          display_Clear();
-          display_Update();
-          setup_GB();
-          mode = CORE_GB;
-
-          // Change working dir to root
-          sd.chdir("/");
-          // Launch filebrowser
-          filePath[0] = '\0';
-          sd.chdir("/");
-          fileBrowser(F("Select file"));
-          display_Clear();
-          identifyCFI_GB();
-          if (!writeCFI_GB()) {
-            display_Clear();
-            println_Msg(F("Flashing failed, time out!"));
-            // Prints string out of the common strings array either with or without newline
-            print_STR(press_button_STR, 1);
-            display_Update();
+          // Flash CFI and save
+          if (!gbxFlashCFI()) {
             wait();
             resetArduino();
           }
@@ -1008,36 +995,9 @@ void getCartInfo_GB() {
   sprintf_P(checksumStr, PSTR("%02X%02X"), eepbit[6], eepbit[7]);
 
   // ROM banks
-  switch (romSize) {
-    case 0x00:
-      romBanks = 2;
-      break;
-    case 0x01:
-      romBanks = 4;
-      break;
-    case 0x02:
-      romBanks = 8;
-      break;
-    case 0x03:
-      romBanks = 16;
-      break;
-    case 0x04:
-      romBanks = 32;
-      break;
-    case 0x05:
-      romBanks = 64;
-      break;
-    case 0x06:
-      romBanks = 128;
-      break;
-    case 0x07:
-      romBanks = 256;
-      break;
-    case 0x08:
-      romBanks = 512;
-      break;
-    default:
-      romBanks = 2;
+  romBanks = 2;
+  if (romSize >= 0x01 && romSize <= 0x08) {
+    romBanks = int_pow(2, romSize + 1);
   }
 
   // SRAM banks
@@ -1147,24 +1107,9 @@ void getCartInfo_GB() {
 // Read ROM
 void readROM_GB() {
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".GB"));
+  createFolder("GB", "ROM", romName, "gb");
 
-  // create a new folder for the rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("GB/ROM/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -1362,14 +1307,7 @@ void readSRAM_GB() {
   if (lastByte > 0) {
 
     // Get name, add extension and convert to char array for sd lib
-    strcpy(fileName, romName);
-    strcat_P(fileName, PSTR(".sav"));
-
-    // create a new folder for the save file
-    EEPROM_readAnything(FOLDER_NUM, foldern);
-    sprintf_P(folder, PSTR("GB/SAVE/%s/%d"), romName, foldern);
-    sd.mkdir(folder, true);
-    sd.chdir(folder);
+    createFolder("GB", "SAVE", romName, "sav");
 
     // write new folder number back to eeprom
     foldern = foldern + 1;
@@ -1458,7 +1396,7 @@ void writeSRAM_GB() {
       display_Update();
 
     } else {
-      print_Error(F("File doesnt exist"));
+      print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
     }
   } else {
     print_Error(F("Cart has no SRAM"));
@@ -1516,24 +1454,9 @@ unsigned long verifySRAM_GB() {
 // Read SRAM + FLASH save data of MBC6
 void readSRAMFLASH_MBC6_GB() {
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".sav"));
+  createFolder("GB", "SAVE", romName, "sav");
 
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("GB/SAVE/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -1744,21 +1667,14 @@ void writeSRAMFLASH_MBC6_GB() {
     println_Msg(F("Save writing finished"));
     display_Update();
   } else {
-    print_Error(F("File doesnt exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
   }
 }
 
 void readEEPROM_MBC7_GB() {
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".sav"));
-
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("GB/SAVE/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("GB", "SAVE", romName, "sav");
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
@@ -1818,7 +1734,7 @@ void writeEEPROM_MBC7_GB() {
 
   // open file on sd card
   if (!myFile.open(filePath, O_READ))
-    print_Error(F("File doesnt exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
 
   myFile.read(sdBuffer, lastByte);
   myFile.close();
@@ -1971,33 +1887,9 @@ void writeFlash29F_GB(byte MBC, boolean flashErase) {
     myFile.seekSet(0);
 
     // ROM banks
-    switch (romSize) {
-      case 0x00:
-        romBanks = 2;
-        break;
-      case 0x01:
-        romBanks = 4;
-        break;
-      case 0x02:
-        romBanks = 8;
-        break;
-      case 0x03:
-        romBanks = 16;
-        break;
-      case 0x04:
-        romBanks = 32;
-        break;
-      case 0x05:
-        romBanks = 64;
-        break;
-      case 0x06:
-        romBanks = 128;
-        break;
-      case 0x07:
-        romBanks = 256;
-        break;
-      default:
-        romBanks = 2;
+    romBanks = 2;
+    if (romSize >= 0x01 && romSize <= 0x07) {
+      romBanks = int_pow(2, romSize + 1);
     }
 
     // Set ROM bank hi 0
@@ -2417,33 +2309,9 @@ bool writeCFI_GB() {
     myFile.seekSet(0);
 
     // ROM banks
-    switch (romSize) {
-      case 0x00:
-        romBanks = 2;
-        break;
-      case 0x01:
-        romBanks = 4;
-        break;
-      case 0x02:
-        romBanks = 8;
-        break;
-      case 0x03:
-        romBanks = 16;
-        break;
-      case 0x04:
-        romBanks = 32;
-        break;
-      case 0x05:
-        romBanks = 64;
-        break;
-      case 0x06:
-        romBanks = 128;
-        break;
-      case 0x07:
-        romBanks = 256;
-        break;
-      default:
-        romBanks = 2;
+    romBanks = 2;
+    if (romSize >= 0x01 && romSize <= 0x07) {
+      romBanks = int_pow(2, romSize + 1);
     }
 
     if (romBanks <= flashBanks) {
@@ -2656,24 +2524,9 @@ bool writeCFI_GB() {
 // Read Pelican GBC Device - All Brainboys, MonsterBrains, Codebreakers
 void readPelican_GB() {
   // Get name, add extension and convert to char array for sd lib
-  strcpy_P(fileName, PSTR("Pelican"));
-  strcat_P(fileName, PSTR(".GB"));
+  createFolder("GB", "ROM", "Pelican", "GB");
 
-  // create a new folder for the rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("GB/ROM/Pelican/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -3115,14 +2968,7 @@ bool isToggle(byte byte1, byte byte2) {
 // Read Mega Memory Card Rom and Save Backup Data
 void readMegaMem_GB() {
   // Dump the Rom
-  strcpy_P(fileName, PSTR("Rom"));
-  strcat_P(fileName, PSTR(".GB"));
-
-  // create a new folder for the rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("GB/ROM/MegaMem/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("GB", "ROM", "MegaMem", "GB");
 
   display_Clear();
   print_STR(saving_to_STR, 0);
@@ -3437,10 +3283,6 @@ void writeMegaMem_GB() {
 ***************************************************/
 // Read Datel GBC Gameshark Device
 void readGameshark_GB() {
-  // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, "Gameshark");
-  strcat(fileName, ".GB");
-
   word finalAddress = 0x5FFF;
   word startAddress = 0x4000;
   word bankAddress = 0x7FE1;
@@ -3489,20 +3331,10 @@ void readGameshark_GB() {
     mainMenu();
   }
 
-  // create a new folder for the rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("GB/ROM/Gameshark/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  // Get name, add extension and convert to char array for sd lib
+  createFolder("GB", "ROM", "Gameshark", "GB");
 
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder();
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {

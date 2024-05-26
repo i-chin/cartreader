@@ -196,28 +196,13 @@ void readSegment_VECTREX(uint16_t startaddr, uint16_t endaddr) {
 //******************************************
 
 void readROM_VECTREX() {
-  strcpy(fileName, romName);
-  strcat(fileName, ".vec");
+  createFolder("VECTREX", "ROM", romName, "vec");
 
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("VECTREX/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   // open file on sdcard
   if (!myFile.open(fileName, O_RDWR | O_CREAT))
     print_FatalError(sd_error_STR);
-
-  // write new folder number back to EEPROM
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   PB6_DISABLE;  // PB6 LOW - Switch Bank
   

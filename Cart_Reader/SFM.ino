@@ -872,14 +872,7 @@ void readROM_SFM() {
   controlIn_SFM();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".sfc"));
-
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("NP/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("NP", "ROM", romName, "sfc");
 
   //clear the screen
   display_Clear();

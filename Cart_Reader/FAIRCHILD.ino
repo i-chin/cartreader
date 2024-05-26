@@ -392,29 +392,14 @@ uint8_t readData_FAIRCHILD() {
 }
 
 void readROM_FAIRCHILD() {
-  strcpy(fileName, romName);
-  strcat(fileName, ".bin");
+  createFolder("FAIRCHILD", "ROM", romName, "bin");
 
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("FAIRCHILD/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_Msg(F("Saving to "));
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   // open file on sdcard
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
     print_FatalError(create_file_STR);
   }
-
-  // write new folder number back to EEPROM
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   unsigned long cartsize = FAIRCHILD[fairchildsize] * 0x400;
   uint8_t blocks = cartsize / 0x200;
@@ -479,19 +464,11 @@ void readROM_FAIRCHILD() {
   wait();
 }
 
-void read16K_FAIRCHILD()  // Read 16K Bytes
-{
-  strcpy(fileName, romName);
-  strcat(fileName, ".bin");
-
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("FAIRCHILD/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+void read16K_FAIRCHILD() { // Read 16K Bytes
+  createFolder("FAIRCHILD", "ROM", romName, "bin");
 
   display_Clear();
-  print_Msg(F("Saving to "));
+  print_STR(saving_to_STR, 0);
   print_Msg(folder);
   println_Msg(F("/..."));
   display_Update();

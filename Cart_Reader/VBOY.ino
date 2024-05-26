@@ -410,22 +410,9 @@ void getCartInfo_VB() {
 void readROM_VB() {
   dataIn_VB();
 
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".vb"));
+  createFolder("VBOY", "ROM", romName, "vb");
 
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("VBOY/ROM/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
     print_FatalError(sd_error_STR);
@@ -513,13 +500,7 @@ void writeSRAM_VB() {
 void readSRAM_VB() {
   dataIn_VB();
 
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".srm"));
-
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("VBOY/SAVE/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("VBOY", "SAVE", romName, "srm");
 
   foldern = foldern + 1;
   EEPROM_writeAnything(FOLDER_NUM, foldern);

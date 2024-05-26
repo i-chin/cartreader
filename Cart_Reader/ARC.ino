@@ -150,28 +150,14 @@ void readSegment_ARC(uint16_t startaddr, uint16_t endaddr) {
 }
 
 void readROM_ARC() {
-  strcpy(fileName, romName);
-  strcat(fileName, ".bin");
+  createFolder("ARC", "ROM", romName, "bin");
 
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("ARC/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_Msg(F("Saving to "));
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   // open file on sdcard
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
     print_FatalError(create_file_STR);
   }
-  // write new folder number back to EEPROM
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   readSegment_ARC(0x0000, 0x0800);  // 2K
   if (arcsize > 0) {

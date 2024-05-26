@@ -212,29 +212,14 @@ void bankSwitch_ODY2(uint16_t addr, uint8_t data) {
 }
 
 void readROM_ODY2() {
-  strcpy(fileName, romName);
-  strcat(fileName, ".bin");
+  createFolder("ODY2", "ROM", romName, "bin");
 
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("ODY2/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_Msg(F("Saving to "));
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   // open file on sdcard
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
     print_FatalError(create_file_STR);
   }
-
-  // write new folder number back to EEPROM
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   if (ody2mapper == 1) {  // A10 CONNECTED
     // Videopac 31:  Musician

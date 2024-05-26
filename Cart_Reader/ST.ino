@@ -167,21 +167,9 @@ void readSlot(bool cartSlot) {
 // Read ST rom to SD card
 void readRom_ST(unsigned int bankStart, unsigned int bankEnd) {
   // create a new folder to save rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  strcpy_P(fileName, PSTR("SUFAMI_TURBO.st"));
-  sprintf_P(folder, PSTR("ST/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("ST", "ROM", "SUFAMI_TURBO", "st");
 
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {

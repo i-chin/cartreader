@@ -1422,24 +1422,9 @@ void readROM_MD() {
   dataIn_MD();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".BIN"));
+  createFolder("MD", "ROM", romName, "BIN");
 
-  // create a new folder
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("MD/ROM/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -1849,14 +1834,7 @@ void readSram_MD() {
   dataIn_MD();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".srm"));
-
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("MD/SAVE/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("MD", "SAVE", romName, "srm");
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
@@ -2710,15 +2688,7 @@ void readEEP_MD() {
   dataIn_MD();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".eep"));
-
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sd.chdir();
-  sprintf_P(folder, PSTR("MD/SAVE/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("MD", "SAVE", romName, "eep");
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
@@ -2810,14 +2780,7 @@ void readBram_MD() {
   dataIn_MD();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy_P(fileName, PSTR("Cart.brm"));
-
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sd.chdir();
-  sprintf_P(folder, PSTR("MD/RAM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("MD", "RAM", "Cart", "brm");
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
@@ -2905,24 +2868,9 @@ void readRealtec_MD() {
   dataIn_MD();
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".MD"));
+  createFolder("MD", "ROM", romName, "MD");
 
-  // create a new folder
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("MD/ROM/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder(true);
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {

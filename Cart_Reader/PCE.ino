@@ -741,7 +741,7 @@ void write_tennokoe_bank_PCE(int bank_index) {
     println_Msg(F("Finished"));
 
   } else {
-    print_Error(F("File doesn't exist"));
+    print_Error(FS(FSTRING_FILE_DOESNT_EXIST));
   }
 
   println_Msg(FS(FSTRING_EMPTY));
@@ -767,15 +767,7 @@ void read_rom_PCE(void) {
   println_Msg(F("KB"));
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy_P(fileName, PSTR("PCEROM"));
-  strcat_P(fileName, PSTR(".pce"));
-
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sd.chdir("/");
-  sprintf_P(folder, PSTR("PCE/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("PCE", "ROM", "PCEROM", "pce");
 
   print_Msg(F("Saving ROM to "));
   print_Msg(folder);

@@ -2408,21 +2408,16 @@ void readSram(unsigned long sramSize, byte flashramType) {
   }
 
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
+  const char* suffix;
 
   if (saveType == 4) {
-    strcat_P(fileName, PSTR(".fla"));
+    suffix = "fla";
   } else if (saveType == 1) {
-    strcat_P(fileName, PSTR(".sra"));
+    suffix = "sra";
   } else {
     print_FatalError(F("Savetype Error"));
   }
-
-  // create a new folder for the save file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("N64/SAVE/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("N64", "SAVE", romName, suffix);
 
   // write new folder number back to eeprom
   foldern = foldern + 1;
@@ -2817,25 +2812,11 @@ void getFramType() {
 // dumping rom slow
 void readRom_N64() {
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".Z64"));
-
-  // create a new folder
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("N64/ROM/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("N64", "ROM", romName, "Z64");
 
   // clear the screen
   // display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder();
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
@@ -2872,25 +2853,11 @@ void readRom_N64() {
 // dumping rom fast
 uint32_t readRom_N64() {
   // Get name, add extension and convert to char array for sd lib
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".Z64"));
-
-  // create a new folder
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("N64/ROM/%s/%d"), romName, foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("N64", "ROM", romName, "Z64");
 
   // clear the screen
   // display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder();
 
   // Open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {

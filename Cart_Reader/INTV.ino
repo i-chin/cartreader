@@ -303,28 +303,13 @@ void readSegment_INTV(uint32_t startaddr, uint32_t endaddr) {
 
 // MODIFIED READ ROUTINE FOR ALL 10 MAPPERS
 void readROM_INTV() {
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".int"));
+  createFolder("INTV", "ROM", romName, "int");
 
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("INTV/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
+  printAndIncrementFolder(true);
 
   // open file on sdcard
   if (!myFile.open(fileName, O_RDWR | O_CREAT))
     print_FatalError(create_file_STR);
-
-  // write new folder number back to EEPROM
-  foldern++;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
 
   switch (intvmapper) {
     case 0:                              //default mattel up to 32K (8K/12K/16K/24K/32K)

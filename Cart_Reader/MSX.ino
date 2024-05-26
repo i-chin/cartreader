@@ -291,23 +291,6 @@ void writeData_MSX(uint16_t addr, uint8_t data) {
 }
 
 //******************************************
-// POWER
-//******************************************
-#ifndef ENABLE_NES
-int int_pow(int base, int exp)  // Power for int
-{
-  int result = 1;
-  while (exp) {
-    if (exp & 1)
-      result *= base;
-    exp /= 2;
-    base *= base;
-  }
-  return result;
-}
-#endif
-
-//******************************************
 // CS CODE
 //******************************************
 void setCS()  // Set CS Line
@@ -360,28 +343,13 @@ void readROM_MSX() {
     println_Msg(F("ROM SIZE 0K"));
     display_Update();
   } else {
-    strcpy(fileName, romName);
-    strcat_P(fileName, PSTR(".bin"));
+    createFolder("MSX", "ROM", romName, "bin");
 
-    // create a new folder for storing rom file
-    EEPROM_readAnything(FOLDER_NUM, foldern);
-    sprintf_P(folder, PSTR("MSX/ROM/%d"), foldern);
-    sd.mkdir(folder, true);
-    sd.chdir(folder);
-
-    display_Clear();
-    print_STR(saving_to_STR, 0);
-    print_Msg(folder);
-    println_Msg(F("/..."));
-    display_Update();
+    printAndIncrementFolder(true);
 
     // open file on sdcard
     if (!myFile.open(fileName, O_RDWR | O_CREAT))
       print_FatalError(sd_error_STR);
-
-    // write new folder number back to EEPROM
-    foldern++;
-    EEPROM_writeAnything(FOLDER_NUM, foldern);
 
     switch (msxmapper) {
       case 0:  // No Mapper
@@ -1018,7 +986,7 @@ setrom:
     Serial.println(sizeROM);
     newmsxsize = sizeROM.toInt() + msxlo;
     if (msxmapper == 11) {  // PAC/FM-PAC 0K/64K
-      if ((newmsxsize > 0) && (newmsxsize < 4)) {
+      if ((newmsxromsize > 0) && (newmsxromsize < 4)) {
         Serial.println(F("SIZE NOT SUPPORTED"));
         Serial.println(FS(FSTRING_EMPTY));
         goto setrom;

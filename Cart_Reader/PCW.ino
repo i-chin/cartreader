@@ -425,20 +425,9 @@ void readSingleROM_PCW() {
   println_Msg(FS(FSTRING_EMPTY));
 
   // Create file
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".pcw"));
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("PCW/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("PCW", "ROM", romName, "pcw");
 
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder();
 
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
     print_FatalError(sd_error_STR);
@@ -564,20 +553,9 @@ void readMultiROM_PCW() {
   println_Msg(FS(FSTRING_EMPTY));
 
   // Create file
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".pcw"));
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("PCW/ROM/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("PCW", "ROM", romName, "pcw");
 
-  print_STR(saving_to_STR, 0);
-  print_Msg(folder);
-  println_Msg(F("/..."));
-  display_Update();
-
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder();
 
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
     print_FatalError(sd_error_STR);
@@ -633,13 +611,7 @@ void readMultiROM_PCW() {
 //******************************************
 
 void readSRAM_PCW() {  // readSRAM_1A()
-  strcpy(fileName, romName);
-  strcat_P(fileName, PSTR(".srm"));
-
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(folder, PSTR("PCW/SAVE/%d"), foldern);
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
+  createFolder("PCW", "SAVE", romName, "srm");
 
   foldern = foldern + 1;
   EEPROM_writeAnything(FOLDER_NUM, foldern);
