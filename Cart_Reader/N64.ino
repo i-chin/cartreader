@@ -4194,27 +4194,7 @@ void resetGameshark_N64() {
 
 // Read rom and save to the SD card
 void backupGameshark_N64() {
-  // create a new folder
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(fileName, PSTR("GS%d"), foldern);
-  strcat_P(fileName, PSTR(".z64"));
-  sd.mkdir("N64/ROM/Gameshark", true);
-  sd.chdir("N64/ROM/Gameshark");
-
-  display_Clear();
-  print_Msg(F("Saving "));
-  print_Msg(fileName);
-  println_Msg(F("..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
-
-  // Open file on sd card
-  if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_FatalError(sd_error_STR);
-  }
+  createFolderAndOpenFile("N64", "ROM", "GameShark", "z64");
 
   for (unsigned long currByte = romBase + 0xEC00000; currByte < (romBase + 0xEC00000 + flashSize); currByte += 512) {
     // Blink led
@@ -4577,26 +4557,7 @@ void resetXplorer_N64() {
 // Read rom and save to the SD card
 void backupXplorer_N64() {
   // create a new folder
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf_P(fileName, PSTR("XP64%d"), foldern);
-  strcat_P(fileName, PSTR(".z64"));
-  sd.mkdir("N64/ROM/XPLORER64", true);
-  sd.chdir("N64/ROM/XPLORER64");
-
-  display_Clear();
-  print_Msg(F("Saving "));
-  print_Msg(fileName);
-  println_Msg(F("..."));
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
-
-  // Open file on sd card
-  if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_FatalError(sd_error_STR);
-  }
+  createFolderAndOpenFile("N64", "ROM", "XPLORER64", "z64");
 
   for (unsigned long currByte = 0x10400000; currByte <= 0x1043FFFF; currByte += 512) {
     // Blink led

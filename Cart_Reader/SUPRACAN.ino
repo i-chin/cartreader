@@ -148,16 +148,7 @@ void suprAcanMenu() {
 static void readROM_Acan() {
   uint32_t crc32 = 0xffffffff;
 
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  snprintf_P(folder, FILEPATH_LENGTH, PSTR("/ACAN/ROM/%d"), foldern);
-
-  printAndIncrementFolder(true);
-
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  if (!myFile.open("rom.bin", O_RDWR | O_CREAT))
-    print_FatalError(create_file_STR);
+  createFolderAndOpenFile("/ACAN", "ROM", "rom", "bin");
 
   draw_progressbar(0, cartSize);
 
@@ -185,17 +176,7 @@ static void readROM_Acan() {
 }
 
 static void readSRAM_Acan() {
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  snprintf_P(folder, FILEPATH_LENGTH, PSTR("/ACAN/SAVE/%d"), foldern);
-
-  printAndIncrementFolder(true);
-
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  if (!myFile.open("save.bin", O_RDWR | O_CREAT))
-    print_FatalError(create_file_STR);
+  createFolderAndOpenFile("/ACAN", "SAVE", "save", "bin");
 
   dataIn_MD();
   for (uint32_t i = 0; i < 0x10000; i += 1024) {
@@ -276,17 +257,7 @@ static void verifySRAM_Acan() {
 }
 
 static void readUM6650() {
-  // create a new folder for storing rom file
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  snprintf_P(folder, sizeof(folder), PSTR("/ACAN/UM6650/%d"), foldern);
-
-  printAndIncrementFolder(true);
-
-  sd.mkdir(folder, true);
-  sd.chdir(folder);
-
-  if (!myFile.open("UM6650.bin", O_RDWR | O_CREAT))
-    print_FatalError(create_file_STR);
+  createFolderAndOpenFile("/ACAN", "UM6650", "UM6650", "bin");
 
   for (uint16_t i = 0; i < 256; i++) {
     dataOut_MD();
