@@ -1096,7 +1096,6 @@ void writeByteCommandShift_Flash(byte command) {
 }
 
 #ifdef ENABLE_FLASH16
-
 void writeWordCommand_Flash(byte command) {
   writeWord_Flash(0x5555, 0xaa);
   writeWord_Flash(0x2aaa, 0x55);
@@ -1743,26 +1742,8 @@ void readFlash() {
   // Reset to root directory
   sd.chdir("/");
 
-  // Get name, add extension and convert to char array for sd lib
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sd.mkdir("FLASH", true);
-  sd.chdir("FLASH");
-  sprintf_P(fileName, PSTR("FL%d"), foldern);
-  strcat_P(fileName, PSTR(".bin"));
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  createFolderAndOpenFile("FLASH", NULL, "FL", "bin");
 
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(fileName);
-  println_Msg(F("..."));
-  display_Update();
-
-  // Open file on sd card
-  if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_FatalError(create_file_STR);
-  }
   for (unsigned long currByte = 0; currByte < flashSize; currByte += 512) {
     for (int c = 0; c < 512; c++) {
       sdBuffer[c] = readByte_Flash(currByte + c);
@@ -2003,29 +1984,8 @@ void readFlash16() {
   // Reset to root directory
   sd.chdir("/");
 
-  // Get name, add extension and convert to char array for sd lib
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sd.mkdir("FLASH", true);
-  sd.chdir("FLASH");
-  sprintf_P(fileName, PSTR("FL%d"), foldern);
-  strcat_P(fileName, PSTR(".bin"));
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  createFolderAndOpenFile("FLASH", NULL, "FL", "bin");
 
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(fileName);
-  println_Msg(F("..."));
-  display_Update();
-
-  // Open file on sd card
-  if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    println_Msg(F("Can't create file on SD."));
-    display_Update();
-    while (1)
-      ;
-  }
   word d = 0;
   for (unsigned long currByte = 0; currByte < flashSize / 2; currByte += 256) {
     for (word c = 0; c < 256; c++) {
@@ -2279,29 +2239,8 @@ void read_Eprom() {
   // Reset to root directory
   sd.chdir("/");
 
-  // Get name, add extension and convert to char array for sd lib
-  EEPROM_readAnything(FOLDER_NUM, foldern);
-  sd.mkdir("FLASH", true);
-  sd.chdir("FLASH");
-  sprintf_P(fileName, PSTR("FL%d"), foldern);
-  strcat_P(fileName, PSTR(".bin"));
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  createFolderAndOpenFile("FLASH", NULL, "FL", "bin");
 
-  display_Clear();
-  print_STR(saving_to_STR, 0);
-  print_Msg(fileName);
-  println_Msg(F("..."));
-  display_Update();
-
-  // Open file on sd card
-  if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    println_Msg(F("Can't create file on SD."));
-    display_Update();
-    while (1)
-      ;
-  }
   word d = 0;
   for (unsigned long currWord = 0; currWord < flashSize / 2; currWord += 256) {
     for (word c = 0; c < 256; c++) {

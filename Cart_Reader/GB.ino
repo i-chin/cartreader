@@ -596,7 +596,7 @@ void setup_GB() {
 void showCartInfo_GB() {
   display_Clear();
   if (strcmp_P(checksumStr, PSTR("00")) != 0) {
-    print_Msg(F("Title: "));
+    print_Msg(FS(FSTRING_NAME));
     println_Msg(romName);
     if (cartID[0] != 0) {
       print_Msg(F("Serial: "));
@@ -605,7 +605,7 @@ void showCartInfo_GB() {
     print_Msg(F("Revision: "));
     println_Msg(romVersion);
 
-    print_Msg(F("Mapper: "));
+    print_Msg(FS(FSTRING_MAPPER));
     if ((romType == 0) || (romType == 8) || (romType == 9))
       print_Msg(F("none"));
     else if ((romType == 1) || (romType == 2) || (romType == 3))
@@ -1276,7 +1276,7 @@ void compare_checksums_GB() {
   char calcsumStr[5];
   sprintf_P(calcsumStr, PSTR("%04X"), calc_checksum_GB(fileName));
 
-  print_Msg(F("Checksum: "));
+  print_Msg(FS(FSTRING_CHECKSUM));
   print_Msg(calcsumStr);
   if (strcmp(calcsumStr, checksumStr) == 0) {
     println_Msg(F(" -> OK"));

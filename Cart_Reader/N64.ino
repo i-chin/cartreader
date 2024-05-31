@@ -1922,7 +1922,7 @@ void printCartInfo_N64() {
   // Print start page
   if (cartSize != 0) {
     display_Clear();
-    print_Msg(F("Title: "));
+    print_Msg(FS(FSTRING_NAME));
     println_Msg(romName);
     print_Msg(F("Serial: "));
     println_Msg(cartID);
@@ -1966,7 +1966,7 @@ void printCartInfo_N64() {
     display_Clear();
     println_Msg(F("GAMEPAK ERROR"));
     println_Msg("");
-    print_Msg(F("Title: "));
+    print_Msg(FS(FSTRING_NAME));
     println_Msg(romName);
     print_Msg(F("Serial: "));
     println_Msg(cartID);
@@ -3344,17 +3344,21 @@ void resetFlashrom_N64(unsigned long flashBase) {
   delay(100);
 }
 
+void sendFlashromCommand_N64(unsigned long addr, byte cmd) {
+  setAddress_N64(addr + (0x555 << 1));
+  writeWord_N64(0xAA);
+  setAddress_N64(addr + (0x2AA << 1));
+  writeWord_N64(0x55);
+  setAddress_N64(addr + (0x555 << 1));
+  writeWord_N64(cmd);
+}
+
 void idFlashrom_N64() {
   // Set size to 0 if no ID is found
   cartSize = 0;
 
   // Send flashrom ID command
-  setAddress_N64(romBase + (0x555 << 1));
-  writeWord_N64(0xAA);
-  setAddress_N64(romBase + (0x2AA << 1));
-  writeWord_N64(0x55);
-  setAddress_N64(romBase + (0x555 << 1));
-  writeWord_N64(0x90);
+  sendFlashromCommand_N64(romBase, 0x90);
 
   // Read 1 byte vendor ID
   setAddress_N64(romBase);
@@ -3374,12 +3378,7 @@ void idFlashrom_N64() {
     resetFlashrom_N64(romBase);
 
     // Test for second flashrom chip at 0x2000000 (32MB)
-    setAddress_N64(romBase + 0x2000000 + (0x555 << 1));
-    writeWord_N64(0xAA);
-    setAddress_N64(romBase + 0x2000000 + (0x2AA << 1));
-    writeWord_N64(0x55);
-    setAddress_N64(romBase + 0x2000000 + (0x555 << 1));
-    writeWord_N64(0x90);
+    sendFlashromCommand_N64(romBase + 0x2000000, 0x90);
 
     char tempID[5];
     setAddress_N64(romBase + 0x2000000);
@@ -3402,12 +3401,7 @@ void idFlashrom_N64() {
     resetFlashrom_N64(romBase + 0x800000);
 
     // Test for second flashrom chip at 0x800000 (8MB)
-    setAddress_N64(romBase + 0x800000 + (0x555 << 1));
-    writeWord_N64(0xAA);
-    setAddress_N64(romBase + 0x800000 + (0x2AA << 1));
-    writeWord_N64(0x55);
-    setAddress_N64(romBase + 0x800000 + (0x555 << 1));
-    writeWord_N64(0x90);
+    sendFlashromCommand_N64(romBase + 0x800000, 0x90);
 
     char tempID[5];
     setAddress_N64(romBase + 0x800000);
@@ -3430,12 +3424,7 @@ void idFlashrom_N64() {
     resetIntel4400_N64();
 
     // Test if second half of the flashrom might be hidden
-    setAddress_N64(romBase + 0x2000000 + (0x555 << 1));
-    writeWord_N64(0xAA);
-    setAddress_N64(romBase + 0x2000000 + (0x2AA << 1));
-    writeWord_N64(0x55);
-    setAddress_N64(romBase + 0x2000000 + (0x555 << 1));
-    writeWord_N64(0x90);
+    sendFlashromCommand_N64(romBase + 0x2000000, 0x90);
 
     // Read manufacturer ID
     setAddress_N64(romBase + 0x2000000);
@@ -3678,18 +3667,8 @@ void eraseFlashrom_N64() {
   display_Update();
 
   // Send Erase Command
-  setAddress_N64(romBase + (0x555 << 1));
-  writeWord_N64(0xAA);
-  setAddress_N64(romBase + (0x2AA << 1));
-  writeWord_N64(0x55);
-  setAddress_N64(romBase + (0x555 << 1));
-  writeWord_N64(0x80);
-  setAddress_N64(romBase + (0x555 << 1));
-  writeWord_N64(0xAA);
-  setAddress_N64(romBase + (0x2AA << 1));
-  writeWord_N64(0x55);
-  setAddress_N64(romBase + (0x555 << 1));
-  writeWord_N64(0x10);
+  sendFlashromCommand_N64(romBase, 0x80);
+  sendFlashromCommand_N64(romBase, 0x10);
 
   // Read the status register
   setAddress_N64(romBase);
@@ -3725,18 +3704,14 @@ void eraseSector_N64(unsigned long sectorSize) {
     }
 
     // Send Erase Command
-    setAddress_N64(flashBase + (0x555 << 1));
-    writeWord_N64(0xAA);
-    setAddress_N64(flashBase + (0x2AA << 1));
-    writeWord_N64(0x55);
-    setAddress_N64(flashBase + (0x555 << 1));
-    writeWord_N64(0x80);
+    sendFlashromCommand_N64(flashBase, 0x80);
     setAddress_N64(flashBase + (0x555 << 1));
     writeWord_N64(0xAA);
     setAddress_N64(flashBase + (0x2AA << 1));
     writeWord_N64(0x55);
     setAddress_N64(romBase + currSector);
     writeWord_N64(0x30);
+
 
     // Read the status register
     setAddress_N64(romBase + currSector);
@@ -3958,13 +3933,7 @@ void writeFlashrom_N64(unsigned long sectorSize) {
         // Join two bytes into one word
         word currWord = ((sdBuffer[currByte] & 0xFF) << 8) | (sdBuffer[currByte + 1] & 0xFF);
         // 2 unlock commands
-        setAddress_N64(flashBase + (0x555 << 1));
-        writeWord_N64(0xAA);
-        setAddress_N64(flashBase + (0x2AA << 1));
-        writeWord_N64(0x55);
-        // Program command
-        setAddress_N64(flashBase + (0x555 << 1));
-        writeWord_N64(0xA0);
+        sendFlashromCommand_N64(flashBase, 0xA0);
         // Write word
         setAddress_N64(romBase + currSector + currSdBuffer + currByte);
         writeWord_N64(currWord);
@@ -4024,6 +3993,15 @@ unsigned long verifyFlashrom_N64() {
 /******************************************
    N64 Gameshark Flash Functions
  *****************************************/
+void sendFlashromGamesharkCommand_N64(uint16_t cmd) {
+  setAddress_N64(0x1EF0AAA8);
+  writeWord_N64(0xAAAA);
+  setAddress_N64(0x1EE05554);
+  writeWord_N64(0x5555);
+  setAddress_N64(0x1EF0AAA8);
+  writeWord_N64(cmd);
+}
+
 void flashGameshark_N64() {
   // Check flashrom ID's
   unlockGSAddressRanges();
@@ -4138,12 +4116,7 @@ void unlockGSAddressRanges() {
 void idGameshark_N64() {
   flashid = 0x0;
   //Send flashrom ID command
-  setAddress_N64(0x1EF0AAA8);
-  writeWord_N64(0xAAAA);
-  setAddress_N64(0x1EE05554);
-  writeWord_N64(0x5555);
-  setAddress_N64(0x1EF0AAA8);
-  writeWord_N64(0x9090);
+  sendFlashromGamesharkCommand_N64(0x9090);
 
   setAddress_N64(0x1EC00000);
   // Read 1 byte vendor ID
@@ -4173,21 +4146,11 @@ void idGameshark_N64() {
 void resetGameshark_N64() {
   if (flashid == 0x0808 || flashid == 0x3535 || flashid == 0x0707) {
     // Send reset command for SST 29LE010 / AMTEL AT29LV010A / SST 29EE010
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0xAAAA);
-    setAddress_N64(0x1EE05554);
-    writeWord_N64(0x5555);
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0xF0F0);
+    sendFlashromGamesharkCommand_N64(0xF0F0);
     delay(100);
   } else if (flashid == 0x0404) {
     // Send reset command for SST 28LF040
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0xAAAA);
-    setAddress_N64(0x1EE05554);
-    writeWord_N64(0x5555);
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0xFFFF);
+    sendFlashromGamesharkCommand_N64(0xFFFF);
     delay(300);
   }
 }
@@ -4226,18 +4189,8 @@ void eraseGameshark_N64() {
 
   // Send chip erase to SST 29LE010 / AMTEL AT29LV010A / SST 29EE010
   if (flashid == 0x0808 || flashid == 0x3535 || flashid == 0x0707) {
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0xAAAA);
-    setAddress_N64(0x1EE05554);
-    writeWord_N64(0x5555);
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0x8080);
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0xAAAA);
-    setAddress_N64(0x1EE05554);
-    writeWord_N64(0x5555);
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0x1010);
+    sendFlashromGamesharkCommand_N64(0x8080);
+    sendFlashromGamesharkCommand_N64(0x1010);
 
     delay(20);
   }
@@ -4261,12 +4214,7 @@ void eraseGameshark_N64() {
     delay(1000);
 
     //Erase flash
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0xAAAA);
-    setAddress_N64(0x1EE05554);
-    writeWord_N64(0x5555);
-    setAddress_N64(0x1EF0AAA8);
-    writeWord_N64(0x3030);
+    sendFlashromGamesharkCommand_N64(0x3030);
     setAddress_N64(0x1EF0AAA8);
     writeWord_N64(0x3030);
     delay(1000);
@@ -4309,12 +4257,7 @@ void writeGameshark_N64() {
       myFile.read(sdBuffer, 256);
 
       //Send page write command to both flashroms
-      setAddress_N64(0x1EF0AAA8);
-      writeWord_N64(0xAAAA);
-      setAddress_N64(0x1EE05554);
-      writeWord_N64(0x5555);
-      setAddress_N64(0x1EF0AAA8);
-      writeWord_N64(0xA0A0);
+      sendFlashromGamesharkCommand_N64(0xA0A0);
 
       // Write 1 page each, one flashrom gets the low byte, the other the high byte.
       for (unsigned long currByte = 0; currByte < 256; currByte += 2) {
@@ -4346,12 +4289,7 @@ void writeGameshark_N64() {
         for (unsigned long currByte = 0; currByte < 256; currByte += 2) {
 
           // Send byte program command
-          setAddress_N64(0x1EF0AAA8);
-          writeWord_N64(0xAAAA);
-          setAddress_N64(0x1EE05554);
-          writeWord_N64(0x5555);
-          setAddress_N64(0x1EF0AAA8);
-          writeWord_N64(0x1010);
+          sendFlashromGamesharkCommand_N64(0x1010);
 
           // Set address
           setAddress_N64(romBase + 0xEC00000 + currSector + currSdBuffer + currByte);
@@ -4429,6 +4367,12 @@ unsigned long verifyGameshark_N64() {
 /******************************************
    XPLORER 64 Functions
  *****************************************/
+void sendFlashromXplorerCommand_N64(uint16_t cmd) {
+  oddXPaddrWrite(0x1040AAAA, 0xAAAA);
+  evenXPaddrWrite(0x10405555, 0x5555);
+  oddXPaddrWrite(0x1040AAAA, cmd);
+}
+
 void flashXplorer_N64() {
   // Check flashrom ID's
   idXplorer_N64();
@@ -4521,9 +4465,7 @@ void flashXplorer_N64() {
 void idXplorer_N64() {
   flashid = 0x0;
   //Send flashrom ID command
-  oddXPaddrWrite(0x1040AAAA, 0xAAAA);
-  evenXPaddrWrite(0x10405555, 0x5555);
-  oddXPaddrWrite(0x1040AAAA, 0x9090);
+  sendFlashromXplorerCommand_N64(0x9090);
 
   setAddress_N64(0x10760000);
   readWord_N64();
@@ -4548,9 +4490,7 @@ void idXplorer_N64() {
 
 void resetXplorer_N64() {
     // Send reset command for SST 29LE010
-    oddXPaddrWrite(0x1040AAAA, 0xAAAA);
-    evenXPaddrWrite(0x10405555, 0x5555);
-    oddXPaddrWrite(0x1040AAAA, 0xF0F0);
+    sendFlashromXplorerCommand_N64(0xF0F0);
     delay(100);
 }
  
@@ -4640,12 +4580,8 @@ void eraseXplorer_N64() {
   display_Update();
 
   // Send chip erase to SST 29LE010
-  oddXPaddrWrite(0x1040AAAA, 0xAAAA);
-  evenXPaddrWrite(0x10405555, 0x5555);
-  oddXPaddrWrite(0x1040AAAA, 0x8080);
-  oddXPaddrWrite(0x1040AAAA, 0xAAAA);
-  evenXPaddrWrite(0x10405555, 0x5555);
-  oddXPaddrWrite(0x1040AAAA,0x1010);
+  sendFlashromXplorerCommand_N64(0x8080);
+  sendFlashromXplorerCommand_N64(0x1010);
 
   delay(20);
 }
@@ -4691,9 +4627,7 @@ void writeXplorer_N64() {
     }
 
     //Send page write command to both flashroms
-    oddXPaddrWrite(0x1040AAAA, 0xAAAA);
-    evenXPaddrWrite(0x10405555, 0x5555);
-    oddXPaddrWrite(0x1040AAAA, 0xA0A0);
+    sendFlashromXplorerCommand_N64(0xA0A0);
 
     // Write 1 page each, one flashrom gets the low byte, the other the high byte.
     for (unsigned long currByte = 0; currByte < 256; currByte += 2) {

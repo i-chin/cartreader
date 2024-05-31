@@ -106,12 +106,7 @@
 /******************************************
    Libraries
  *****************************************/
-/*
-#include <iSdio.h>
-#include <utility/Sd2CardExt.h>
-const int chipSelectPin = 4;
-Sd2CardExt card;
-*/
+
 // SD Card
 SdFs sd;
 FsFile myFile;
@@ -722,7 +717,11 @@ void createFolder(const char* system, const char* subfolder, const char* gameNam
 
   // create a new folder for the rom file
   EEPROM_readAnything(FOLDER_NUM, foldern);
-  sprintf(folder, "%s/%s/%s/%d", system, subfolder, gameName, foldern);
+  if(subfolder == NULL) {
+    sprintf_P(folder, PSTR("%s/%s/%d"), system, gameName, foldern);
+  } else {
+    sprintf_P(folder, PSTR("%s/%s/%s/%d"), system, subfolder, gameName, foldern);
+  }
   sd.mkdir(folder, true);
   sd.chdir(folder);
 }
