@@ -1272,7 +1272,7 @@ void readROM_SNES() {
   createFolderAndOpenFile("SNES", "ROM", romName, "sfc");
 
   //Dump Derby Stallion '96 (Japan) and Sound Novel Tsukuru (Japan) - Actual Size is 24Mb
-  if ((romType == LO) && (numBanks == 96) && (strcmp_P(PSTR("CC86"), checksumStr) == 0) || strcmp_P(PSTR("A77B"), checksumStr) == 0) {
+  if ((romType == LO) && (numBanks == 96) && ((strcmp_P(PSTR("CC86"), checksumStr) == 0) || (strcmp_P(PSTR("A77B"), checksumStr) == 0))) {
     // Read Banks 0x00-0x3F for the 1st/2nd MB
     for (int currBank = 0; currBank < 64; currBank++) {
       // Dump the bytes to SD 512B at a time
