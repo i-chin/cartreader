@@ -61,6 +61,7 @@
 
 #include "OSCR.h"
 
+//******************************************
 // EEPROM Index Define
 //******************************************
 #define CONFIG_REV_NUM 0        // Config Rev #

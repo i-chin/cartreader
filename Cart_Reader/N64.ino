@@ -44,9 +44,6 @@ String CRC1 = "";
 String CRC2 = "";
 #endif
 
-static const char N64_EEP_FILENAME_FMT[] PROGMEM = "%s.eep";
-static const char N64_SAVE_DIRNAME_FMT[] PROGMEM = "N64/SAVE/%s/%d";
-
 /******************************************
   Menu
 *****************************************/
@@ -2277,22 +2274,7 @@ boolean readEepromPageList(byte* output, byte page_number, byte page_count) {
 void readEeprom() {
   if ((saveType == 5) || (saveType == 6)) {
     // Get name, add extension and convert to char array for sd lib
-    snprintf_P(fileName, sizeof(fileName), N64_EEP_FILENAME_FMT, romName);
-
-    // create a new folder for the save file
-    EEPROM_readAnything(FOLDER_NUM, foldern);
-    snprintf_P(folder, sizeof(folder), N64_SAVE_DIRNAME_FMT, romName, foldern);
-    sd.mkdir(folder, true);
-    sd.chdir(folder);
-
-    // write new folder number back to eeprom
-    foldern = foldern + 1;
-    EEPROM_writeAnything(FOLDER_NUM, foldern);
-
-    // Open file on sd card
-    if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-      print_FatalError(create_file_STR);
-    }
+    createFolderAndOpenFile("N64", "SAVE", romName, "eep");
 
     for (int i = 0; i < eepPages; i += sizeof(sdBuffer) / 8) {
       // If any missing bytes error out
@@ -2417,16 +2399,7 @@ void readSram(unsigned long sramSize, byte flashramType) {
   } else {
     print_FatalError(F("Savetype Error"));
   }
-  createFolder("N64", "SAVE", romName, suffix);
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
-
-  // Open file on sd card
-  if (!myFile.open(fileName, O_RDWR | O_CREAT)) {
-    print_FatalError(sd_error_STR);
-  }
+  createFolderAndOpenFile("N64", "SAVE", romName, suffix);
 
   for (unsigned long currByte = sramBase; currByte < (sramBase + (sramSize / flashramType)); currByte += offset) {
     // Set the address
