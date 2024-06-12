@@ -975,6 +975,7 @@ byte readByte_Flash(unsigned long myAddress) {
   return tempByte;
 }
 
+#ifdef ENABLE_FLASH16
 void writeWord_Flash(unsigned long myAddress, word myData) {
   PORTF = myAddress & 0xFF;
   PORTK = (myAddress >> 8) & 0xFF;
@@ -1043,6 +1044,7 @@ word readWord_Flash(unsigned long myAddress) {
 
   return tempWord;
 }
+#endif
 
 /******************************************
   write helper functions
