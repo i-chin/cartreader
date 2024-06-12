@@ -32,6 +32,9 @@ constexpr char PROGMEM ATTENTION_3_3V[] = "ATTENTION 3.3V";
 // 8bit Flash menu items
 static const char* const menuOptionsFLASH8[] PROGMEM = { flashMenuItemBlankcheck, flashMenuItemErase, flashMenuItemRead, flashMenuItemWrite, flashMenuItemID, flashMenuItemPrint, FSTRING_RESET };
 
+// Misc flash strings
+const char PROGMEM ATTENTION_3_3V[] = "ATTENTION 3.3V";
+
 #ifdef ENABLE_FLASH16
 // Flash start menu
 static const char flashMenuItem1[] PROGMEM = "8bit Flash adapter";
@@ -974,7 +977,6 @@ byte readByte_Flash(unsigned long myAddress) {
   return tempByte;
 }
 
-#ifdef ENABLE_FLASH16
 void writeWord_Flash(unsigned long myAddress, word myData) {
   PORTF = myAddress & 0xFF;
   PORTK = (myAddress >> 8) & 0xFF;
@@ -1043,7 +1045,6 @@ word readWord_Flash(unsigned long myAddress) {
 
   return tempWord;
 }
-#endif
 
 /******************************************
   write helper functions
