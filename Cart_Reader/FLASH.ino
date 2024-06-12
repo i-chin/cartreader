@@ -27,8 +27,6 @@ static const char flashMenuItemWrite[] PROGMEM = "Write";
 static const char flashMenuItemErase[] PROGMEM = "Erase";
 static const char flashMenuItemPrint[] PROGMEM = "Print";
 
-constexpr char PROGMEM ATTENTION_3_3V[] = "ATTENTION 3.3V";
-
 // 8bit Flash menu items
 static const char* const menuOptionsFLASH8[] PROGMEM = { flashMenuItemBlankcheck, flashMenuItemErase, flashMenuItemRead, flashMenuItemWrite, flashMenuItemID, flashMenuItemPrint, FSTRING_RESET };
 
