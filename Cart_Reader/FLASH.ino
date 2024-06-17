@@ -147,7 +147,7 @@ void flashromMenu8() {
     case 3:
       filePath[0] = '\0';
       sd.chdir("/");
-      fileBrowser(F("Select file"));
+      fileBrowser(FS(FSTRING_SELECT_FILE));
       display_Clear();
       time = millis();
 
@@ -271,7 +271,7 @@ void flashromMenu16() {
     case 3:
       filePath[0] = '\0';
       sd.chdir("/");
-      fileBrowser(F("Select file"));
+      fileBrowser(FS(FSTRING_SELECT_FILE));
       display_Clear();
       time = millis();
       if (flashid == 0xC2F3) {
@@ -351,7 +351,7 @@ void epromMenu() {
     case 2:
       filePath[0] = '\0';
       sd.chdir("/");
-      fileBrowser(F("Select file"));
+      fileBrowser(FS(FSTRING_SELECT_FILE));
       display_Clear();
       time = millis();
       write_Eprom();
@@ -2475,7 +2475,7 @@ void identifyCFI_Flash() {
 void writeCFI_Flash() {
   filePath[0] = '\0';
   sd.chdir("/");
-  fileBrowser(F("Select file"));
+  fileBrowser(FS(FSTRING_SELECT_FILE));
   display_Clear();
 
   if (openFlashFile()) {

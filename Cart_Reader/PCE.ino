@@ -769,15 +769,7 @@ void read_rom_PCE(void) {
   // Get name, add extension and convert to char array for sd lib
   createFolder("PCE", "ROM", "PCEROM", "pce");
 
-  print_Msg(F("Saving ROM to "));
-  print_Msg(folder);
-  print_Msg(F("/"));
-  println_Msg(fileName);
-  display_Update();
-
-  // write new folder number back to eeprom
-  foldern = foldern + 1;
-  EEPROM_writeAnything(FOLDER_NUM, foldern);
+  printAndIncrementFolder();
 
   //open file on sd card
   if (!myFile.open(fileName, O_RDWR | O_CREAT)) {

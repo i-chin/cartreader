@@ -680,7 +680,7 @@ void writeSRAM_SMS() {
   if (false) {
     print_Error(F("DISABLED"));
   } else {
-    fileBrowser(F("Select file"));
+    fileBrowser(FS(FSTRING_SELECT_FILE));
 
     sd.chdir();
     sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
