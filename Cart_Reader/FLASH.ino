@@ -30,15 +30,23 @@ static const char flashMenuItemPrint[] PROGMEM = "Print";
 // 8bit Flash menu items
 static const char* const menuOptionsFLASH8[] PROGMEM = { flashMenuItemBlankcheck, flashMenuItemErase, flashMenuItemRead, flashMenuItemWrite, flashMenuItemID, flashMenuItemPrint, FSTRING_RESET };
 
+#ifndef ENABLE_FLASH16
+// Flash mode menu
+static const char modeMenuItem1[] PROGMEM = "CFI Mode";
+static const char modeMenuItem2[] PROGMEM = "Standard Mode";
+static const char* const menuOptionsMode[] PROGMEM = { modeMenuItem1, modeMenuItem2, FSTRING_RESET };
+#endif
+
 // Misc flash strings
 const char PROGMEM ATTENTION_3_3V[] = "ATTENTION 3.3V";
 
 #ifdef ENABLE_FLASH16
 // Flash start menu
-static const char flashMenuItem1[] PROGMEM = "8bit Flash adapter";
-static const char flashMenuItem2[] PROGMEM = "Eprom adapter";
-static const char flashMenuItem3[] PROGMEM = "16bit Flash adapter";
-static const char* const menuOptionsFlash[] PROGMEM = { flashMenuItem1, flashMenuItem2, flashMenuItem3, FSTRING_RESET };
+static const char flashMenuItem1[] PROGMEM = "CFI";
+static const char flashMenuItem2[] PROGMEM = "8bit Flash";
+static const char flashMenuItem3[] PROGMEM = "Eprom";
+static const char flashMenuItem4[] PROGMEM = "16bit Flash";
+static const char* const menuOptionsFlash[] PROGMEM = { flashMenuItem1, flashMenuItem2, flashMenuItem3, flashMenuItem4, FSTRING_RESET };
 
 // 16bit Flash menu items
 static const char* const menuOptionsFLASH16[] PROGMEM = { flashMenuItemBlankcheck, flashMenuItemErase, flashMenuItemRead, flashMenuItemWrite, flashMenuItemID, flashMenuItemPrint, FSTRING_RESET };
@@ -48,15 +56,26 @@ static const char epromMenuItem4[] PROGMEM = "Verify";
 static const char* const menuOptionsEprom[] PROGMEM = { flashMenuItemBlankcheck, flashMenuItemRead, flashMenuItemWrite, epromMenuItem4, flashMenuItemPrint, FSTRING_RESET };
 
 void flashMenu() {
-  // create menu with title and 3 options to choose from
+  // create menu with title and 5 options to choose from
   unsigned char flashSlot;
   // Copy menuOptions out of progmem
-  convertPgm(menuOptionsFlash, 4);
-  flashSlot = question_box(F("Select adapter PCB"), menuOptions, 4, 0);
+  convertPgm(menuOptionsFlash, 5);
+  flashSlot = question_box(F("Select Mode"), menuOptions, 5, 0);
 
   // wait for user choice to come back from the question box menu
   switch (flashSlot) {
     case 0:
+      setupCFI();
+      flashSize = 8388608;
+      writeCFI_Flash(0);
+      verifyFlash();
+      print_STR(press_button_STR, 0);
+      display_Update();
+      wait();
+      resetArduino();
+      break;
+
+    case 1:
       display_Clear();
       display_Update();
       mapping = 1;
@@ -66,14 +85,14 @@ void flashMenu() {
       mode = CORE_FLASH8;
       break;
 
-    case 1:
+    case 2:
       display_Clear();
       display_Update();
       setup_Eprom();
       mode = CORE_EPROM;
       break;
 
-    case 2:
+    case 3:
       display_Clear();
       display_Update();
       setup_Flash16();
@@ -82,7 +101,7 @@ void flashMenu() {
       mode = CORE_FLASH16;
       break;
 
-    case 3:
+    case 4:
       resetArduino();
       break;
 
@@ -95,10 +114,33 @@ void flashMenu() {
   display_Clear();
   display_Update();
   mapping = 1;
-  setup_Flash8();
-  id_Flash8();
-  wait();
-  mode = CORE_FLASH8;
+
+  // create menu with title and 3 options to choose from
+  unsigned char flashMode;
+  // Copy menuOptions out of progmem
+  convertPgm(menuOptionsMode, 3);
+  flashMode = question_box(F("Select Flash Mode"), menuOptions, 3, 0);
+
+  // wait for user choice to come back from the question box menu
+  switch (flashMode) {
+    case 0:
+      setupCFI();
+      flashSize = 8388608;
+      writeCFI_Flash(0);
+      verifyFlash();
+      print_STR(press_button_STR, 0);
+      display_Update();
+      wait();
+      resetArduino();
+      break;
+
+    case 1:
+      setup_Flash8();
+      id_Flash8();
+      wait();
+      mode = CORE_FLASH8;
+      break;
+  }
 }
 #endif
 
@@ -829,7 +871,7 @@ void writeByte_Flash(unsigned long myAddress, byte myData) {
     // A15-A22
     PORTL = (myAddress >> 15) & 0xFF;
   }
-  // for SNES ExLoRom repro
+  // for SNES ExLoRom repro with 2x 4MB
   else if (mapping == 2) {
     // A8-A14
     PORTK = (myAddress >> 8) & 0x7F;
@@ -856,6 +898,26 @@ void writeByte_Flash(unsigned long myAddress, byte myData) {
     }
     // Switch SNES BA6(PL6) to HIGH to disable SRAM
     PORTL |= (1 << 6);
+  }
+  // for SNES LoRom repro with 2x 2MB
+  else if (mapping == 4) {
+    // A8-A14
+    PORTK = (myAddress >> 8) & 0x7F;
+    // Set SNES A15(PK7) HIGH to disable SRAM
+    PORTK |= (1 << 7);
+    // A15-A22
+    PORTL = (myAddress >> 15) & 0xFF;
+    // Flip BA6(PL6) to address second rom chip
+    PORTL ^= (1 << PL6);
+  }
+  // for SNES HiRom repro with 2x 2MB
+  else if (mapping == 5) {
+    // A8-A15
+    PORTK = (myAddress >> 8) & 0xFF;
+    // A16-A23
+    PORTL = (myAddress >> 16) & 0xFF;
+    // Flip BA5(PL5) to address second rom chip
+    PORTL ^= (1 << PL5);
   }
 
   // Data
@@ -940,6 +1002,26 @@ byte readByte_Flash(unsigned long myAddress) {
     }
     // Switch SNES BA6(PL6) to HIGH to disable SRAM
     PORTL |= (1 << 6);
+  }
+  // for SNES LoRom repro with 2x 2MB
+  else if (mapping == 4) {
+    // A8-A14
+    PORTK = (myAddress >> 8) & 0x7F;
+    // Set SNES A15(PK7) HIGH to disable SRAM
+    PORTK |= (1 << 7);
+    // A15-A22
+    PORTL = (myAddress >> 15) & 0xFF;
+    // Flip BA6(PL6) to address second rom chip
+    PORTL ^= (1 << PL6);
+  }
+  // for SNES HiRom repro with 2x 2MB
+  else if (mapping == 5) {
+    // A8-A15
+    PORTK = (myAddress >> 8) & 0xFF;
+    // A16-A23
+    PORTL = (myAddress >> 16) & 0xFF;
+    // Flip BA5(PL5) to address second rom chip
+    PORTL ^= (1 << PL5);
   }
 
   // Arduino running at 16Mhz -> one nop = 62.5ns
@@ -1714,8 +1796,27 @@ void blankcheck_Flash() {
 }
 
 void verifyFlash() {
+  verifyFlash(0);
+}
+
+void verifyFlash(byte romChips) {
   if (openVerifyFlashFile()) {
     blank = 0;
+
+    if (romChips == 1) {
+      myFile.seekCur(0);
+      // Truncate file to size of 1st flash chip
+      if (fileSize > flashSize / 2) {
+        fileSize = flashSize / 2;
+      }
+    } else if (romChips == 2) {
+      if (fileSize > flashSize / 2) {
+        myFile.seekCur(flashSize / 2);
+        fileSize = fileSize - (flashSize / 2);
+      } else
+        fileSize = 0;
+    }
+
     for (unsigned long currByte = 0; currByte < fileSize; currByte += 512) {
       //fill sdBuffer
       myFile.read(sdBuffer, 512);
@@ -2370,7 +2471,7 @@ void print_Eprom(int numBytes) {
 #endif
 
 /******************************************
-CFI flashrom functions (copy&paste from GB.ino)
+CFI flashrom functions (modified from GB.ino)
 *****************************************/
 void sendCFICommand_Flash(byte cmd) {
   writeByteCompensated_Flash(0xAAA, 0xaa);
@@ -2456,8 +2557,10 @@ void identifyCFI_Flash() {
       flashSwitchLastBits = true;
     } else {
       println_Msg(F("CFI Query failed!"));
+      print_STR(press_button_STR, 0);
       display_Update();
       wait();
+      resetArduino();
       return;
     }
   }
@@ -2472,13 +2575,13 @@ void identifyCFI_Flash() {
 }
 
 // Write flashrom
-void writeCFI_Flash() {
-  filePath[0] = '\0';
-  sd.chdir("/");
-  fileBrowser(FS(FSTRING_SELECT_FILE));
-  display_Clear();
-
-  if (openFlashFile()) {
+void writeCFI_Flash(byte romChips) {
+  if (openFileOnSD()) {
+    // Print filepath
+    print_STR(flashing_file_STR, 0);
+    print_Msg(filePath);
+    println_Msg(F("..."));
+    display_Update();
 
     // Reset flash
     dataOut();
@@ -2513,7 +2616,30 @@ void writeCFI_Flash() {
       statusReg = readByte_Flash(0);
     }
 
-    println_Msg(F("Writing flash"));
+    print_Msg(F("Writing flash"));
+    // If we have two ROM chips only write half the ROM file here and skip to second half of file on second write
+    if (romChips == 0) {
+      println_Msg(F(""));
+    }
+
+    else if (romChips == 1) {
+      println_Msg(F(" 1/2"));
+      myFile.seekCur(0);
+      // Truncate file to size of 1st flash chip
+      if (fileSize > flashSize / 2) {
+        fileSize = flashSize / 2;
+      }
+    }
+
+    else if (romChips == 2) {
+      println_Msg(F(" 2/2"));
+      if (fileSize > flashSize / 2) {
+        myFile.seekCur(flashSize / 2);
+        fileSize = fileSize - (flashSize / 2);
+      } else {
+        fileSize = 0;
+      }
+    }
     display_Update();
 
     //Initialize progress bar
