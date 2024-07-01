@@ -14,7 +14,7 @@ unsigned long time;
 unsigned long blank;
 unsigned long sectorSize;
 uint16_t bufferSize;
-byte mapping = 1;
+byte mapping = 0;
 
 /******************************************
    Menu
@@ -56,6 +56,10 @@ static const char epromMenuItem4[] PROGMEM = "Verify";
 static const char* const menuOptionsEprom[] PROGMEM = { flashMenuItemBlankcheck, flashMenuItemRead, flashMenuItemWrite, epromMenuItem4, flashMenuItemPrint, FSTRING_RESET };
 
 void flashMenu() {
+  display_Clear();
+  display_Update();
+  mapping = 0;
+
   // create menu with title and 5 options to choose from
   unsigned char flashSlot;
   // Copy menuOptions out of progmem
@@ -76,9 +80,6 @@ void flashMenu() {
       break;
 
     case 1:
-      display_Clear();
-      display_Update();
-      mapping = 1;
       setup_Flash8();
       id_Flash8();
       wait();
@@ -86,15 +87,11 @@ void flashMenu() {
       break;
 
     case 2:
-      display_Clear();
-      display_Update();
       setup_Eprom();
       mode = CORE_EPROM;
       break;
 
     case 3:
-      display_Clear();
-      display_Update();
       setup_Flash16();
       id_Flash16();
       wait();
@@ -113,7 +110,7 @@ void flashMenu() {
 void flashMenu() {
   display_Clear();
   display_Update();
-  mapping = 1;
+  mapping = 0;
 
   // create menu with title and 3 options to choose from
   unsigned char flashMode;
@@ -855,15 +852,15 @@ void writeByte_Flash(unsigned long myAddress, byte myData) {
   // A0-A7
   PORTF = myAddress & 0xFF;
 
-  // standard for flash adapter and SNES HiRom
-  if (mapping == 1) {
+  // flash adapter (without SRAM save chip)
+  if (mapping == 0) {
     // A8-A15
     PORTK = (myAddress >> 8) & 0xFF;
     // A16-A23
     PORTL = (myAddress >> 16) & 0xFF;
   }
-  // for SNES LoRom
-  else if (mapping == 0) {
+  // SNES LoRom
+  else if (mapping == 1) {
     // A8-A14
     PORTK = (myAddress >> 8) & 0x7F;
     // Set SNES A15(PK7) HIGH to disable SRAM
@@ -871,8 +868,39 @@ void writeByte_Flash(unsigned long myAddress, byte myData) {
     // A15-A22
     PORTL = (myAddress >> 15) & 0xFF;
   }
-  // for SNES ExLoRom repro with 2x 4MB
+  // SNES HiRom
   else if (mapping == 2) {
+    // A8-A15
+    PORTK = (myAddress >> 8) & 0xFF;
+    // A16-A23
+    PORTL = (myAddress >> 16) & 0xFF;
+    // Switch SNES BA6(PL6) to HIGH to disable SRAM
+    PORTL |= (1 << 6);
+  }
+  // for SNES LoRom repro with 2x 2MB
+  else if (mapping == 11) {
+    // A8-A14
+    PORTK = (myAddress >> 8) & 0x7F;
+    // Set SNES A15(PK7) HIGH to disable SRAM
+    PORTK |= (1 << 7);
+    // A15-A22
+    PORTL = (myAddress >> 15) & 0xFF;
+    // Flip BA6(PL6) to address second rom chip
+    PORTL ^= (1 << 6);
+  }
+  // for SNES HiRom repro with 2x 2MB
+  else if (mapping == 22) {
+    // A8-A15
+    PORTK = (myAddress >> 8) & 0xFF;
+    // A16-A23
+    PORTL = (myAddress >> 16) & 0xFF;
+    // Flip BA5(PL5) to address second rom chip
+    PORTL ^= (1 << 5);
+    // Switch SNES BA6(PL6) to HIGH to disable SRAM
+    PORTL |= (1 << 6);
+  }
+  // for SNES ExLoRom repro with 2x 4MB
+  else if (mapping == 111) {
     // A8-A14
     PORTK = (myAddress >> 8) & 0x7F;
     // Set SNES A15(PK7) HIGH to disable SRAM
@@ -880,10 +908,10 @@ void writeByte_Flash(unsigned long myAddress, byte myData) {
     // A15-A22
     PORTL = (myAddress >> 15) & 0xFF;
     // Flip A22(PL7) to reverse P0 and P1 roms
-    PORTL ^= (1 << PL7);
+    PORTL ^= (1 << 7);
   }
   // for SNES ExHiRom repro
-  else if (mapping == 3) {
+  else if (mapping == 222) {
     // A8-A15
     PORTK = (myAddress >> 8) & 0xFF;
     // A16-A22
@@ -898,26 +926,6 @@ void writeByte_Flash(unsigned long myAddress, byte myData) {
     }
     // Switch SNES BA6(PL6) to HIGH to disable SRAM
     PORTL |= (1 << 6);
-  }
-  // for SNES LoRom repro with 2x 2MB
-  else if (mapping == 4) {
-    // A8-A14
-    PORTK = (myAddress >> 8) & 0x7F;
-    // Set SNES A15(PK7) HIGH to disable SRAM
-    PORTK |= (1 << 7);
-    // A15-A22
-    PORTL = (myAddress >> 15) & 0xFF;
-    // Flip BA6(PL6) to address second rom chip
-    PORTL ^= (1 << PL6);
-  }
-  // for SNES HiRom repro with 2x 2MB
-  else if (mapping == 5) {
-    // A8-A15
-    PORTK = (myAddress >> 8) & 0xFF;
-    // A16-A23
-    PORTL = (myAddress >> 16) & 0xFF;
-    // Flip BA5(PL5) to address second rom chip
-    PORTL ^= (1 << PL5);
   }
 
   // Data
@@ -959,15 +967,15 @@ byte readByte_Flash(unsigned long myAddress) {
   // A0-A7
   PORTF = myAddress & 0xFF;
 
-  // standard for flash adapter and SNES HiRom
-  if (mapping == 1) {
+  // flash adapter (without SRAM save chip)
+  if (mapping == 0) {
     // A8-A15
     PORTK = (myAddress >> 8) & 0xFF;
     // A16-A23
     PORTL = (myAddress >> 16) & 0xFF;
   }
-  // for SNES LoRom
-  else if (mapping == 0) {
+  // SNES LoRom
+  else if (mapping == 1) {
     // A8-A14
     PORTK = (myAddress >> 8) & 0x7F;
     // Set SNES A15(PK7) HIGH to disable SRAM
@@ -975,8 +983,39 @@ byte readByte_Flash(unsigned long myAddress) {
     // A15-A22
     PORTL = (myAddress >> 15) & 0xFF;
   }
-  // for SNES ExLoRom repro
+  // SNES HiRom
   else if (mapping == 2) {
+    // A8-A15
+    PORTK = (myAddress >> 8) & 0xFF;
+    // A16-A23
+    PORTL = (myAddress >> 16) & 0xFF;
+    // Switch SNES BA6(PL6) to HIGH to disable SRAM
+    PORTL |= (1 << 6);
+  }
+  // for SNES LoRom repro with 2x 2MB
+  else if (mapping == 11) {
+    // A8-A14
+    PORTK = (myAddress >> 8) & 0x7F;
+    // Set SNES A15(PK7) HIGH to disable SRAM
+    PORTK |= (1 << 7);
+    // A15-A22
+    PORTL = (myAddress >> 15) & 0xFF;
+    // Flip BA6(PL6) to address second rom chip
+    PORTL ^= (1 << 6);
+  }
+  // for SNES HiRom repro with 2x 2MB
+  else if (mapping == 22) {
+    // A8-A15
+    PORTK = (myAddress >> 8) & 0xFF;
+    // A16-A23
+    PORTL = (myAddress >> 16) & 0xFF;
+    // Flip BA5(PL5) to address second rom chip
+    PORTL ^= (1 << 5);
+    // Switch SNES BA6(PL6) to HIGH to disable SRAM
+    PORTL |= (1 << 6);
+  }
+  // for SNES ExLoRom repro
+  else if (mapping == 111) {
     // A8-A14
     PORTK = (myAddress >> 8) & 0x7F;
     // Set SNES A15(PK7) HIGH to disable SRAM
@@ -984,10 +1023,10 @@ byte readByte_Flash(unsigned long myAddress) {
     // A15-A22
     PORTL = (myAddress >> 15) & 0xFF;
     // Flip A22(PL7) to reverse P0 and P1 roms
-    PORTL ^= (1 << PL7);
+    PORTL ^= (1 << 7);
   }
   // for SNES ExHiRom repro
-  else if (mapping == 3) {
+  else if (mapping == 222) {
     // A8-A15
     PORTK = (myAddress >> 8) & 0xFF;
     // A16-A22
@@ -1002,26 +1041,6 @@ byte readByte_Flash(unsigned long myAddress) {
     }
     // Switch SNES BA6(PL6) to HIGH to disable SRAM
     PORTL |= (1 << 6);
-  }
-  // for SNES LoRom repro with 2x 2MB
-  else if (mapping == 4) {
-    // A8-A14
-    PORTK = (myAddress >> 8) & 0x7F;
-    // Set SNES A15(PK7) HIGH to disable SRAM
-    PORTK |= (1 << 7);
-    // A15-A22
-    PORTL = (myAddress >> 15) & 0xFF;
-    // Flip BA6(PL6) to address second rom chip
-    PORTL ^= (1 << PL6);
-  }
-  // for SNES HiRom repro with 2x 2MB
-  else if (mapping == 5) {
-    // A8-A15
-    PORTK = (myAddress >> 8) & 0xFF;
-    // A16-A23
-    PORTL = (myAddress >> 16) & 0xFF;
-    // Flip BA5(PL5) to address second rom chip
-    PORTL ^= (1 << PL5);
   }
 
   // Arduino running at 16Mhz -> one nop = 62.5ns
@@ -1250,6 +1269,12 @@ void writeFlash29F032() {
     // Retry writing, for when /RESET is not connected (floating)
     int dq5failcnt = 0;
     int noread = 0;
+
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = (uint32_t)fileSize;
+    draw_progressbar(0, totalProgressBar);
+
     // Fill sdBuffer
     for (unsigned long currByte = 0; currByte < fileSize; currByte += 512) {
       // if (currByte >= 0) {
@@ -1298,6 +1323,9 @@ void writeFlash29F032() {
       } else {
         noread = 0;
       }
+      // update progress bar
+      processedProgressBar += 512;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
     // Set data pins to input again
     dataIn8();
@@ -1368,6 +1396,11 @@ void writeFlash29F1610() {
     // Set data pins to output
     dataOut();
 
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = (uint32_t)fileSize;
+    draw_progressbar(0, totalProgressBar);
+
     for (unsigned long currByte = 0; currByte < fileSize; currByte += 128) {
       // Fill sdBuffer with 1 page at a time then write it repeat until all bytes are written
       myFile.read(sdBuffer, 128);
@@ -1387,6 +1420,9 @@ void writeFlash29F1610() {
       for (byte c = 0; c < 128; c++) {
         writeByte_Flash(currByte + c, sdBuffer[c]);
       }
+      // update progress bar
+      processedProgressBar += 128;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
 
     // Check if write is complete
@@ -1405,6 +1441,11 @@ void writeFlash29F1601() {
 
     // Set data pins to output
     dataOut();
+
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = (uint32_t)fileSize;
+    draw_progressbar(0, totalProgressBar);
 
     for (unsigned long currByte = 0; currByte < fileSize; currByte += 128) {
       // Fill sdBuffer with 1 page at a time then write it repeat until all bytes are written
@@ -1430,6 +1471,9 @@ void writeFlash29F1601() {
           writeByte_Flash(currByte + c, sdBuffer[c]);
         }
       }
+      // update progress bar
+      processedProgressBar += 128;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
 
     // Check if write is complete
@@ -1526,6 +1570,11 @@ void writeFlash29LV640() {
     // Set data pins to output
     dataOut();
 
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = (uint32_t)fileSize;
+    draw_progressbar(0, totalProgressBar);
+
     for (unsigned long currByte = 0; currByte < fileSize; currByte += 512) {
       // Fill sdBuffer
       myFile.read(sdBuffer, 512);
@@ -1542,6 +1591,9 @@ void writeFlash29LV640() {
         // Check if write is complete
         busyCheck29LV640(currByte + c, sdBuffer[c]);
       }
+      // update progress bar
+      processedProgressBar += 512;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
     // Set data pins to input again
     dataIn8();
@@ -1557,6 +1609,11 @@ void writeFlash29GL(unsigned long sectorSize, byte bufferSize) {
   if (openFlashFile()) {
     // Set data pins to output
     dataOut();
+
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = (uint32_t)fileSize;
+    draw_progressbar(0, totalProgressBar);
 
     for (unsigned long currSector = 0; currSector < fileSize; currSector += sectorSize) {
       // Blink led
@@ -1594,6 +1651,9 @@ void writeFlash29GL(unsigned long sectorSize, byte bufferSize) {
           dataOut();
         }
       }
+      // update progress bar
+      processedProgressBar += sectorSize;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
     // Set data pins to input again
     dataIn8();
@@ -1610,6 +1670,11 @@ void writeFlash29F800() {
     // Set data pins to output
     dataOut();
 
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = (uint32_t)fileSize;
+    draw_progressbar(0, totalProgressBar);
+
     // Fill sdBuffer
     for (unsigned long currByte = 0; currByte < fileSize; currByte += 512) {
       myFile.read(sdBuffer, 512);
@@ -1624,6 +1689,9 @@ void writeFlash29F800() {
         writeByte_Flash(currByte + c, sdBuffer[c]);
         busyCheck29F032(currByte + c, sdBuffer[c]);
       }
+      // update progress bar
+      processedProgressBar += 512;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
 
     // Set data pins to input again
@@ -1697,6 +1765,11 @@ void writeFlashE28FXXXJ3A() {
   uint32_t block_addr;
   uint32_t block_addr_mask = ~(sectorSize - 1);
 
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = (uint32_t)fileSize;
+  draw_progressbar(0, totalProgressBar);
+
   // Fill sdBuffer
   for (uint32_t currByte = 0; currByte < fileSize; currByte += 512) {
     myFile.read(sdBuffer, 512);
@@ -1733,12 +1806,20 @@ void writeFlashE28FXXXJ3A() {
       while ((readByte_Flash(block_addr) & 0x80) == 0x00)
         ;
     }
+    // update progress bar
+    processedProgressBar += 512;
+    draw_progressbar(processedProgressBar, totalProgressBar);
   }
 
   dataIn8();
 }
 
 void writeFlashLH28F0XX() {
+
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = (uint32_t)fileSize;
+  draw_progressbar(0, totalProgressBar);
 
   // Fill sdBuffer
   for (uint32_t currByte = 0; currByte < fileSize; currByte += 512) {
@@ -1767,6 +1848,9 @@ void writeFlashLH28F0XX() {
       while ((readByte_Flash(currByte + c) & 0x80) == 0x00)
         ;
     }
+    // update progress bar
+    processedProgressBar += 512;
+    draw_progressbar(processedProgressBar, totalProgressBar);
   }
 
   dataIn8();
