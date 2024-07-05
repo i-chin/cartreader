@@ -4,8 +4,8 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             2024-06-30
-   Version:          13.4
+   Date:             2024-07-05
+   Version:          13.5
 
    SD lib: https://github.com/greiman/SdFat
    LCD lib: https://github.com/olikraus/u8g2
@@ -34,14 +34,16 @@
    RobinTheHood - GameboyAdvanceRomDumper
    Gens-gs - Megadrive checksum
    fceux - iNes header
+   PsyK0p4T - Sufami Turbo module
+   LuigiBlood - SNES Game Processor RAM Cassette module
 
    And a special Thank You to all coders and contributors on Github and the Arduino forum:
    jiyunomegami, splash5, Kreeblah, ramapcsx2, PsyK0p4T, Dakkaron, majorpbx, Pickle, sdhizumi,
-   Uzlopak, sakman55, Tombo89, scrap-a, borti4938, vogelfreiheit, CaitSith2, Modman,
-   philenotfound, karimhadjsalem, nsx0r, ducky92, niklasweber, Lesserkuma, BacteriaMage,
-   vpelletier, Ancyker, mattiacci, RWeick, joshman196, partlyhuman, ButThouMust, hxlnt,
-   breyell, qufb
-
+   Uzlopak, sakman55, Tombo89, scrap-a, borti4938, vogelfreiheit, CaitSith2, Modman, Chomemel, 
+   philenotfound, karimhadjsalem, nsx0r, ducky92, niklasweber, Lesserkuma, BacteriaMage, qufb,
+   vpelletier, Ancyker, mattiacci, RWeick, ButThouMust, partlyhuman, fakkuyuu, hxlnt, breyell,
+   smesgr9000, joshman196, PsychoFox11, plaidpants, LuigiBlood, InvalidInterrupt
+   
    And to nocash for figuring out the secrets of the SFC Nintendo Power cartridge.
 
    This program is free software: you can redistribute it and/or modify
@@ -2832,7 +2834,7 @@ unsigned char questionBox_Display(const __FlashStringHelper* question, char answ
     // Attract Mode
     if (millis() - idleTime > 300000) {
       if ((millis() - idleTime) % 4000 == 0) {
-        if (currentColor < 7) {
+        if (currentColor < 5) {
           currentColor++;
           if (currentColor == 1) {
             currentColor = 2;  // skip red as that signifies an error to the user
@@ -2840,8 +2842,8 @@ unsigned char questionBox_Display(const __FlashStringHelper* question, char answ
         } else {
           currentColor = 0;
         }
+        rgbLed(currentColor);
       }
-      rgbLed(currentColor);
     }
 
     /* Check Button/rotary encoder
