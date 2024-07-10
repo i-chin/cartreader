@@ -169,7 +169,7 @@ void setup_LJ()
   PORTJ |= (1 << 0); // TIME(PJ0)
 
   checkStatus_LJ();
-  strcpy(romName, "LJ");
+  strcpy_P(romName, PSTR("LJ"));
 
   mode = CORE_LJ;
 }
@@ -298,16 +298,16 @@ setrom:
   Serial.print(LJ[newljsize]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newljsize);
+  EEPROM_writeAnything(LJ_SIZE, newljsize);
   ljsize = newljsize;
 }
 
 void checkStatus_LJ()
 {
-  EEPROM_readAnything(8, ljsize);
+  EEPROM_readAnything(LJ_SIZE, ljsize);
   if (ljsize > ljhi) {
     ljsize = 1; // default 2M
-    EEPROM_writeAnything(8, ljsize);
+    EEPROM_writeAnything(LJ_SIZE, ljsize);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -347,7 +347,7 @@ void setCart_LJ()
     // seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineSingleDigit, &gameSize)) {
-      EEPROM_writeAnything(8, gameSize);
+      EEPROM_writeAnything(LJ_SIZE, gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

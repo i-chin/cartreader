@@ -141,7 +141,7 @@ void setup_BALLY()
   PORTJ |= (1 << 0); // TIME(PJ0)
 
   checkStatus_BALLY();
-  strcpy(romName, "BALLY");
+  strcpy_P(romName, PSTR("BALLY"));
 
   mode = CORE_BALLY;
 }
@@ -263,16 +263,16 @@ setrom:
   Serial.print(BALLY[newballysize]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newballysize);
+  EEPROM_writeAnything(BALLY_ASTROCADE_SIZE, newballysize);
   ballysize = newballysize;
 }
 
 void checkStatus_BALLY()
 {
-  EEPROM_readAnything(8, ballysize);
+  EEPROM_readAnything(BALLY_ASTROCADE_SIZE, ballysize);
   if (ballysize > ballyhi) {
     ballysize = 0; // default 2K
-    EEPROM_writeAnything(8, ballysize);
+    EEPROM_writeAnything(BALLY_ASTROCADE_SIZE, ballysize);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -312,7 +312,7 @@ void setCart_BALLY()
     // seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineSingleDigit, &gameSize)) {
-      EEPROM_writeAnything(8, gameSize);
+      EEPROM_writeAnything(BALLY_ASTROCADE_SIZE, gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

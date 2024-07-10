@@ -559,16 +559,16 @@ setrom:
   Serial.print(LEAPSTER[newleapsize]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newleapsize);
+  EEPROM_writeAnything(LEAP_SIZE, newleapsize);
   leapsize = newleapsize;
 }
 
 void checkStatus_LEAP()
 {
-  EEPROM_readAnything(8, leapsize);
+  EEPROM_readAnything(LEAP_SIZE, leapsize);
   if (leapsize > leaphi) {
     leapsize = 1; // default 8M
-    EEPROM_writeAnything(8, leapsize);
+    EEPROM_writeAnything(LEAP_SIZE, leapsize);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -633,7 +633,7 @@ void idFLASH_LEAP() // "BFD7" = 39VF040
   dataOut_LEAP();
   resetFLASH_LEAP();
   dataIn_LEAP();
-  sprintf(flashid_str, "%02X%02X", ID1, ID2);
+  sprintf_P(flashid_str, PSTR("%02X%02X"), ID1, ID2);
   display_Clear();
   print_Msg(F("Flash ID: "));
   println_Msg(flashid_str);
@@ -713,7 +713,7 @@ void writeFLASH_LEAP()
 {
   fileBrowser(F("Select FLASH File"));
   sd.chdir();
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
   display_Clear();
   println_Msg(F("Writing File: "));
@@ -990,7 +990,7 @@ void writeEEP_LEAP()
 {
   fileBrowser(F("Select EEPROM File"));
   sd.chdir();
-  sprintf(filePath, "%s/%s", filePath, fileName);
+  sprintf_P(filePath, PSTR("%s/%s"), filePath, fileName);
 
   display_Clear();
   println_Msg(F("Writing File: "));
@@ -1043,7 +1043,7 @@ void setCart_LEAP()
     // seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineSingleDigit, &gameSize)) {
-      EEPROM_writeAnything(8, gameSize);
+      EEPROM_writeAnything(LEAP_SIZE, gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

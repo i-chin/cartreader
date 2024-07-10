@@ -125,7 +125,7 @@ void setup_VSMILE()
   DDRA = 0x00;  // D8-D15 [INPUT]
 
   checkStatus_VSMILE();
-  strcpy(romName, "VSMILE");
+  strcpy_P(romName, PSTR("VSMILE"));
 
   mode = CORE_VSMILE;
 }
@@ -307,16 +307,16 @@ setrom:
   Serial.print(VSMILE[newvsmilesize]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newvsmilesize);
+  EEPROM_writeAnything(VSMILE_SIZE, newvsmilesize);
   vsmilesize = newvsmilesize;
 }
 
 void checkStatus_VSMILE()
 {
-  EEPROM_readAnything(8, vsmilesize);
+  EEPROM_readAnything(VSMILE_SIZE, vsmilesize);
   if (vsmilesize > vsmilehi) {
     vsmilesize = 2; // default 8M
-    EEPROM_writeAnything(8, vsmilesize);
+    EEPROM_writeAnything(VSMILE_SIZE, vsmilesize);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -356,7 +356,7 @@ void setCart_VSMILE()
     // seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineSingleDigit, &gameSize)) {
-      EEPROM_writeAnything(8, gameSize);
+      EEPROM_writeAnything(VSMILE_SIZE, gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

@@ -340,16 +340,16 @@ setrom:
   Serial.print(TRS80[newtrs80size]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newtrs80size);
+  EEPROM_writeAnything(TRS-80_SIZE, newtrs80size);
   trs80size = newtrs80size;
 }
 
 void checkStatus_TRS80()
 {
-  EEPROM_readAnything(8, trs80size);
+  EEPROM_readAnything(TRS-80_SIZE, trs80size);
   if (trs80size > trs80hi) {
     trs80size = 5; // default 32K
-    EEPROM_writeAnything(8, trs80size);
+    EEPROM_writeAnything(TRS-80_SIZE, trs80size);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -389,7 +389,7 @@ void setCart_TRS80()
     // seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineSingleDigit, &gameSize)) {
-      EEPROM_writeAnything(8, gameSize);
+      EEPROM_writeAnything(TRS-80_SIZE, gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

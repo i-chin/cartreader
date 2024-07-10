@@ -411,7 +411,7 @@ void writeData_TI99(uint16_t addr, uint8_t data)
 void CreateROMFolder_TI99()
 {
   sd.chdir();
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "TI99/ROM/%d", foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -420,7 +420,7 @@ void CreateROMFolder_TI99()
 void FinishROMFolder_TI99()
 {
   foldern += 1;
-  EEPROM_writeAnything(0, foldern); // FOLDER #
+  EEPROM_writeAnything(FOLDER_NUM, foldern); // FOLDER #
   sd.chdir();
 }
 
@@ -593,21 +593,21 @@ void readCROM_TI99()
 
 void checkStatus_TI99()
 {
-  EEPROM_readAnything(7, ti99mapper);
-  EEPROM_readAnything(8, gromsize);
-  EEPROM_readAnything(9, cromsize);
-  EEPROM_readAnything(13, grommap);
+  EEPROM_readAnything(TI99_MAPPER, ti99mapper);
+  EEPROM_readAnything(TI99_GROM_SIZE, gromsize);
+  EEPROM_readAnything(TI99_CROM_SIZE, cromsize);
+  EEPROM_readAnything(TI99_GROM_MAPPERE, grommap);
   if (ti99mapper > (ti99mapcount - 1)) {
     ti99mapper = 0;
-    EEPROM_writeAnything(7, ti99mapper);
+    EEPROM_writeAnything(TI99_MAPPER, ti99mapper);
   }
   if (gromsize > gromhi) {
     gromsize = 1; // default 6K
-    EEPROM_writeAnything(8, gromsize);
+    EEPROM_writeAnything(TI99_GROM_SIZE, gromsize);
   }
   if (cromsize > cromhi) {
     cromsize = 2; // default 8K
-    EEPROM_writeAnything(9, cromsize);
+    EEPROM_writeAnything(TI99_CROM_SIZE, cromsize);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -716,7 +716,7 @@ setmapper:
     goto setmapper;
   }
 #endif
-  EEPROM_writeAnything(7, newti99mapper);
+  EEPROM_writeAnything(TI99_MAPPER, newti99mapper);
   ti99mapper = newti99mapper;
 }
 
@@ -780,14 +780,14 @@ void setGROMSize_TI99()
   print_Msg(GROM[newgromsize]);
   println_Msg(F("KB"));
   display_Update();
-  EEPROM_writeAnything(8, newgromsize);
+  EEPROM_writeAnything(TI99_GROM_SIZE, newgromsize);
   gromsize = newgromsize;
   // Default GROM Map to sequential GROMs
   newgrommap = 0;
   for (int x = 0; x < gromsize; x++){
     newgrommap = (newgrommap | (1 << (x + 3)));
   }
-  EEPROM_writeAnything(13, newgrommap);
+  EEPROM_writeAnything(TI99_GROM_MAPPERE, newgrommap);
   grommap = newgrommap;
   print_Msg(F("GROM MAP  "));
   display_Update();
@@ -820,14 +820,14 @@ setgrom:
   Serial.print(F("GROM SIZE "));
   Serial.print(GROM[newgromsize]);
   Serial.println(F("KB"));
-  EEPROM_writeAnything(8, newgromsize);
+  EEPROM_writeAnything(TI99_GROM_SIZE, newgromsize);
   gromsize = newgromsize;
   // Default GROM Map to sequential GROMs
   newgrommap = 0;
   for (int x = 0; x < gromsize; x++){
     newgrommap = (newgrommap | (1 << (x + 3)));
   }
-  EEPROM_writeAnything(13, newgrommap);
+  EEPROM_writeAnything(TI99_GROM_MAPPERE, newgrommap);
   grommap = newgrommap;
   Serial.print(F("GROM MAP  "));
   readGROMMap();
@@ -864,7 +864,7 @@ void readGROMMap()
   Serial.println(FS(FSTRING_EMPTY));
 #endif
   if (gromsize != newgromsize) {
-    EEPROM_writeAnything(8, newgromsize);
+    EEPROM_writeAnything(TI99_GROM_SIZE, newgromsize);
     gromsize = newgromsize;
   }
 }
@@ -904,7 +904,7 @@ void setGROMMap_TI99()
     b = 0;
     delay(1000);
   }
-  EEPROM_writeAnything(13, newgrommap);
+  EEPROM_writeAnything(TI99_GROM_MAPPERE, newgrommap);
   grommap = newgrommap;
   display.setCursor(0, 56); // Display selection at bottom
   print_Msg(F("GROM MAP: "));
@@ -924,7 +924,7 @@ void setGROMMap_TI99()
     if (mapGROM.toInt() == 1)
       newgrommap = (newgrommap | (1 << i));
   }
-  EEPROM_writeAnything(13, newgrommap);
+  EEPROM_writeAnything(TI99_GROM_MAPPERE, newgrommap);
   grommap = newgrommap;
   Serial.print(F("GROM MAP: "));
   readGROMMap();
@@ -989,7 +989,7 @@ setrom:
   Serial.print(CROM[newcromsize]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newcromsize);
+  EEPROM_writeAnything(TI99_CROM_SIZE, newcromsize);
   cromsize = newcromsize;
 }
 
@@ -1059,10 +1059,10 @@ void setCart_TI99()
     seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLine_TI99, &entry, &printDataLine_TI99)) {
-      EEPROM_writeAnything(7, entry.gameMapper);
-      EEPROM_writeAnything(8, entry.gromSize);
-      EEPROM_writeAnything(9, entry.romSize);
-      EEPROM_writeAnything(13, entry.gromMap);
+      EEPROM_writeAnything(TI99_MAPPER, entry.gameMapper);
+      EEPROM_writeAnything(TI99_GROM_SIZE, entry.gromSize);
+      EEPROM_writeAnything(TI99_CROM_SIZE, entry.romSize);
+      EEPROM_writeAnything(TI99_GROM_MAPPERE, entry.gromMap);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

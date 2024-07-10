@@ -269,16 +269,16 @@ setrom:
   Serial.print(PYUUTA[newpyuutasize]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newpyuutasize);
+  EEPROM_writeAnything(PYUUTA_SIZE, newpyuutasize);
   pyuutasize = newpyuutasize;
 }
 
 void checkStatus_PYUUTA()
 {
-  EEPROM_readAnything(8, pyuutasize);
+  EEPROM_readAnything(PYUUTA_SIZE, pyuutasize);
   if (pyuutasize > pyuutahi) {
     pyuutasize = 0; // default 8K
-    EEPROM_writeAnything(8, pyuutasize);
+    EEPROM_writeAnything(PYUUTA_SIZE, pyuutasize);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -318,7 +318,7 @@ void setCart_PYUUTA()
     // seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineSingleDigit, &gameSize)) {
-      EEPROM_writeAnything(8, gameSize);
+      EEPROM_writeAnything(PYUUTA_SIZE, gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

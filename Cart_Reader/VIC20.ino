@@ -178,7 +178,7 @@ void setup_VIC20()
   PORTJ |= (1 << 0); // TIME(PJ0)
 
   checkStatus_VIC20();
-  strcpy(romName, "VIC20");
+  strcpy_P(romName, PSTR("VIC20"));
 
   mode = CORE_VIC20;
 }
@@ -220,7 +220,7 @@ void readSegment_VIC20(uint32_t startaddr, uint32_t endaddr)
 void CreateROMFolder_VIC20()
 {
   sd.chdir();
-  EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(FOLDER_NUM, foldern);
   sprintf(folder, "VIC20/ROM/%d", foldern);
   sd.mkdir(folder, true);
   sd.chdir(folder);
@@ -229,7 +229,7 @@ void CreateROMFolder_VIC20()
 void FinishROMFolder_VIC20()
 {
   foldern += 1;
-  EEPROM_writeAnything(0, foldern); // FOLDER #
+  EEPROM_writeAnything(FOLDER_NUM, foldern); // FOLDER #
   sd.chdir();
 }
 
@@ -405,21 +405,21 @@ setrom:
   Serial.print(VIC20SIZE[newvic20size] & 0x0F);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newvic20size);
+  EEPROM_writeAnything(VIC20_SIZE, newvic20size);
   vic20size = newvic20size;
 }
 
 void checkStatus_VIC20()
 {
-  EEPROM_readAnything(7, vic20map);
-  EEPROM_readAnything(8, vic20size);
+  EEPROM_readAnything(VIC20_MAPPER, vic20map);
+  EEPROM_readAnything(VIC20_SIZE, vic20size);
   if (vic20map > 8) {
     vic20map = 7; // default 0xA000
-    EEPROM_writeAnything(7, vic20map);
+    EEPROM_writeAnything(VIC20_MAPPER, vic20map);
   }
   if (vic20size > vic20hi) {
     vic20size = 2; // default 8K
-    EEPROM_writeAnything(8, vic20size);
+    EEPROM_writeAnything(VIC20_SIZE, vic20size);
   }
  
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -543,7 +543,7 @@ void setROMMap_VIC20()
   Serial.println(newmap);
   newvic20map = newmap.toInt();
 #endif
-  EEPROM_writeAnything(7, newvic20map);
+  EEPROM_writeAnything(VIC20_MAPPER, newvic20map);
   vic20map = newvic20map;
 }
 
@@ -566,8 +566,8 @@ void setCart_VIC20()
     seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineMapperSize, &entry)) {
-      EEPROM_writeAnything(7, entry.gameMapper);
-      EEPROM_writeAnything(8, entry.gameSize);
+      EEPROM_writeAnything(VIC20_MAPPER, entry.gameMapper);
+      EEPROM_writeAnything(VIC20_SIZE, entry.gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

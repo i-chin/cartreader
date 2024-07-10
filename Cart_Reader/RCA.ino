@@ -269,16 +269,16 @@ setrom:
   Serial.print(RCA[newrcasize]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newrcasize);
+  EEPROM_writeAnything(RCA_SIZE, newrcasize);
   rcasize = newrcasize;
 }
 
 void checkStatus_RCA()
 {
-  EEPROM_readAnything(8, rcasize);
+  EEPROM_readAnything(RCA_SIZE, rcasize);
   if (rcasize > rcahi)  {
     rcasize = 1; // default 1024B
-    EEPROM_writeAnything(8, rcasize);
+    EEPROM_writeAnything(RCA_SIZE, rcasize);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -318,7 +318,7 @@ void setCart_RCA()
     // seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineSingleDigit, &gameSize)) {
-      EEPROM_writeAnything(8, gameSize);
+      EEPROM_writeAnything(RCA_SIZE, gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

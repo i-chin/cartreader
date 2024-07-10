@@ -165,7 +165,7 @@ void setup_ATARI8()
   PORTJ |= (1 << 0); // TIME(PJ0)
 
   checkStatus_ATARI8();
-  strcpy(romName, "ATARI");
+  strcpy_P(romName, PSTR("ATARI"));
 
   mode = CORE_ATARI8;
 }
@@ -306,7 +306,7 @@ void readROM_ATARI8()
   createFolderAndOpenFile("ATARI8", "ROM", romName, "bin");
 
   // Store Slot Setting to EEPROM
-  EEPROM_writeAnything(7, atari8right); // 0 = LEFT, 1 = RIGHT
+  EEPROM_writeAnything(ATARI8SLOT, atari8right); // 0 = LEFT, 1 = RIGHT
 
   // ATARI 8-bit A12-A0 = 1 0000 0000 0000
   // S4 [100]/S5 [101] are the upper 3 bits for 16-bit address
@@ -322,7 +322,7 @@ void readROM_ATARI8()
     DISABLE_S5;
     // Correct Size to 8K
     atari8size = 0; // 8K
-    EEPROM_writeAnything(8, atari8size); 
+    EEPROM_writeAnything(ATARI8SIZE, atari8size); 
   }
   else if (atari8size == 3) { // Bounty Bob Strikes Back 40K
     ENABLE_S4;
@@ -430,21 +430,21 @@ setrom:
   Serial.print(ATARI8[newatari8size]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newatari8size);
+  EEPROM_writeAnything(ATARI8SIZE, newatari8size);
   atari8size = newatari8size;
 }
 
 void checkStatus_ATARI8()
 {
-  EEPROM_readAnything(7, atari8right);
+  EEPROM_readAnything(ATARI8SLOT, atari8right);
   if (atari8right != 1) {
     atari8right = 0; // default LEFT Slot
-    EEPROM_writeAnything(7, atari8right);
+    EEPROM_writeAnything(ATARI8SLOT, atari8right);
   }
-  EEPROM_readAnything(8, atari8size);
+  EEPROM_readAnything(ATARI8SIZE, atari8size);
   if (atari8size > atari8hi) {
     atari8size = 1; // default 16K
-    EEPROM_writeAnything(8, atari8size);
+    EEPROM_writeAnything(ATARI8SIZE, atari8size);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -489,8 +489,8 @@ void setCart_ATARI8()
     seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineMapperSize, &entry)) {
-      EEPROM_writeAnything(7, entry.gameMapper);
-      EEPROM_writeAnything(8, entry.gameSize);
+      EEPROM_writeAnything(ATARI8SLOT, entry.gameMapper);
+      EEPROM_writeAnything(ATARI8SIZE, entry.gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

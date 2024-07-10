@@ -67,40 +67,57 @@
 //******************************************
 // EEPROM Index Define
 //******************************************
-#define CONFIG_REV_NUM 0        // Config Rev #
-#define FOLDER_NUM 1            // FOLDER #
-#define PCE_ADAPTER 3           // PCE ADAPTER_SWAPT
-#define CLK_GEN_OFFSET 4        // CLK GEN ONNSET
-#define LED_SETTING 8           // LED (RESET TO ON)
-#define CART_MODE  10           // CART_MODE(SNES/GB READER SETTINGS)
-#define READ_RETRY 11           // READ_RETRY(SNES/GB READER SETTINGS)
-#define READ_STATUS 12          // READ_STATUS(SNES/GB READER SETTINGS)
-#define READ_UNKNOWN_CRC 13     // READ_UNKNOWN_CRC(SNES/GB READER SETTINGS)
-#define NES_MAPPER 20           // NES MAPPER
-#define NES_PRG_SIZE 21         // NES PRG SIZE
-#define NES_CHR_SIZE 22         // NES CHR SIZE
-#define NES_RAM_SIZE 23         // NES RAM SIZE
-#define COL_ROM_SIZE 30         // COLECOVISION ROM SIZE
-#define INTV_MAPPER 40          // INTELLIVISION MAPPER
-#define INTV_ROM_SIZE 41        // INTELLIVISION ROM SIZE
-#define WSV_ROM_SIZE 50         // WATARA SUPERVISION ROM SIZE
-#define MSX_MAPPER 60           // MSX MAPPER
-#define MSX_ROM_SIZE 61         // MSX ROM SIZE
-#define MSX_RAM_SIZE 62         // MSX RAM SIZE
-#define ARC_ROM_SIZE 70         // ARC ROM SIZE
-#define ATARI2600_MAPPER 80     // ATARI2600 MAPPER
-#define ATARI2600_ROM_SIZE 81   // ATARI2600 ROM SIZE
-#define FAIRCHILD_ROM_SIZE 90   // FAIRCHILD ROM SIZE
+#define CONFIG_REV_NUM 0         // Config Rev #
+#define FOLDER_NUM 1             // FOLDER #
+#define PCE_ADAPTER 3            // PCE ADAPTER_SWAPT
+#define CLK_GEN_OFFSET 4         // CLK GEN ONNSET
+#define LED_SETTING 8            // LED (RESET TO ON)
+#define CART_MODE  10            // CART_MODE(SNES/GB READER SETTINGS)
+#define READ_RETRY 11            // READ_RETRY(SNES/GB READER SETTINGS)
+#define READ_STATUS 12           // READ_STATUS(SNES/GB READER SETTINGS)
+#define READ_UNKNOWN_CRC 13      // READ_UNKNOWN_CRC(SNES/GB READER SETTINGS)
+#define NES_MAPPER 20            // NES MAPPER
+#define NES_PRG_SIZE 21          // NES PRG SIZE
+#define NES_CHR_SIZE 22          // NES CHR SIZE
+#define NES_RAM_SIZE 23          // NES RAM SIZE
+#define COL_ROM_SIZE 30          // COLECOVISION ROM SIZE
+#define INTV_MAPPER 40           // INTELLIVISION MAPPER
+#define INTV_ROM_SIZE 41         // INTELLIVISION ROM SIZE
+#define WSV_ROM_SIZE 50          // WATARA SUPERVISION ROM SIZE
+#define MSX_MAPPER 60            // MSX MAPPER
+#define MSX_ROM_SIZE 61          // MSX ROM SIZE
+#define MSX_RAM_SIZE 62          // MSX RAM SIZE
+#define ARC_ROM_SIZE 70          // ARC ROM SIZE
+#define ATARI2600_MAPPER 80      // ATARI2600 MAPPER
+#define ATARI2600_ROM_SIZE 81    // ATARI2600 ROM SIZE
+#define FAIRCHILD_ROM_SIZE 90    // FAIRCHILD ROM SIZE
 #define ODY2_MAPPER 100          // ODY2 MAPPER
 #define ODY2_ROM_SIZE 101        // ODY2 ROM SIZE
-#define C64_MAPPER 111          // C64_MAPPER
-#define C64_ROM_SIZE 112        // C64 ROM SIZE
-#define C64_PORT 113            // C64 PORT
-#define ATARI5200_MAPPER 121    // ATARI5200_MAPPER
-#define ATARI5200_ROM_SIZE 122  // ATARI5200 ROM SIZE
-#define ATARI7800_MAPPER 131    // ATARI7800_MAPPER
-#define ATARI7800_ROM_SIZE 132  // ATARI7800 ROM SIZE
-#define VECTREX_ROM_SIZE 141    // VECTRREX ROM SIZE
+#define C64_MAPPER 111           // C64_MAPPER
+#define C64_ROM_SIZE 112         // C64 ROM SIZE
+#define C64_PORT 113             // C64 PORT
+#define ATARI5200_MAPPER 121     // ATARI5200_MAPPER
+#define ATARI5200_ROM_SIZE 122   // ATARI5200 ROM SIZE
+#define ATARI7800_MAPPER 131     // ATARI7800_MAPPER
+#define ATARI7800_ROM_SIZE 132   // ATARI7800 ROM SIZE
+#define VECTREX_ROM_SIZE 141     // VECTRREX ROM SIZE
+#define ATARI8SLOT 151           // ATARI8 SLOT LEFT RIGHT
+#define ATARI8SIZE 152           // ATARI8 SIZE
+#define BALLY_ASTROCADE_SIZE 153 // BALLY ASTROCADE SIZE
+#define LEAP_SIZE 154            // LEAP SIZE
+#define LJ_SIZE 155              // LJ SIZE
+#define LJ_PRO_SIZE 156          // LJ PRO SIZE
+#define PV1000_SIZE 157          // PV1000 SIZE
+#define PYUUTA_SIZE 158          // PYUUTA SIZE
+#define RCA_SIZE 159             // RCA SIZE
+#define TI99_MAPPER 160          // TI99 MAPPER
+#define TI99_GROM_SIZE 161       // TI99 GROM SIZE
+#define TI99_CROM_SIZE 162       // TI99 CROM SIZE
+#define TI99_GROM_MAPPERE 163    // TI99 GROM MAPPER
+#define TRS-80_SIZE 164          // TRS-80 SIZE
+#define VIC20_MAPPER 165         // VIC20 MAPPER
+#define VIC20_SIZE 166           // VIC20 SIZE
+#define VSMILE_SIZE 167          // VSMILE SIZE
 
 //******************************************
 // Config Revision
@@ -3524,6 +3541,23 @@ void resetEEPROM() {
   EEPROM_writeAnything(ATARI7800_MAPPER, (byte)0);        // ATARI7800 MAPPER
   EEPROM_writeAnything(ATARI7800_ROM_SIZE, (byte)0);      // ATARI7800 ROM SIZE
   EEPROM_writeAnything(VECTREX_ROM_SIZE, (byte)0);        // VECTRREX ROM SIZE
+  EEPROM_writeAnything(ATARI8SLOT, (byte)0);              // ATARI8 SLOT LEFT RIGHT
+  EEPROM_writeAnything(ATARI8SIZE, (byte)0);              // ATARI8 SIZE
+  EEPROM_writeAnything(BALLY_ASTROCADE_SIZE, (byte)0);    // BALLY ASTROCADE SIZE
+  EEPROM_writeAnything(LEAP_SIZE, (byte)0);               // LEAP SIZE
+  EEPROM_writeAnything(LJ_SIZE, (byte)0);                 // LJ SIZE
+  EEPROM_writeAnything(LJ_PRO_SIZE, (byte)0);             // LJ PRO SIZE
+  EEPROM_writeAnything(PV1000_SIZE, (byte)0);             // PV1000 SIZE
+  EEPROM_writeAnything(PYUUTA_SIZE, (byte)0);             // PYUUTA SIZE
+  EEPROM_writeAnything(RCA_SIZE, (byte)0);                // RCA SIZE
+  EEPROM_writeAnything(TI99_MAPPER, (byte)0);             // TI99 MAPPER
+  EEPROM_writeAnything(TI99_GROM_SIZE, (byte)0);          // TI99 GROM SIZE
+  EEPROM_writeAnything(TI99_CROM_SIZE, (byte)0);          // TI99 CROM SIZE
+  EEPROM_writeAnything(TI99_GROM_MAPPERE, (byte)0);       // TI99 GROM MAPPER
+  EEPROM_writeAnything(TRS-80_SIZE, (byte)0);             // TRS-80 SIZE
+  EEPROM_writeAnything(VIC20_MAPPER, (byte)0);            // VIC20 MAPPER
+  EEPROM_writeAnything(VIC20_SIZE, (byte)0);              // VIC20 SIZE
+  EEPROM_writeAnything(VSMILE_SIZE, (byte)0);             // VSMILE SIZE
 
   delay(1000);
 }

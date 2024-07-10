@@ -266,16 +266,16 @@ setrom:
   Serial.print(PV1000[newpv1000size]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newpv1000size);
+  EEPROM_writeAnything(PV1000_SIZE, newpv1000size);
   pv1000size = newpv1000size;
 }
 
 void checkStatus_PV1000()
 {
-  EEPROM_readAnything(8, pv1000size);
+  EEPROM_readAnything(PV1000_SIZE, pv1000size);
   if (pv1000size > pv1000hi) {
     pv1000size = 0; // default 8K
-    EEPROM_writeAnything(8, pv1000size);
+    EEPROM_writeAnything(PV1000_SIZE, pv1000size);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -315,7 +315,7 @@ void setCart_PV1000()
     // seek_first_letter_in_database(myFile, myLetter);
 
     if(checkCartSelection(myFile, &readDataLineSingleDigit, &gameSize)) {
-      EEPROM_writeAnything(8, gameSize);
+      EEPROM_writeAnything(PV1000_SIZE, gameSize);
     }
   } else {
     print_FatalError(FS(FSTRING_DATABASE_FILE_NOT_FOUND));

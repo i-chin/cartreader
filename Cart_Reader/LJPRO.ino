@@ -345,19 +345,19 @@ void readID_U1() // Parallel Mode
   byte id2 = PINF; // 0x15 [MX25L1605]/0x16 [MX25L3205]
   CS1_HIGH; // U1 HIGH
   // Flash ID
-  sprintf(mnfID, "%02X", id0);
-  sprintf(deviceID, "%02X%02X", id1, id2);
+  sprintf_P(mnfID, PSTR("%02X"), id0);
+  sprintf_P(deviceID, PSTR("%02X%02X"), id1, id2);
 //  println_Msg(mnfID);
 //  println_Msg(deviceID);
 //  display_Update();
-  if(strcmp(deviceID, "2015") == 0) { // MX25L1605
+  if(strcmp_P(deviceID, PSTR("2015")) == 0) { // MX25L1605
     ljproflash1found = 1;
     ljproflash1size = 2;
     display_Clear();
     println_Msg(F("U1 MX25L1605 FOUND"));
     display_Update();
   }
-  else if (strcmp(deviceID, "2016") == 0) { // MX25L3205
+  else if (strcmp_P(deviceID, PSTR("2016")) == 0) { // MX25L3205
     ljproflash1found = 1;
     ljproflash1size = 4;
     display_Clear();
@@ -379,18 +379,18 @@ void readID_U2() // Parallel Mode
   pulseClock_LJPRO(1);
   CS2_HIGH; // U2 HIGH
   // Flash ID
-  sprintf(mnfID, "%02X", id0);
-  sprintf(deviceID, "%02X%02X", id1, id2);
+  sprintf_P(mnfID, PSTR("%02X"), id0);
+  sprintf_P(deviceID, PSTR("%02X%02X"), id1, id2);
 //  println_Msg(mnfID);
 //  println_Msg(deviceID);
 //  display_Update();
-  if(strcmp(deviceID, "2015") == 0) { // MX25L1605
+  if(strcmp_P(deviceID, PSTR("2015")) == 0) { // MX25L1605
     ljproflash2found = 1;
     ljproflash2size = 2;
     println_Msg(F("U2 MX25L1605 FOUND"));
     display_Update();
   }
-  else if (strcmp(deviceID, "2016") == 0) { // MX25L3205
+  else if (strcmp_P(deviceID, PSTR("2016")) == 0) { // MX25L3205
     ljproflash2found = 1;
     ljproflash2size = 4;
     println_Msg(F("U2 MX25L3205 FOUND"));
@@ -522,16 +522,16 @@ setrom:
   Serial.print(LJPRO[newljprosize]);
   Serial.println(F("KB"));
 #endif
-  EEPROM_writeAnything(8, newljprosize);
+  EEPROM_writeAnything(LJ_PRO_SIZE, newljprosize);
   ljprosize = newljprosize;
 }
 
 void checkStatus_LJPRO()
 {
-  EEPROM_readAnything(8, ljprosize);
+  EEPROM_readAnything(LJ_PRO_SIZE, ljprosize);
   if (ljprosize > ljprohi) {
     ljprosize = 0; // default 2M
-    EEPROM_writeAnything(8, ljprosize);
+    EEPROM_writeAnything(LJ_PRO_SIZE, ljprosize);
   }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
