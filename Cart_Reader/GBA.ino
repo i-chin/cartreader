@@ -1940,6 +1940,10 @@ void resetIntel_GBA(unsigned long partitionSize) {
   }
 }
 
+void resetF0088H0_GBA() {
+  writeWord_GBA(0, 0xFF);
+}
+
 void resetMX29GL128E_GBA() {
   writeWord_GAB(0, 0xF0);
 }
@@ -1977,6 +1981,10 @@ void idFlashrom_GBA() {
   // Intel Strataflash
   if (flashid == 0x8802 || (flashid == 0x8816)) {
     cartSize = 0x2000000;
+  }
+  // F0088H0
+  else if (flashid == 0x8812) {
+    cartSize = 0x10000000;
   } else {
     // Send swapped MX29GL128E/MSP55LV128 ID command to flashrom
     writeWord_GAB(0xAAA, 0xAA);
@@ -2014,17 +2022,20 @@ void idFlashrom_GBA() {
 }
 
 boolean blankcheckFlashrom_GBA() {
-  for (unsigned long currSector = 0; currSector < fileSize; currSector += 0x20000) {
-    // Blink led
-    blinkLED();
+  boolean blank = 1;
 
-    for (unsigned long currByte = 0; currByte < 0x20000; currByte += 2) {
-      if (readWord_GBA(currSector + currByte) != 0xFFFF) {
-        return 0;
-      }
+  for (unsigned long currByte = 0; currByte < fileSize; currByte += 2) {
+    // Check if all bytes are 0xFFFF
+    if (readWord_GBA(currByte) != 0xFFFF) {
+      currByte = fileSize;
+      blank = 0;
     }
   }
-  return 1;
+  if (blank) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 void eraseIntel4000_GBA() {
@@ -2195,6 +2206,26 @@ void eraseIntel4400_GBA() {
     }*/
 }
 
+void eraseF0088H0_GBA() {
+  for (unsigned long currBlock = 0; currBlock < fileSize; currBlock += 0x40000) {
+    // Unlock Block
+    writeWord_GBA(currBlock, 0x60);
+    writeWord_GBA(currBlock, 0xD0);
+
+    // Erase Command
+    writeWord_GBA(currBlock, 0x20);
+    writeWord_GBA(currBlock, 0xD0);
+
+    // Read the status register
+    word statusReg = readWord_GBA(currBlock);
+    while ((statusReg | 0xFF7F) != 0xFFFF) {
+      statusReg = readWord_GBA(currBlock);
+    }
+    // Blink led
+    blinkLED();
+  }
+}
+
 void sectorEraseMSP55LV128_GBA() {
   unsigned long lastSector = 0xFFFFFF;
 
@@ -2284,6 +2315,73 @@ void writeIntel4000_GBA() {
         while ((statusReg | 0xFF7F) != 0xFFFF) {
           statusReg = readWord_GBA(currBlock + currSdBuffer + currWriteBuffer + 62);
         }
+      }
+    }
+  }
+}
+
+void writeF0088H0_GBA() {
+  byte writeBuffer[1024];
+
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = fileSize;
+  draw_progressbar(0, totalProgressBar);
+
+  unsigned long lastBlock = 0x2000000;
+  if (fileSize < lastBlock)
+    lastBlock = fileSize;
+
+  // 32MB max GBA bank size
+  for (unsigned long currBank = 0; currBank < fileSize; currBank += 0x2000000) {
+
+    // 4MB minimum repro block size
+    for (unsigned long currBlock = 0; currBlock < lastBlock; currBlock += 0x400000) {
+
+      // 256KB flashrom sector size
+      for (unsigned long currSector = 0; currSector < 0x400000; currSector += 0x40000) {
+        // Unlock Sector
+        //writeWord_GBA(currBlock + currSector, 0x60);
+        //writeWord_GBA(currBlock + currSector, 0xD0);
+
+        // Blink led
+        blinkLED();
+
+        // 1024B writeBuffer
+        for (unsigned long currWriteBuffer = 0; currWriteBuffer < 0x40000; currWriteBuffer += 1024) {
+          // Fill writeBuffer from SD card
+          myFile.read(writeBuffer, 1024);
+
+          // Buffered program command
+          writeWord_GBA(currBlock + currSector + currWriteBuffer, 0xEA);
+
+          // Check Status register
+          word statusReg = readWord_GBA(currBlock + currSector + currWriteBuffer);
+          while ((statusReg | 0xFF7F) != 0xFFFF) {
+            statusReg = readWord_GBA(currBlock + currSector + currWriteBuffer);
+          }
+
+          // Write word count (minus 1)
+          writeWord_GBA(currBlock + currSector + currWriteBuffer, 0x1FF);
+
+          // Send writeBuffer to flashrom
+          for (word currByte = 0; currByte < 1024; currByte += 2) {
+            // Join two bytes into one word
+            word currWord = ((writeBuffer[currByte + 1] & 0xFF) << 8) | (writeBuffer[currByte] & 0xFF);
+            writeWord_GBA(currBlock + currSector + currWriteBuffer + currByte, currWord);
+          }
+
+          // Write buffer to flash
+          writeWord_GBA(currBlock + currSector + currWriteBuffer + 1022, 0xD0);
+
+          // Read the status register at last written address
+          statusReg = readWord_GBA(currBlock + currSector + currWriteBuffer + 1022);
+          while ((statusReg | 0xFF7F) != 0xFFFF) {
+            statusReg = readWord_GBA(currBlock + currSector + currWriteBuffer + 1022);
+          }
+        }
+        processedProgressBar += 0x40000;
+        draw_progressbar(processedProgressBar, totalProgressBar);
       }
     }
   }
@@ -2415,7 +2513,7 @@ void flashRepro_GBA() {
   // Check flashrom ID's
   idFlashrom_GBA();
 
-  if ((flashid == 0x8802) || (flashid == 0x8816) || (flashid == 0x227E)) {
+  if ((flashid == 0x8802) || (flashid == 0x8816) || (flashid == 0x227E) || (flashid == 0x8812)) {
     print_Msg(F("ID: "));
     print_Msg(flashid_str);
     print_Msg(F(" Size: "));
@@ -2445,6 +2543,10 @@ void flashRepro_GBA() {
     // Intel 4400L0ZDQ0
     else if (flashid == 0x8816) {
       println_Msg(F("Intel 4400L0ZDQ0"));
+    }
+    // F0088H0
+    else if (flashid == 0x8812) {
+      println_Msg(F("F0088H0"));
     }
     println_Msg("");
     println_Msg(F("This will erase your"));
@@ -2486,6 +2588,20 @@ void flashRepro_GBA() {
         display_Update();
         eraseIntel4400_GBA();
         resetIntel_GBA(0x200000);
+      } else if (flashid == 0x8812) {
+        println_Msg(F("Erasing..."));
+        display_Update();
+        // Set flash bank
+        writeByte_GBA(0x2, 0x0);
+        // Offset within bank
+        writeByte_GBA(0x3, 0x0);
+        // Size
+        writeByte_GBA(0x4, 0x20);
+        delay(500);
+        setROM_GBA();
+        eraseF0088H0_GBA();
+        // Reset or blankcheck will fail
+        resetF0088H0_GBA();
       } else if (flashid == 0x227E) {
         //if (sectorCheckMX29GL128E_GBA()) {
         //print_FatalError(F("Sector Protected"));
@@ -2503,65 +2619,64 @@ void flashRepro_GBA() {
         }
         //}
       }
-      /* Skip blankcheck to save time
-        print_Msg(F("Blankcheck..."));
-        display_Update();
-        if (blankcheckFlashrom_GBA()) {
-        println_Msg(FS(FSTRING_OK));
-      */
 
-      //Write flashrom
-      print_Msg(F("Writing "));
-      println_Msg(filePath);
+      print_Msg(F("Blankcheck..."));
       display_Update();
-      if ((flashid == 0x8802) || (flashid == 0x8816)) {
-        writeIntel4000_GBA();
-      } else if (flashid == 0x227E) {
-        if ((romType == 0xC2) || (romType == 0x89) || (romType == 0x20)) {
-          //MX29GL128E (0xC2)
-          //PC28F256M29 (0x89)
-          writeMX29GL128E_GBA();
-        } else if ((romType == 0x1) || (romType == 0x4)) {
-          //MSP55LV128(N)
-          writeMSP55LV128_GBA();
+      if (blankcheckFlashrom_GBA()) {
+        println_Msg(FS(FSTRING_OK));
+        //Write flashrom
+        print_Msg(F("Writing "));
+        println_Msg(filePath);
+        display_Update();
+
+        if ((flashid == 0x8802) || (flashid == 0x8816)) {
+          writeIntel4000_GBA();
+        } else if (flashid == 0x8812) {
+          writeF0088H0_GBA();
+        } else if (flashid == 0x227E) {
+          if ((romType == 0xC2) || (romType == 0x89) || (romType == 0x20)) {
+            //MX29GL128E (0xC2)
+            //PC28F256M29 (0x89)
+            writeMX29GL128E_GBA();
+          } else if ((romType == 0x1) || (romType == 0x4)) {
+            //MSP55LV128(N)
+            writeMSP55LV128_GBA();
+          }
         }
-      }
 
-      // Close the file:
-      myFile.close();
+        // Close the file:
+        myFile.close();
 
-      // Verify
-      print_STR(verifying_STR, 0);
-      display_Update();
-      if (flashid == 0x8802) {
-        // Don't know the correct size so just take some guesses
-        resetIntel_GBA(0x8000);
-        delay(1000);
-        resetIntel_GBA(0x100000);
-        delay(1000);
-        resetIntel_GBA(0x200000);
-        delay(1000);
-      } else if (flashid == 0x8816) {
-        resetIntel_GBA(0x200000);
-        delay(1000);
-      }
-
-      else if (flashid == 0x227E) {
-        resetMX29GL128E_GBA();
-        delay(1000);
-      }
-      if (verifyFlashrom_GBA() == 1) {
-        println_Msg(FS(FSTRING_OK));
+        // Verify
+        print_STR(verifying_STR, 0);
         display_Update();
+        if (flashid == 0x8802) {
+          // Don't know the correct size so just take some guesses
+          resetIntel_GBA(0x8000);
+          delay(1000);
+          resetIntel_GBA(0x100000);
+          delay(1000);
+          resetIntel_GBA(0x200000);
+          delay(1000);
+        } else if (flashid == 0x8816) {
+          resetIntel_GBA(0x200000);
+          delay(1000);
+        } else if (flashid == 0x8812) {
+          resetF0088H0_GBA();
+          delay(1000);
+        } else if (flashid == 0x227E) {
+          resetMX29GL128E_GBA();
+          delay(1000);
+        }
+        if (verifyFlashrom_GBA() == 1) {
+          println_Msg(FS(FSTRING_OK));
+          display_Update();
+        } else {
+          print_FatalError(F("ERROR"));
+        }
       } else {
-        print_FatalError(F("ERROR"));
-      }
-      /* Skipped blankcheck
-        }
-        else {
         print_FatalError(F("failed"));
-        }
-      */
+      }
     } else {
       print_FatalError(open_file_STR);
     }
