@@ -114,7 +114,7 @@
 #define TI99_GROM_SIZE 161       // TI99 GROM SIZE
 #define TI99_CROM_SIZE 162       // TI99 CROM SIZE
 #define TI99_GROM_MAPPERE 163    // TI99 GROM MAPPER
-#define TRS-80_SIZE 164          // TRS-80 SIZE
+#define TRS80_SIZE 164           // TRS-80 SIZE
 #define VIC20_MAPPER 165         // VIC20 MAPPER
 #define VIC20_SIZE 166           // VIC20 SIZE
 #define VSMILE_SIZE 167          // VSMILE SIZE
@@ -3554,7 +3554,7 @@ void resetEEPROM() {
   EEPROM_writeAnything(TI99_GROM_SIZE, (byte)0);          // TI99 GROM SIZE
   EEPROM_writeAnything(TI99_CROM_SIZE, (byte)0);          // TI99 CROM SIZE
   EEPROM_writeAnything(TI99_GROM_MAPPERE, (byte)0);       // TI99 GROM MAPPER
-  EEPROM_writeAnything(TRS-80_SIZE, (byte)0);             // TRS-80 SIZE
+  EEPROM_writeAnything(TRS80_SIZE, (byte)0);              // TRS-80 SIZE
   EEPROM_writeAnything(VIC20_MAPPER, (byte)0);            // VIC20 MAPPER
   EEPROM_writeAnything(VIC20_SIZE, (byte)0);              // VIC20 SIZE
   EEPROM_writeAnything(VSMILE_SIZE, (byte)0);             // VSMILE SIZE
