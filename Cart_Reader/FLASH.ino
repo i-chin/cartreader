@@ -161,7 +161,12 @@ void flashromMenu8() {
 
     case 1:
       display_Clear();
-      println_Msg(F("Erasing Flashrom"));
+      println_Msg(F("Warning: This will erase"));
+      println_Msg(F("your flashrom/repro"));
+      print_STR(press_button_STR, 1);
+      display_Update();
+      wait();
+      println_Msg(FS(FSTRING_EMPTY));
       println_Msg(F("Please wait..."));
       display_Update();
       time = millis();
@@ -1529,7 +1534,15 @@ void eraseFlash29F1610() {
   // Set data pins to input again
   dataIn8();
 
-  busyCheck29F1610();
+  // Read the status register
+  byte statusReg = readByte_Flash(0);
+
+  while ((statusReg & 0x80) != 0x80) {
+    statusReg = readByte_Flash(0);
+    // Blink led
+    blinkLED();
+    delay(100);
+  }
 }
 
 // Delay between write operations based on status register
@@ -1860,16 +1873,33 @@ void writeFlashLH28F0XX() {
   Common flashrom functions
 *****************************************/
 void blankcheck_Flash() {
-  println_Msg(F("Please wait..."));
-  display_Update();
+
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = flashSize;
+  draw_progressbar(0, totalProgressBar);
 
   blank = 1;
-  for (unsigned long currByte = 0; currByte < flashSize; currByte++) {
-    // Check if all bytes are 0xFF
-    if (readByte_Flash(currByte) != 0xFF) {
-      currByte = flashSize;
-      blank = 0;
+  for (unsigned long currBuffer = 0; currBuffer < flashSize; currBuffer += 512) {
+    // Fill buffer
+    for (int c = 0; c < 512; c++) {
+      // Read byte
+      sdBuffer[c] = readByte_Flash(currBuffer + c);
     }
+    // Check if all bytes are 0xFF
+    for (uint32_t currByte = 0; currByte < 512; currByte++) {
+      if (sdBuffer[currByte] != 0xFF) {
+        currByte = 512;
+        currBuffer = flashSize;
+        blank = 0;
+      }
+    }
+    // Update progress bar
+    processedProgressBar += 512;
+    draw_progressbar(processedProgressBar, totalProgressBar);
+    // Blink led
+    if (currBuffer % 25600 == 0)
+      blinkLED();
   }
   if (blank) {
     println_Msg(F("Flashrom is empty"));
@@ -1901,6 +1931,11 @@ void verifyFlash(byte romChips) {
         fileSize = 0;
     }
 
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = fileSize;
+    draw_progressbar(0, totalProgressBar);
+
     for (unsigned long currByte = 0; currByte < fileSize; currByte += 512) {
       //fill sdBuffer
       myFile.read(sdBuffer, 512);
@@ -1909,6 +1944,12 @@ void verifyFlash(byte romChips) {
           blank++;
         }
       }
+      // Update progress bar
+      processedProgressBar += 512;
+      draw_progressbar(processedProgressBar, totalProgressBar);
+      // Blink led
+      if (currByte % 25600 == 0)
+        blinkLED();
     }
     if (blank == 0) {
       println_Msg(F("Flashrom verified OK"));
@@ -1930,11 +1971,22 @@ void readFlash() {
 
   createFolderAndOpenFile("FLASH", NULL, "FL", "bin");
 
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = flashSize;
+  draw_progressbar(0, totalProgressBar);
+
   for (unsigned long currByte = 0; currByte < flashSize; currByte += 512) {
     for (int c = 0; c < 512; c++) {
       sdBuffer[c] = readByte_Flash(currByte + c);
     }
     myFile.write(sdBuffer, 512);
+    // Update progress bar
+    processedProgressBar += 512;
+    draw_progressbar(processedProgressBar, totalProgressBar);
+    // Blink led
+    if (currByte % 25600 == 0)
+      blinkLED();
   }
 
   // Close the file:
