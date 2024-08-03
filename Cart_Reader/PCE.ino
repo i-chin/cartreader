@@ -97,11 +97,7 @@ void pcsMenu(void) {
       //Hucard
       display_Clear();
       display_Update();
-      if (adapterSwap == 1) {
-        pce_internal_mode = HUCARD;
-      } else {
-        pce_internal_mode = HUCARD_NOSWAP;
-      }
+      pce_internal_mode = (adapterSwap == 1) ? HUCARD: HUCARD_NOSWAP;
       setup_cart_PCE();
       mode = CORE_PCE;
       break;
@@ -110,11 +106,7 @@ void pcsMenu(void) {
       //Turbografx
       display_Clear();
       display_Update();
-      if (adapterSwap == 1) {
-        pce_internal_mode = TURBOCHIP;
-      } else {
-        pce_internal_mode = TURBOCHIP_NOSWAP;
-      }
+      pce_internal_mode = (adapterSwap == 1) ? TURBOCHIP: TURBOCHIP_NOSWAP;
       setup_cart_PCE();
       mode = CORE_PCE;
       break;
@@ -778,6 +770,7 @@ void read_rom_PCE(void) {
 
   //clear the screen
   display_Clear();
+  
   rom_size = detect_rom_size_PCE();
   if (pce_force_rom_size > 0) {
     rom_size = pce_force_rom_size;
@@ -789,8 +782,8 @@ void read_rom_PCE(void) {
   println_Msg(F("KB"));
 
   // Get name, add extension and convert to char array for sd lib
+  sd.chdir("/");
   createFolder("PCE", "ROM", "PCEROM", "pce");
-
   printAndIncrementFolder();
 
   //open file on sd card
@@ -838,7 +831,7 @@ void read_rom_PCE(void) {
   myFile.close();
 
   //CRC search and rename ROM
-  crc_search(fileName, folder, rom_size, crc);
+  compareCRC("pce.txt", 0, 1, 0);
 
   println_Msg(FS(FSTRING_EMPTY));
   print_STR(press_button_STR, true);
