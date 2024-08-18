@@ -4,8 +4,8 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             2024-08-11
-   Version:          14.2
+   Date:             2024-08-16
+   Version:          14.4
 
    SD lib: https://github.com/greiman/SdFat
    LCD lib: https://github.com/olikraus/u8g2
@@ -37,13 +37,14 @@
    fceux - iNes header
    PsyK0p4T - Sufami Turbo module
    LuigiBlood - SNES Game Processor RAM Cassette module
-
+   
    And a special Thank You to all coders and contributors on Github and the Arduino forum:
    jiyunomegami, splash5, Kreeblah, ramapcsx2, PsyK0p4T, Dakkaron, majorpbx, Pickle, sdhizumi,
    Uzlopak, sakman55, Tombo89, scrap-a, borti4938, vogelfreiheit, CaitSith2, Modman, Chomemel, 
    philenotfound, karimhadjsalem, nsx0r, ducky92, niklasweber, Lesserkuma, BacteriaMage, qufb,
    vpelletier, Ancyker, mattiacci, RWeick, ButThouMust, partlyhuman, fakkuyuu, hxlnt, breyell,
-   smesgr9000, joshman196, PsychoFox11, plaidpants, LuigiBlood, InvalidInterrupt
+   smesgr9000, joshman196, PsychoFox11, plaidpants, LuigiBlood, InvalidInterrupt, andy-miles,
+   wfmarques
 
    And to nocash for figuring out the secrets of the SFC Nintendo Power cartridge.
 
@@ -814,9 +815,7 @@ void readDataLineSingleDigit(FsFile& database, void* byteData) {
 #endif
 
 #if ( \
-   defined(ENABLE_ODY2) || defined(ENABLE_7800) || defined(ENABLE_C64) || defined(ENABLE_JAGUAR) || \
-   defined(ENABLE_VIC20)|| defined(ENABLE_ATARI8)\
- )
+  defined(ENABLE_ODY2) || defined(ENABLE_7800) || defined(ENABLE_C64) || defined(ENABLE_JAGUAR) || defined(ENABLE_VIC20) || defined(ENABLE_ATARI8))
 struct database_entry_mapper_size {
   byte gameMapper;
   byte gameSize;
@@ -874,6 +873,7 @@ boolean checkCartSelection(FsFile& database, void (*readData)(FsFile&, void*), v
       printDataLine(data);
     }
     println_Msg(FS(FSTRING_EMPTY));
+
 #if defined(ENABLE_OLED)
     print_STR(press_to_change_STR, 0);
     if (fastScrolling > 1)
@@ -951,6 +951,10 @@ boolean checkCartSelection(FsFile& database, void (*readData)(FsFile&, void*), v
 void printInstructions() {
   println_Msg(FS(FSTRING_EMPTY));
 
+#ifdef ENABLE_GLOBAL_LOG
+  // Disable log to prevent unnecessary logging
+  dont_log = true;
+#endif
 #if defined(ENABLE_OLED)
   print_STR(press_to_change_STR, 1);
   print_STR(right_to_select_STR, 1);
@@ -961,8 +965,11 @@ void printInstructions() {
   println_Msg(F("U/D to Change"));
   println_Msg(F("Space/Zero to Select"));
 #endif /* ENABLE_OLED | ENABLE_LCD | SERIAL_MONITOR */
-
   display_Update();
+#ifdef ENABLE_GLOBAL_LOG
+  // Enable log again
+  dont_log = false;
+#endif
 }
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
@@ -1305,7 +1312,7 @@ static const char* const modeOptions[] PROGMEM = {
 #ifdef ENABLE_VSMILE
   modeItem40,
 #endif
-#ifdef ENABLE_FLASH
+#ifdef ENABLE_FLASH8
   modeItem41,
 #endif
 #ifdef ENABLE_SELFTEST
@@ -1620,7 +1627,7 @@ void mainMenu() {
       break;
 #endif
 
-#ifdef ENABLE_FLASH
+#ifdef ENABLE_FLASH8
     case SYSTEM_MENU_FLASH:
 #ifdef ENABLE_VSELECT
       setup_FlashVoltage();
@@ -2352,6 +2359,21 @@ void setup() {
   if (!myLog.open("OSCR_LOG.txt", O_RDWR | O_CREAT | O_APPEND)) {
     print_FatalError(sd_error_STR);
   }
+
+  // Start new log if file is too big
+  if (myLog.fileSize() > 262144) {
+    EEPROM_readAnything(0, foldern);
+    sprintf(folder, "%s%d%s", "OSCR_LOG_", foldern, ".txt");
+    foldern = foldern + 1;
+    EEPROM_writeAnything(0, foldern);
+    myLog.rename(folder);
+    // Close the file:
+    myLog.close();
+    if (!myLog.open("OSCR_LOG.txt", O_RDWR | O_CREAT | O_APPEND)) {
+      print_FatalError(sd_error_STR);
+    }
+  }
+
   println_Msg(FS(FSTRING_EMPTY));
 #if defined(HW1)
   print_Msg(F("OSCR HW1"));
@@ -3767,7 +3789,7 @@ void loop() {
 #ifdef ENABLE_SNES
     case CORE_SNES: return snesMenu();
 #endif
-#ifdef ENABLE_SFM
+#if (defined(ENABLE_SFM) && defined(ENABLE_SNES))
     case CORE_SFM: return sfmMenu();
 #ifdef ENABLE_FLASH
     case CORE_SFM_FLASH: return sfmFlashMenu();
@@ -3778,11 +3800,13 @@ void loop() {
     case CORE_GB: return gbMenu();
     case CORE_GBA: return gbaMenu();
     case CORE_GBM: return gbmMenu();
+#if defined(ENABLE_FLASH)
     case CORE_GB_GBSMART: return gbSmartMenu();
     case CORE_GB_GBSMART_FLASH: return gbSmartFlashMenu();
     case CORE_GB_GBSMART_GAME: return gbSmartGameOptions();
 #endif
-#ifdef ENABLE_FLASH
+#endif
+#ifdef ENABLE_FLASH8
     case CORE_FLASH8: return flashromMenu8();
 #ifdef ENABLE_FLASH16
     case CORE_FLASH16: return flashromMenu16();
@@ -3796,7 +3820,7 @@ void loop() {
 #ifdef ENABLE_PCE
     case CORE_PCE: return pceMenu();
 #endif
-#ifdef ENABLE_SV
+ #if (defined(ENABLE_SV) && defined(ENABLE_SNES))
     case CORE_SV: return svMenu();
 #endif
 #ifdef ENABLE_NES
@@ -3863,15 +3887,15 @@ void loop() {
     case CORE_LYNX: return lynxMenu();
 #endif
 #ifdef ENABLE_VECTREX
-  	case CORE_VECTREX: return vectrexMenu();
+    case CORE_VECTREX: return vectrexMenu();
 #endif
 #ifdef ENABLE_JAGUAR
-  	case CORE_JAGUAR: return jagMenu();
+    case CORE_JAGUAR: return jagMenu();
 #endif
-#ifdef ENABLE_ST
+#if (defined(ENABLE_ST) && defined(ENABLE_SNES))
     case CORE_ST: return stMenu();
 #endif
-#ifdef ENABLE_GPC
+#if (defined(ENABLE_GPC) && defined(ENABLE_SNES))
     case CORE_GPC: return gpcMenu();
 #endif
 #ifdef ENABLE_ATARI8

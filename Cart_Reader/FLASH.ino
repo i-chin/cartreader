@@ -2,7 +2,7 @@
 // FLASHROM MODULE
 // (also includes SNES repro functions)
 //******************************************
-#ifdef ENABLE_FLASH
+#ifdef ENABLE_FLASH8
 
 /******************************************
    Variables
@@ -140,6 +140,19 @@ void flashMenu() {
   }
 }
 #endif
+
+void setupCFI() {
+  display_Clear();
+  display_Update();
+  filePath[0] = '\0';
+  sd.chdir("/");
+  fileBrowser(F("Select file"));
+  display_Clear();
+  setup_Flash8();
+  identifyCFI_Flash();
+  sprintf(filePath, "%s/%s", filePath, fileName);
+  display_Clear();
+}
 
 void readOnlyMode() {
   display_Clear();
@@ -2832,7 +2845,7 @@ void identifyCFI_Flash() {
     flashSwitchLastBits = true;
   } else {
     // Try x16 mode next
-    startCFIMode(true);
+    startCFIMode_Flash(true);
     sprintf(cfiQRYx16, "%02X%02X%02X", readByte_Flash(0x10), readByte_Flash(0x11), readByte_Flash(0x12));
     if (strcmp(cfiQRYx16, "515259") == 0) {  // QRY in x16 mode
       println_Msg(F("Normal CFI x16 Mode"));

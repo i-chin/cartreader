@@ -105,7 +105,7 @@ byte ljprosize;
 byte newljprosize;
 
 char mnfID[3];
-char deviceID[5];
+char deviceID_str[5];
 boolean ljproflash1found = false;
 boolean ljproflash2found = false;
 byte ljproflash1size;
@@ -348,7 +348,7 @@ void readID_U1() // Parallel Mode
   sprintf_P(mnfID, PSTR("%02X"), id0);
   sprintf_P(deviceID, PSTR("%02X%02X"), id1, id2);
 //  println_Msg(mnfID);
-//  println_Msg(deviceID);
+//  println_Msg(deviceID_str);
 //  display_Update();
   if(strcmp_P(deviceID, PSTR("2015")) == 0) { // MX25L1605
     ljproflash1found = 1;
@@ -382,7 +382,7 @@ void readID_U2() // Parallel Mode
   sprintf_P(mnfID, PSTR("%02X"), id0);
   sprintf_P(deviceID, PSTR("%02X%02X"), id1, id2);
 //  println_Msg(mnfID);
-//  println_Msg(deviceID);
+//  println_Msg(deviceID_str);
 //  display_Update();
   if(strcmp_P(deviceID, PSTR("2015")) == 0) { // MX25L1605
     ljproflash2found = 1;

@@ -65,12 +65,6 @@ static const char* const menuOptionsN64Controller[] PROGMEM = { N64ContMenuItem1
 static const char N64CartMenuItem4[] PROGMEM = "Force Savetype";
 static const char* const menuOptionsN64Cart[] PROGMEM = { FSTRING_READ_ROM, FSTRING_READ_SAVE, FSTRING_WRITE_SAVE, N64CartMenuItem4, FSTRING_RESET };
 
-// N64 CRC32 error menu items
-static const char N64CRCMenuItem1[] PROGMEM = "No";
-static const char N64CRCMenuItem2[] PROGMEM = "Yes and keep old";
-static const char N64CRCMenuItem3[] PROGMEM = "Yes and delete old";
-static const char* const menuOptionsN64CRC[] PROGMEM = { N64CRCMenuItem1, N64CRCMenuItem2, N64CRCMenuItem3, FSTRING_RESET };
-
 // Rom menu
 static const char N64RomItem1[] PROGMEM = "4 MB";
 static const char N64RomItem2[] PROGMEM = "8 MB";
@@ -89,6 +83,7 @@ static const char N64SaveItem4[] PROGMEM = "SRAM";
 static const char N64SaveItem5[] PROGMEM = "FLASH";
 static const char* const saveOptionsN64[] PROGMEM = { N64SaveItem1, N64SaveItem2, N64SaveItem3, N64SaveItem4, N64SaveItem5 };
 
+#if defined(ENABLE_FLASH)
 // Repro write buffer menu
 static const char N64BufferItem1[] PROGMEM = "No buffer";
 static const char N64BufferItem2[] PROGMEM = "32 Byte";
@@ -102,6 +97,7 @@ static const char N64SectorItem2[] PROGMEM = "32 KB";
 static const char N64SectorItem3[] PROGMEM = "64 KB";
 static const char N64SectorItem4[] PROGMEM = "128 KB";
 static const char* const sectorOptionsN64[] PROGMEM = { N64SectorItem1, N64SectorItem2, N64SectorItem3, N64SectorItem4 };
+#endif
 
 // N64 start menu
 void n64Menu() {
@@ -128,6 +124,7 @@ void n64Menu() {
       mode = CORE_N64_CONTROLLER;
       break;
 
+#if defined(ENABLE_FLASH)
     case 2:
       display_Clear();
       display_Update();
@@ -136,6 +133,7 @@ void n64Menu() {
       printCartInfo_N64();
       mode = CORE_N64_CART;
       break;
+#endif
 
     case 3:
       display_Clear();
@@ -161,6 +159,9 @@ void n64Menu() {
     case 5:
       resetArduino();
       break;
+
+    default:
+      print_MissingModule();  // does not return
   }
 }
 
@@ -174,6 +175,8 @@ void n64ControllerMenu() {
 
   // wait for user choice to come back from the question box menu
   switch (mainMenu) {
+
+#if defined(ENABLE_CONTROLLERTEST)
     case 0:
       resetController();
       display_Clear();
@@ -185,6 +188,7 @@ void n64ControllerMenu() {
 #endif
       quit = 1;
       break;
+#endif
 
     case 1:
       resetController();
@@ -226,6 +230,9 @@ void n64ControllerMenu() {
     case 3:
       resetArduino();
       break;
+
+    default:
+      print_MissingModule();  // does not return
   }
 }
 
@@ -282,7 +289,8 @@ void n64CartMenu() {
       } else if ((saveType == 5) || (saveType == 6)) {
         println_Msg(F("Reading EEPROM..."));
         display_Update();
-        readEeprom();
+        resetEeprom_N64();
+        readEeprom_N64();
       } else {
         print_Error(F("Savetype Error"));
       }
@@ -351,9 +359,10 @@ void n64CartMenu() {
         // Launch file browser
         fileBrowser(F("Select eep file"));
         display_Clear();
-
-        writeEeprom();
-        writeErrors = verifyEeprom();
+        resetEeprom_N64();
+        writeEeprom_N64();
+        resetEeprom_N64();
+        writeErrors = verifyEeprom_N64();
 
         if (writeErrors == 0) {
           println_Msg(F("EEPROM verified OK"));
@@ -532,7 +541,9 @@ void setAddress_N64(unsigned long myAddress) {
 
   // Switch WR(PH5) RD(PH6) ale_L(PC0) ale_H(PC1) to high (since the pins are active low)
   PORTH |= (1 << 5) | (1 << 6);
-  PORTC |= (1 << 0) | (1 << 1);
+  PORTC |= (1 << 1);
+  __asm__("nop\n\t"); // needed for repro
+  PORTC |= (1 << 0);
 
   // Output high part to address pins
   PORTF = myAdrHighOut & 0xFF;
@@ -1001,6 +1012,8 @@ void get_button() {
 /******************************************
   N64 Controller Test
  *****************************************/
+#if defined(ENABLE_CONTROLLERTEST)
+
 #ifdef ENABLE_SERIAL
 void controllerTest_Serial() {
   while (quit) {
@@ -1518,6 +1531,7 @@ void controllerTest_Display() {
     }
   }
 }
+#endif
 #endif
 
 /******************************************
@@ -2204,7 +2218,7 @@ void idCart() {
 }
 
 // Write Eeprom to cartridge
-void writeEeprom() {
+void writeEeprom_N64() {
   if ((saveType == 5) || (saveType == 6)) {
 
     // Create filepath
@@ -2279,8 +2293,18 @@ boolean readEepromPageList(byte* output, byte page_number, byte page_count) {
   return 1;
 }
 
+// Reset Eeprom
+void resetEeprom_N64() {
+  // Pull RESET(PH0) low
+  PORTH &= ~(1 << 0);
+  delay(100);
+  // Pull RESET(PH0) high
+  PORTH |= (1 << 0);
+  delay(100);
+}
+
 // Dump Eeprom to SD
-void readEeprom() {
+void readEeprom_N64() {
   if ((saveType == 5) || (saveType == 6)) {
     // Get name, add extension and convert to char array for sd lib
     createFolderAndOpenFile("N64", "SAVE", romName, "eep");
@@ -2299,17 +2323,13 @@ void readEeprom() {
     }
     // Close the file:
     myFile.close();
-    print_Msg(F("Saved to "));
-    print_Msg(folder);
-    println_Msg(F("/"));
-    display_Update();
   } else {
     print_FatalError(F("Savetype Error"));
   }
 }
 
 // Check if a write succeeded, returns 0 if all is ok and number of errors if not
-unsigned long verifyEeprom() {
+unsigned long verifyEeprom_N64() {
   unsigned long writeErrors;
 
   if ((saveType == 5) || (saveType == 6)) {
@@ -3022,6 +3042,7 @@ void savesummary_N64(boolean checkfound, char crcStr[9], unsigned long timeElaps
 }
 #endif
 
+#if defined(ENABLE_FLASH)
 /******************************************
    N64 Repro Flashrom Functions
  *****************************************/
@@ -3283,13 +3304,11 @@ void flashRepro_N64() {
       myFile.close();
 
       // Verify
-      print_STR(verifying_STR, 0);
+      print_STR(verifying_STR, 1);
       display_Update();
       writeErrors = verifyFlashrom_N64();
-      if (writeErrors == 0) {
-        println_Msg(FS(FSTRING_OK));
-        display_Update();
-      } else {
+      if (writeErrors != 0) {
+        display_Clear();
         print_Msg(writeErrors);
         print_Msg(F(" bytes "));
         print_Error(did_not_verify_STR);
@@ -3734,6 +3753,11 @@ boolean blankcheckFlashrom_N64() {
 
 // Write Intel flashrom
 void writeIntel4400_N64() {
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = (uint32_t)(fileSize);
+  draw_progressbar(0, totalProgressBar);
+
   for (unsigned long currSector = 0; currSector < fileSize; currSector += 131072) {
     // Blink led
     blinkLED();
@@ -3781,12 +3805,19 @@ void writeIntel4400_N64() {
           statusReg = readWord_N64();
         }
       }
+      processedProgressBar += 512;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
   }
 }
 // Write Fujitsu MSP55LV100S flashrom consisting out of two MSP55LV512 flashroms one used for the high byte the other for the low byte
 void writeMSP55LV100_N64(unsigned long sectorSize) {
   unsigned long flashBase = romBase;
+
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = (uint32_t)(fileSize);
+  draw_progressbar(0, totalProgressBar);
 
   for (unsigned long currSector = 0; currSector < fileSize; currSector += sectorSize) {
     // Blink led
@@ -3837,6 +3868,8 @@ void writeMSP55LV100_N64(unsigned long sectorSize) {
           statusReg = readWord_N64();
         }
       }
+      processedProgressBar += 512;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
   }
 }
@@ -3844,6 +3877,11 @@ void writeMSP55LV100_N64(unsigned long sectorSize) {
 // Write Spansion S29GL256N flashrom using the 32 byte write buffer
 void writeFlashBuffer_N64(unsigned long sectorSize, byte bufferSize) {
   unsigned long flashBase = romBase;
+
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = (uint32_t)(fileSize);
+  draw_progressbar(0, totalProgressBar);
 
   for (unsigned long currSector = 0; currSector < fileSize; currSector += sectorSize) {
     // Blink led
@@ -3899,6 +3937,8 @@ void writeFlashBuffer_N64(unsigned long sectorSize, byte bufferSize) {
           statusReg = readWord_N64();
         }
       }
+      processedProgressBar += 512;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
   }
 }
@@ -3906,6 +3946,11 @@ void writeFlashBuffer_N64(unsigned long sectorSize, byte bufferSize) {
 // Write MX29LV640 flashrom without write buffer
 void writeFlashrom_N64(unsigned long sectorSize) {
   unsigned long flashBase = romBase;
+
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = (uint32_t)(fileSize);
+  draw_progressbar(0, totalProgressBar);
 
   for (unsigned long currSector = 0; currSector < fileSize; currSector += sectorSize) {
     // Blink led
@@ -3937,6 +3982,8 @@ void writeFlashrom_N64(unsigned long sectorSize) {
           statusReg = readWord_N64();
         }
       }
+      processedProgressBar += 512;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
   }
 }
@@ -3945,6 +3992,11 @@ unsigned long verifyFlashrom_N64() {
   // Open file on sd card
   if (myFile.open(filePath, O_READ)) {
     writeErrors = 0;
+
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = (uint32_t)(fileSize);
+    draw_progressbar(0, totalProgressBar);
 
     for (unsigned long currSector = 0; currSector < fileSize; currSector += 131072) {
       // Blink led
@@ -3969,6 +4021,8 @@ unsigned long verifyFlashrom_N64() {
             }
           }
         }
+        processedProgressBar += 512;
+        draw_progressbar(processedProgressBar, totalProgressBar);
       }
     }
     // Close the file:
@@ -3980,6 +4034,7 @@ unsigned long verifyFlashrom_N64() {
     return 9999;
   }
 }
+#endif
 
 /******************************************
    N64 Gameshark Flash Functions
