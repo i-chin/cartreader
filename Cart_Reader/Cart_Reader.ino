@@ -4,8 +4,8 @@
    This project represents a community-driven effort to provide
    an easy to build and easy to modify cartridge dumper.
 
-   Date:             2024-08-16
-   Version:          14.4
+   Date:             2024-09-13
+   Version:          14.5
 
    SD lib: https://github.com/greiman/SdFat
    LCD lib: https://github.com/olikraus/u8g2
@@ -15,7 +15,7 @@
    RTC lib: https://github.com/adafruit/RTClib
    Frequency lib: https://github.com/PaulStoffregen/FreqCount
 
-   Compiled with Arduino IDE 2.2.1
+   Compiled with Arduino IDE 2.3.2
 
    Thanks to:
    MichlK - ROM Reader for Super Nintendo
@@ -523,7 +523,7 @@ uint32_t calculateCRC(char* fileName, char* folder, unsigned long offset) {
 /******************************************
    CRC Functions for Atari, Fairchild, Ody2, Arc, etc. modules
  *****************************************/
-#if (defined(ENABLE_ODY2) || defined(ENABLE_ARC) || defined(ENABLE_FAIRCHILD) || defined(ENABLE_MSX) || defined(ENABLE_POKE) || defined(ENABLE_2600) || defined(ENABLE_7800) || defined(ENABLE_C64) || defined(ENABLE_VECTREX) || defined(ENABLE_NES) || defined(ENABLE_LYNX) || defined(ENABLE_ATARI8) || defined(ENABLE_BALLY) || defined(ENABLE_LEAP) || defined(ENABLE_LJ) || defined(ENABLE_LJPRO) || defined(ENABLE_PV1000) || defined(ENABLE_PYUUTA) || defined(ENABLE_RCA) || defined(ENABLE_TI99) || defined(ENABLE_TRS80) || defined(ENABLE_VIC20) || defined(ENABLE_VSMILE))
+#if (defined(ENABLE_ODY2) || defined(ENABLE_ARC) || defined(ENABLE_FAIRCHILD) || defined(ENABLE_MSX) || defined(ENABLE_POKE) || defined(ENABLE_2600) || defined(ENABLE_7800) || defined(ENABLE_C64) || defined(ENABLE_VECTREX) || defined(ENABLE_NES) || defined(ENABLE_LYNX) || defined(ENABLE_ATARI8) || defined(ENABLE_BALLY) || defined(ENABLE_LEAP) || defined(ENABLE_LJ) || defined(ENABLE_LJPRO) || defined(ENABLE_PV1000) || defined(ENABLE_PYUUTA) || defined(ENABLE_RCA) || defined(ENABLE_TI99) || defined(ENABLE_TRS80) || defined(ENABLE_VIC20) || defined(ENABLE_VSMILE) || defined(ENABLE_CPS3))
 
 void printCRC(char* checkFile, uint32_t* crcCopy, unsigned long offset) {
   uint32_t crc = calculateCRC(checkFile, folder, offset);
@@ -946,8 +946,6 @@ boolean checkCartSelection(FsFile& database, void (*readData)(FsFile&, void*), v
   return false;
 }
 
-#if ( \
-  defined(ENABLE_ODY2) || defined(ENABLE_ARC) || defined(ENABLE_FAIRCHILD) || defined(ENABLE_MSX) || defined(ENABLE_POKE) || defined(ENABLE_2600) || defined(ENABLE_5200) || defined(ENABLE_7800) || defined(ENABLE_C64) || defined(ENABLE_VECTREX) || defined(ENABLE_NES) || defined(ENABLE_GBX) || defined(ENABLE_BALLY) || defined(ENABLE_PV1000) || defined(ENABLE_PYUUTA) || defined(ENABLE_RCA) || defined(ENABLE_TRS80) || defined(ENABLE_VIC20) || defined(ENABLE_LEAP) || defined(ENABLE_LJ) || defined(ENABLE_VSMILE) || defined(ENABLE_TI99) || defined(ENABLE_ATARI8))
 void printInstructions() {
   println_Msg(FS(FSTRING_EMPTY));
 
@@ -1051,7 +1049,6 @@ int navigateMenu(__attribute__((unused)) int min, __attribute__((unused)) int ma
   return selectedNumber;
 }
 #endif /* (ENABLE_OLED | ENABLE_LCD) */
-#endif /* ENABLE_<CORES> */
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
 void starting_letter__subDraw(byte selection, byte line) {
@@ -1188,8 +1185,9 @@ constexpr char modeItem38[] PROGMEM = "Tomy Pyuuta";
 constexpr char modeItem39[] PROGMEM = "TRS-80";
 constexpr char modeItem40[] PROGMEM = "Vtech V.Smile (3V)";
 constexpr char modeItem41[] PROGMEM = "Flashrom Programmer";
-constexpr char modeItem42[] PROGMEM = "Self Test (3V)";
-constexpr char modeItem43[] PROGMEM = "About";
+constexpr char modeItem42[] PROGMEM = "CP System III";
+constexpr char modeItem43[] PROGMEM = "Self Test (3V)";
+constexpr char modeItem44[] PROGMEM = "About";
 
 static const char* const modeOptions[] PROGMEM = {
 #ifdef ENABLE_GBX
@@ -1315,10 +1313,13 @@ static const char* const modeOptions[] PROGMEM = {
 #ifdef ENABLE_FLASH8
   modeItem41,
 #endif
-#ifdef ENABLE_SELFTEST
+#ifdef ENABLE_CPS3
   modeItem42,
 #endif
-  modeItem43, FSTRING_RESET
+#ifdef ENABLE_SELFTEST
+  modeItem43,
+#endif
+  modeItem44, FSTRING_RESET
 
 };
 
@@ -1634,6 +1635,11 @@ void mainMenu() {
 #endif
       return flashMenu();
       break;
+#endif
+
+#if (defined(ENABLE_CPS3) && defined(ENABLE_FLASH8) && defined(ENABLE_FLASH16)) 
+    case SYSTEM_MENU_CPS3:
+      return cpsMenu();
 #endif
 
 #ifdef ENABLE_SELFTEST
@@ -2361,8 +2367,8 @@ void setup() {
   }
 
   // Start new log if file is too big
-  if (myLog.fileSize() > 262144) {
-    EEPROM_readAnything(0, foldern);
+  EEPROM_readAnything(0, foldern);
+  if ((myLog.fileSize() > 262144) && (foldern < 9999) && (foldern > 0)){
     sprintf(folder, "%s%d%s", "OSCR_LOG_", foldern, ".txt");
     foldern = foldern + 1;
     EEPROM_writeAnything(0, foldern);
@@ -3933,6 +3939,11 @@ void loop() {
 #endif
 #ifdef ENABLE_VSMILE
     case CORE_VSMILE: return vsmileMenu();
+#endif
+#if (defined(ENABLE_CPS3) && defined(ENABLE_FLASH8) && defined(ENABLE_FLASH16)) 
+    case CORE_CPS3_CART: return flashromCPS_Cartridge();
+    case CORE_CPS3_128SIMM: return flashromCPS_SIMM2x8();
+    case CORE_CPS3_64SIMM: return flashromCPS_SIMM4x8();
 #endif
     case CORE_MAX: return resetArduino();
   }

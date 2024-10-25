@@ -267,28 +267,34 @@ void mdMenu() {
       resetFlash_MD();
       idFlash_MD();
       resetFlash_MD();
-      print_Msg(F("Flash ID: "));
-      println_Msg(flashid_str);
       if (flashid == 0xC2F1) {
         println_Msg(F("MX29F1610 detected"));
         flashSize = 2097152;
+      } else if (flashid == 0x017E) {
+        println_Msg(F("S29GL064N detected"));
+        flashSize = 4194304;
       } else {
+        print_Msg(F("Flash ID: "));
+        println_Msg(flashid_str);
         print_FatalError(F("Error: Unknown flashrom"));
       }
+      println_Msg("Erasing...");
       display_Update();
-
       eraseFlash_MD();
       resetFlash_MD();
       blankcheck_MD();
-      write29F1610_MD();
+      if (flashid == 0xC2F1)
+        write29F1610_MD();
+      else if (flashid == 0x017E)
+        write29GL_MD();
       resetFlash_MD();
       delay(1000);
       resetFlash_MD();
       delay(1000);
+      println_Msg("Verifying...");
       verifyFlash_MD();
       // Set CS(PH3) HIGH
       PORTH |= (1 << 3);
-      println_Msg(FS(FSTRING_EMPTY));
       // Prints string out of the common strings array either with or without newline
       print_STR(press_button_STR, 1);
       display_Update();
@@ -753,13 +759,26 @@ void getCartInfo_MD() {
     id[c + 1] = loByte;
   }
 
-  //Identify games using SVP chip
+  // Get cart name
+  for (byte c = 0; c < 48; c += 2) {
+    // split word
+    word myWord = readWord_MD((0x150 + c) / 2);
+    byte loByte = myWord & 0xFF;
+    byte hiByte = myWord >> 8;
+
+    // write to buffer
+    sdBuffer[c] = hiByte;
+    sdBuffer[c + 1] = loByte;
+  }
+  romName[copyToRomName_MD(romName, sdBuffer, sizeof(romName) - 1)] = 0;
+
+  // Identify games using SVP chip
   if (!strncmp_P(PSTR("GM MK-1229 "), id, 11) || !strncmp_P(PSTR("GM G-7001  "), id, 11))  // Virtua Racing (E/U/J)
     isSVP = 1;
   else
     isSVP = 0;
 
-  // Fix cartridge sizes according to no-intro database
+  // Fix cartridge sizes and checksums according to no-intro database
   if (cartSize == 0x400000) {
     switch (chksum) {
       case 0xCE25:  // Super Street Fighter 2 (J) 40Mbit
@@ -886,171 +905,159 @@ void getCartInfo_MD() {
     }
   }
 
-  // Fatman (Japan).md
+  // Fatman (Japan)
   if (!strncmp_P(PSTR("GM T-44013 "), id, 11) && (chksum == 0xFFFF)) {
     chksum = 0xC560;
     cartSize = 0xA0000;
   }
+  
+  // Slaughter Sport (USA)
+  if (!strncmp("GMT5604600jJ", romName, 12) && (chksum == 0xFFFF)) {
+    strcpy(romName, "SLAUGHTERSPORT");
+    chksum = 0x6BAE;
+  }
 
-  // Beggar Prince (Rev 1)(Aftermarket)
+  // Fixes aftermarket cartridges
+  // Beggar Prince (Rev 1)
   if (!strncmp_P(PSTR("SF-001"), id, 6) && (chksum == 0x3E08)) {
     cartSize = 0x400000;
   }
-
-  // Legend of Wukong (Aftermarket)
+  // Legend of Wukong
   if (!strncmp_P(PSTR("SF-002"), id, 6) && (chksum == 0x12B0)) {
     chksum = 0x45C6;
   }
-
-  //YM2612 Instrument Editor (Aftermarket)
-  if (!strncmp_P(PSTR("GM 10101010"), id, 11) && (chksum == 0xC439)) {
+  // YM2612 Instrument Editor
+  if (!strncmp("GM 10101010", id, 11) && (chksum == 0xC439)) {
     chksum = 0x21B0;
     cartSize = 0x100000;
   }
-
-  //Technoptimistic (Aftermarket)
+  // Technoptimistic
   if (!strncmp_P(PSTR("MU REMUTE01"), id, 11) && (chksum == 0x0000)) {
     chksum = 0xB55C;
     cartSize = 0x400000;
   }
-
-  //Decoder (Aftermarket)
+  // Decoder
   if (!strncmp_P(PSTR("GM REMUTE02"), id, 11) && (chksum == 0x0000)) {
     chksum = 0x5426;
     cartSize = 0x400000;
   }
-
-  //Handy Harvy (Aftermarket)
+  // Handy Harvy
   if (!strncmp_P(PSTR("GM HHARVYSG"), id, 11) && (chksum == 0x0000)) {
     chksum = 0xD9D2;
     cartSize = 0x100000;
   }
-
-  //Jim Power - The Lost Dimension in 3D (Aftermarket)
+  // Jim Power - The Lost Dimension in 3D
   if (!strncmp_P(PSTR("GM T-107036"), id, 11) && (chksum == 0x0000)) {
     chksum = 0xAA28;
   }
-
-  //mikeyeldey95 (Aftermarket)
-  if (!strncmp_P(PSTR("GM 00000000-43"), id, 14) && (chksum == 0x0000)) {
+  // mikeyeldey95
+  if (!strncmp("GM 00000000-43", id, 14) && (chksum == 0x0000)) {
     chksum = 0x921B;
     cartSize = 0x400000;
   }
-
-  // Enryuu Seiken Xiao-Mei (Aftermarket)
+  // Enryuu Seiken Xiao-Mei
   if (!strncmp("GM 00000000-00", id, 14) && (chksum == 0x1E0C)) {
     chksum = 0xE7E5;
     cartSize = 0x400000;
   }
-
-  // Life on Earth - Reimagined (Aftermarket)
+  // Life on Earth - Reimagined
   if (!strncmp("GM 00000000-00", id, 14) && (chksum == 0x6BD5)) {
     chksum = 0x1FEA;
     cartSize = 0x400000;
   }
-
-  // Sasha Darko's Sacred Line I (Aftermarket)
+  // Sasha Darko's Sacred Line I
   if (!strncmp("GM 00000005-00", id, 14) && (chksum == 0x9F34)) {
     chksum = 0xA094;
     cartSize = 0x400000;
   }
-
-  // Sasha Darko's Sacred Line II (Aftermarket)
+  // Sasha Darko's Sacred Line II
   if (!strncmp("GM 00000005-00", id, 14) && (chksum == 0x0E9B)) {
     chksum = 0x6B4B;
     cartSize = 0x400000;
   }
-
-  // Sasha Darko's Sacred Line (Watermelon Release) (Aftermarket)
+  // Sasha Darko's Sacred Line (Watermelon Release)
   if (!strncmp("GM T-574323-00", id, 14) && (chksum == 0xAEDD)) {
     cartSize = 0x400000;
   }
-
-  // Kromasphere (Aftermarket)
+  // Kromasphere
   if (!strncmp("GM MK-0000 -00", id, 14) && (chksum == 0xC536)) {
     chksum = 0xFAB1;
     cartSize = 0x200000;
   }
-
-  // YM2017 (Aftermarket)
+  // YM2017
   if (!strncmp("GM CSET0001-02", id, 14) && (chksum == 0x0000)) {
     chksum = 0xE3A9;
   }
-
-  // The Curse of Illmore Bay (Aftermarket)
+  // The Curse of Illmore Bay
   if (!strncmp("1774          ", id, 14) && (chksum == 0x0000)) {
     chksum = 0x6E34;
     cartSize = 0x400000;
   }
-
-  // Coffee Crisis (Aftermarket)
+  // Coffee Crisis
   if (!strncmp("JN-20160131-03", id, 14) && (chksum == 0x0000)) {
     chksum = 0x8040;
     cartSize = 0x400000;
   }
+  // Romeow & Julicat
+  if (!strncmp("ROMEOWJULICAT", romName, 13) && (chksum == 0x0000)) {
+    chksum = 0xB094;
+    cartSize = 0x200000;
+  }
 
-  // Sonic & Knuckles Check
+  // Sonic & Knuckles checks
   SnKmode = 0;
-  if (chksum == 0xDFB3) {
+  if (!strncmp("GM MK-1563 -00", id, 14) && (chksum == 0xDFB3)) {
+    char labelLockon[17];
+    memset(labelLockon, 0, 17);
 
-    //Sonic & Knuckles ID:GM MK-1563 -00
-    if (!strcmp_P(PSTR("GM MK-1563 -00"), id)) {
-      char labelLockon[17] = {0};
+    // Get labelLockon
+    for (byte c = 0; c < 16; c += 2) {
+      // split word
+      word myWord = readWord_MD((0x200100 + c) / 2);
+      byte loByte = myWord & 0xFF;
+      byte hiByte = myWord >> 8;
 
-      // Get labelLockon
-      for (byte c = 0; c < 16; c += 2) {
+      // write to buffer
+      labelLockon[c] = hiByte;
+      labelLockon[c + 1] = loByte;
+    }
+
+    // check Lock-on game presence
+    if (!(strcmp("SEGA MEGA DRIVE ", labelLockon) & strcmp("SEGA GENESIS    ", labelLockon))) {
+      char idLockon[15];
+      memset(idLockon, 0, 15);
+
+      // Lock-on cart checksum
+      chksumLockon = readWord_MD(0x1000C7);
+      // Lock-on cart size
+      cartSizeLockon = ((long(readWord_MD(0x1000D2)) << 16) | readWord_MD(0x1000D3)) + 1;
+
+      // Get IdLockon
+      for (byte c = 0; c < 14; c += 2) {
         // split word
-        word myWord = readWord_MD((0x200100 + c) / 2);
+        word myWord = readWord_MD((0x200180 + c) / 2);
         byte loByte = myWord & 0xFF;
         byte hiByte = myWord >> 8;
 
         // write to buffer
-        labelLockon[c] = hiByte;
-        labelLockon[c + 1] = loByte;
+        idLockon[c] = hiByte;
+        idLockon[c + 1] = loByte;
       }
 
-      // check Lock-on game presence
-      if (!(strcmp_P(PSTR("SEGA MEGA DRIVE "), labelLockon) & strcmp_P(PSTR("SEGA GENESIS    "), labelLockon))) {
-        char idLockon[15] = {0};
-
-        // Lock-on cart checksum
-        chksumLockon = readWord_MD(0x1000C7);
-        // Lock-on cart size
-        cartSizeLockon = ((long(readWord_MD(0x1000D2)) << 16) | readWord_MD(0x1000D3)) + 1;
-
-        // Get IdLockon
-        for (byte c = 0; c < 14; c += 2) {
-          // split word
-          word myWord = readWord_MD((0x200180 + c) / 2);
-          byte loByte = myWord & 0xFF;
-          byte hiByte = myWord >> 8;
-
-          // write to buffer
-          idLockon[c] = hiByte;
-          idLockon[c + 1] = loByte;
-        }
-
-        if (!strncmp_P(PSTR("GM 00001009-0"), idLockon, 13) || !strncmp_P(PSTR("GM 00004049-0"), idLockon, 13)) {
-          //Sonic1 ID:GM 00001009-0? or GM 00004049-0?
-          SnKmode = 2;
-        } else if (!strcmp_P(PSTR("GM 00001051-00"), idLockon) || !strcmp_P(PSTR("GM 00001051-01"), idLockon) || !strcmp_P(PSTR("GM 00001051-02"), idLockon)) {
-          //Sonic2 ID:GM 00001051-00 or GM 00001051-01 or GM 00001051-02
-          SnKmode = 3;
-
-          // Prepare Sonic2 Banks
-          writeSSF2Map(0x509878, 1);  // 0xA130F1
-
-        } else if (!strcmp_P(PSTR("GM MK-1079 -00"), idLockon)) {
-          //Sonic3 ID:GM MK-1079 -00
-          SnKmode = 4;
-        } else {
-          //Other game
-          SnKmode = 5;
-        }
-
-      } else {
-        SnKmode = 1;
+      if (!strncmp("GM 00001009-0", idLockon, 13) || !strncmp("GM 00004049-0", idLockon, 13)) { // Sonic1 ID:GM 00001009-0? or GM 00004049-0?
+        SnKmode = 2;
+      } else if (!strcmp("GM 00001051-00", idLockon) || !strcmp("GM 00001051-01", idLockon) || !strcmp("GM 00001051-02", idLockon)) { // Sonic2 ID:GM 00001051-00 or GM 00001051-01 or GM 00001051-02
+        SnKmode = 3;
+        // Prepare Sonic2 Banks
+        writeSSF2Map(0x509878, 1);  // 0xA130F1
+      } else if (!strcmp("GM MK-1079 -00", idLockon)) { // Sonic3 ID:GM MK-1079 -00
+        SnKmode = 4;
+      } else { // Other game
+        SnKmode = 5;
       }
+
+    } else {
+      SnKmode = 1;
     }
   }
 
@@ -1223,25 +1230,6 @@ void getCartInfo_MD() {
         sramBase = sramBase >> 1;
       }
     }
-  }
-
-  // Get name
-  for (byte c = 0; c < 48; c += 2) {
-    // split word
-    word myWord = readWord_MD((0x150 + c) / 2);
-    byte loByte = myWord & 0xFF;
-    byte hiByte = myWord >> 8;
-
-    // write to buffer
-    sdBuffer[c] = hiByte;
-    sdBuffer[c + 1] = loByte;
-  }
-  romName[copyToRomName_MD(romName, sdBuffer, sizeof(romName) - 1)] = 0;
-
-  //Check for Slaughter Sport
-  if (!strncmp("GMT5604600jJ", romName, 12) && (chksum == 0xFFFF)) {
-    strcpy(romName, "SLAUGHTERSPORT");
-    chksum = 0x6BAE;
   }
 
   //Get Lock-on cart name
@@ -1971,6 +1959,11 @@ void write29F1610_MD() {
     // Set data pins to output
     dataOut_MD();
 
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = (uint32_t)fileSize / 2;
+    draw_progressbar(0, totalProgressBar);
+
     // Fill sdBuffer with 1 page at a time then write it repeat until all bytes are written
     int d = 0;
     for (unsigned long currByte = 0; currByte < fileSize / 2; currByte += 64) {
@@ -1997,6 +1990,90 @@ void write29F1610_MD() {
       // Check if write is complete
       delayMicroseconds(100);
       busyCheck_MD();
+
+      // update progress bar
+      processedProgressBar += 64;
+      draw_progressbar(processedProgressBar, totalProgressBar);
+    }
+
+    // Set data pins to input again
+    dataIn_MD();
+
+    // Close the file:
+    myFile.close();
+  } else {
+    print_STR(open_file_STR, 1);
+    display_Update();
+  }
+}
+
+void write29GL_MD() {
+  // Create filepath
+  sprintf(filePath, "%s/%s", filePath, fileName);
+  print_STR(flashing_file_STR, 0);
+  print_Msg(filePath);
+  println_Msg(F("..."));
+  display_Update();
+
+  // Open file on sd card
+  if (myFile.open(filePath, O_READ)) {
+    // Get rom size from file
+    fileSize = myFile.fileSize();
+    if (fileSize > flashSize) {
+      print_FatalError(file_too_big_STR);
+    }
+    // Set data pins to output
+    dataOut_MD();
+
+    //Initialize progress bar
+    uint32_t processedProgressBar = 0;
+    uint32_t totalProgressBar = (uint32_t)fileSize;
+    draw_progressbar(0, totalProgressBar);
+
+    for (unsigned long currSdBuffer = 0; currSdBuffer < fileSize; currSdBuffer += 512) {
+      myFile.read(sdBuffer, 512);
+
+      // Blink led
+      if (currSdBuffer % 4096 == 0) {
+        blinkLED();
+      }
+
+      for (int currWriteBuffer = 0; currWriteBuffer < 512; currWriteBuffer += 32) {
+        // Two unlock cycles
+        writeFlash_MD(0x555, 0xaa);
+        writeFlash_MD(0x2aa, 0x55);
+        // Write Buffer Load command to Sector Address
+        writeFlash_MD((currSdBuffer + currWriteBuffer) / 2, 0x25);
+        // Sector Address, Word count
+        writeFlash_MD((currSdBuffer + currWriteBuffer) / 2, 16 - 1);
+
+        // Load buffer
+        word currWord;
+        for (byte currByte = 0; currByte < 32; currByte += 2) {
+          currWord = ((sdBuffer[currWriteBuffer + currByte] & 0xFF) << 8) | (sdBuffer[currWriteBuffer + currByte + 1] & 0xFF);
+          writeFlash_MD((currSdBuffer + currWriteBuffer + currByte) / 2, currWord);
+        }
+
+        // Write buffer
+        writeFlash_MD((currSdBuffer + currWriteBuffer + 32 - 2) / 2, 0x29);
+
+        // Check if write is complete
+        // Set data pins to input
+        dataIn_MD();
+
+        // Read the status register
+        word statusReg = readFlash_MD((currSdBuffer + currWriteBuffer + 32 - 2) / 2);
+
+        while ((statusReg | 0xFF7F) != (currWord | 0xFF7F)) {
+          statusReg = readFlash_MD((currSdBuffer + currWriteBuffer + 32 - 2) / 2);
+        }
+
+        // Set data pins to output
+        dataOut_MD();
+      }
+      // update progress bar
+      processedProgressBar += 512;
+      draw_progressbar(processedProgressBar, totalProgressBar);
     }
 
     // Set data pins to input again
