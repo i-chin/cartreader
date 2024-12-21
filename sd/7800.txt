@@ -10,6 +10,9 @@ Alien Brigade
 Asteroids
 0,0
 
+Asteroids Deluxe
+0,1
+
 Atari 7800 Development Card
 0,0
 
@@ -27,6 +30,9 @@ Baseball
 
 Basketbrawl
 1,4
+
+Berzerk
+0,2
 
 Centipede
 0,0
@@ -87,6 +93,9 @@ Food Fight (Europe)
 
 Food Fight (USA)
 0,1
+
+Frenzy
+0,2
 
 Galaga (Europe)
 0,2
@@ -174,6 +183,9 @@ Scrapyard Dog
 
 Sentinel
 1,4
+
+Space Duel
+0,1
 
 Summer Games
 1,4

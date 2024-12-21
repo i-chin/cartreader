@@ -951,6 +951,7 @@ void printInstructions() {
 
 #ifdef ENABLE_GLOBAL_LOG
   // Disable log to prevent unnecessary logging
+  bool wasnt_logging = dont_log; // Remember if we were logging or not
   dont_log = true;
 #endif
 #if defined(ENABLE_OLED)
@@ -966,7 +967,7 @@ void printInstructions() {
   display_Update();
 #ifdef ENABLE_GLOBAL_LOG
   // Enable log again
-  dont_log = false;
+  dont_log = wasnt_logging; // Return to original state
 #endif
 }
 

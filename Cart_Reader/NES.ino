@@ -8,21 +8,19 @@
 #ifdef ENABLE_NES
 
 //Line Content
-//28   Supported Mappers
-//106  Defines
-//136  Variables
-//197  Menus
-//383  Setup
-//412  No-Intro SD Database Functions
-//1125 Low Level Functions
-//1372 CRC Functions
-//1426 File Functions
-//1527 NES 2.0 Header Functions
-//1957 Config Functions
-//2760 ROM Functions
-//3951 RAM Functions
-//4384 Eeprom Functions
-//4574 NESmaker Flash Cart Functions
+//37   Supported Mappers
+//185  Defines
+//211  Variables
+//242  Menus
+//456  Setup
+//486  No-Intro SD Database Functions
+//803  Low Level Functions
+//1012 File Functions
+//1083 Config Functions
+//1701 ROM Functions
+//3666 RAM Functions
+//4066 Eeprom Functions
+//4254 NESmaker Flash Cart Functions
 
 struct mapper_NES {
   uint16_t mapper;
@@ -77,7 +75,7 @@ static const struct mapper_NES PROGMEM mapsize[] = {
   { 46, 1, 6, 0, 8, 0, 0 },  // Rumble Station [UNLICENSED]
   { 47, 4, 4, 6, 6, 0, 0 },  // (super spike vball + world cup)
   { 48, 3, 4, 6, 6, 0, 0 },  // taito tc0690
-  { 52, 0, 3, 0, 3, 0, 0 },  // Realtec 8213 [UNLICENSED]
+  { 52, 0, 5, 0, 7, 0, 0 },  // Realtec 8213 [UNLICENSED]
   { 56, 0, 7, 0, 6, 0, 0 },  // KS202 [UNLICENSED]
   { 57, 0, 3, 0, 5, 0, 0 },  // BMC-GKA [UNLICENSED]
   { 58, 1, 6, 1, 6, 0, 0 },  // BMC-GKB (C)NROM-based multicarts, duplicate of mapper 213 [UNLICENSED]
@@ -173,9 +171,14 @@ static const struct mapper_NES PROGMEM mapsize[] = {
   { 242, 5, 5, 0, 0, 0, 0 },  // ET-113 [UNLICENSED]
   { 246, 5, 5, 7, 7, 0, 0 },  // C&E Feng Shen Bang [UNLICENSED]
   // 248 - bad mapper, not used
-  { 255, 4, 7, 5, 8, 0, 0 },  // 110-in-1 multicart (same as 225) [UNLICENSED]
-  { 446, 0, 8, 0, 0, 0, 0 },  // Mindkids SMD172B_FGPA submapper 0 & 1
-  { 552, 0, 5, 0, 6, 0, 0 }   // Taito X1-017 actual bank order
+  { 255, 4, 7, 5, 8, 0, 0 },   // 110-in-1 multicart (same as 225) [UNLICENSED]
+  { 268, 0, 11, 0, 8, 0, 0 },  // 268.0 MindKids/CoolGirl [UNLICENSED]
+  { 315, 0, 5, 0, 7, 0, 0 },   // BMC-830134C [UNLICENSED]
+  { 329, 1, 7, 0, 0, 0, 3 },   // UNL-EDU2000, same as 177 [UNLICENSED]
+  { 366, 0, 6, 0, 8, 0, 0 },   // GN-45 [UNLICENSED]
+  { 446, 0, 8, 0, 0, 0, 0 },   // Mindkids SMD172B_FGPA submapper 0 & 1 [UNLICENSED]
+  { 470, 0, 11, 0, 0, 0, 0 },  // INX_007T_V01 [UNLICENSED]
+  { 552, 0, 5, 0, 6, 0, 0 }    // Taito X1-017 actual bank order
 };
 
 const char _file_name_no_number_fmt[] PROGMEM = "%s.%s";
@@ -992,6 +995,20 @@ static void write_wram_byte(unsigned int address, uint8_t data) {  // Mapper 5 (
   set_address(0);
   // Set phi2 to high state to keep cartridge unreseted
   PHI2_HI;
+}
+
+// Pirate Mapper 59
+static void write_reg_m59(unsigned int address) {
+  ROMSEL_HI;
+  MODE_WRITE;
+  PRG_WRITE;
+  set_address(address);
+  set_romsel(address);
+  _delay_us(1); // WRITING
+  ROMSEL_HI;
+  PRG_READ;
+  MODE_READ;
+  set_address(0);
 }
 
 /******************************************
@@ -2131,11 +2148,13 @@ void readPRG(bool readrom) {
         break;
 
       case 52:
-        banks = int_pow(2, prgsize);
+        banks = int_pow(2, prgsize) * 2;
         write_prg_byte(0xA001, 0x80);  // enable WRAM write
         for (size_t i = 0; i < banks; i++) {
-          write_prg_byte(0x6000, (i & 0x07) | 0x08);
-          dumpBankPRG(0x0, 0x4000, base);
+          write_prg_byte(0x6000, (i & 0x07) >> 4);
+          write_prg_byte(0x8000, 6);
+          write_prg_byte(0x8001, i);
+          dumpBankPRG(0x0, 0x2000, base);
         }
         break;
 
@@ -2159,8 +2178,8 @@ void readPRG(bool readrom) {
 
       case 58:
       case 213:
-        banks = int_pow(2, prgsize) / 2;
-        for (size_t i = 0; i < banks; i++) {
+        banks = int_pow(2, prgsize);
+        for (size_t i = 0; i < banks; i += 2) {
           write_prg_byte(0x8000 + (i & 0x07), 0x00);
           dumpBankPRG(0x0, 0x8000, base);
         }
@@ -2168,9 +2187,9 @@ void readPRG(bool readrom) {
 
       case 59:
         banks = int_pow(2, prgsize);
-        for (size_t i = 0; i < banks; i++) {
-          write_prg_byte((0x8000 + (i & 0x07)) << 4 | 0x80, 0);
-          dumpBankPRG(0x0, 0x4000, base);
+        for (size_t i = 0; i < banks; i += 2) {
+          write_reg_m59(0x8000 + ((i & 0x07) << 4));
+          dumpBankPRG(0x0, 0x8000, base);
         }
         break;
 
@@ -2738,6 +2757,41 @@ void readPRG(bool readrom) {
         }
         break;
 
+      case 268:  // submapper 0
+        banks = int_pow(2, prgsize) * 2;
+        for (size_t i = 0; i < banks; i++) {
+          write_prg_byte(0x6000, ((i & 0x70) >> 4) | ((i & 0xC00) >> 6));
+          write_prg_byte(0x6001, ((i & 0x80) >> 3) | ((i & 0x300) >> 6) | 0x60);
+          write_prg_byte(0x6002, 0x00);
+          write_prg_byte(0x6003, 0x00);
+          write_prg_byte(0x8000, 6);
+          write_prg_byte(0x8001, i);
+          dumpBankPRG(0x0, 0x2000, base);
+        }
+        break;
+
+      case 315:
+        banks = int_pow(2, prgsize) * 2;
+        write_prg_byte(0xA001, 0x80);
+        for (size_t i = 0; i < banks; i++) {
+          write_prg_byte(0x6800, (i & 30) >> 3);
+          write_prg_byte(0x8000, 6);
+          write_prg_byte(0x8001, i);
+          dumpBankPRG(0x0, 0x2000, base);
+        }
+        break;
+
+      case 366:
+        banks = int_pow(2, prgsize) * 2;
+        write_prg_byte(0xA001, 0x80);
+        for (size_t i = 0; i < banks; i++) {
+          write_prg_byte(0x6800 + (i & 0x70), i);
+          write_prg_byte(0x8000, 6);
+          write_prg_byte(0x8001, i);
+          dumpBankPRG(0x0, 0x2000, base);
+        }
+        break;
+
       case 446:
         banks = int_pow(2, prgsize) * 2;
         write_prg_byte(0x5003, 0);
@@ -2747,6 +2801,15 @@ void readPRG(bool readrom) {
           write_prg_byte(0x5001, i);           // outer bank MSB
           write_prg_byte(0x8000, 0);
           dumpBankPRG(0x0, 0x2000, base);
+        }
+        break;
+
+      case 470:
+        banks = int_pow(2, prgsize) / 2;
+        for (size_t i = 0; i < banks; i++) {
+          write_prg_byte(0x5000, i >> 3);
+          write_prg_byte(0x8000, i & 0x07);
+          dumpBankPRG(0x0, 0x8000, base);
         }
         break;
 
@@ -3148,11 +3211,13 @@ void readCHR(bool readrom) {
           break;
 
         case 52:
-          banks = int_pow(2, chrsize);
+          banks = int_pow(2, chrsize) * 4;
           write_prg_byte(0xA001, 0x80);  // enable WRAM write
           for (size_t i = 0; i < banks; i++) {
-            write_prg_byte(0x6000, (i & 0x04) << 2 | (i & 0x03) << 4 | 0x40);
-            dumpBankCHR(0x0, 0x1000);
+            write_prg_byte(0x6000, (i & 0x180) >> 3 | (i & 0x200) >> 7);
+            write_prg_byte(0x8000, 0x02);
+            write_prg_byte(0x8001, i);
+            dumpBankCHR(0x1000, 0x1400);
           }
           break;
 
@@ -3185,7 +3250,7 @@ void readCHR(bool readrom) {
         case 59:
           banks = int_pow(2, chrsize) / 2;
           for (size_t i = 0; i < banks; i++) {
-            write_prg_byte(0x8000 + (i & 0x07), 0);
+            write_reg_m59(0x8000 + (i & 0x07));
             dumpBankCHR(0x0, 0x2000);
           }
           break;
@@ -3615,6 +3680,39 @@ void readCHR(bool readrom) {
             write_prg_byte(0x6006, (i | 2));
             write_prg_byte(0x6007, (i | 3));
             dumpBankCHR(0x0, 0x2000);
+          }
+          break;
+
+        case 268:  // mapper 268.0
+          banks = int_pow(2, chrsize) * 4;
+          write_prg_byte(0xA001, 0x80);
+          for (size_t i = 0; i < banks; i++) {
+            write_prg_byte(0x6000, ((i & 0x380) >> 4) | ((i & 0xC00) >> 9));
+            write_prg_byte(0x8000, 0x02);
+            write_prg_byte(0x8001, i);
+            dumpBankCHR(0x1000, 0x1400);
+          }
+          break;
+
+        case 315:
+          banks = int_pow(2, chrsize) * 4;
+          write_prg_byte(0xA001, 0x80);
+          for (size_t i = 0; i < banks; i++) {
+            write_prg_byte(0x6800, ((i & 0x100) >> 8) | ((i & 0x80) >> 6) | ((i & 0x40) >> 3));
+            write_prg_byte(0x8000, 0x02);
+            write_prg_byte(0x8001, i);
+            dumpBankCHR(0x1000, 0x1400);
+          }
+          break;
+
+        case 366:
+          banks = int_pow(2, chrsize) * 4;
+          write_prg_byte(0xA001, 0x80);
+          for (size_t i = 0; i < banks; i++) {
+            write_prg_byte(0x6800 + ((i & 0x380) >> 3), i);
+            write_prg_byte(0x8000, 0x02);
+            write_prg_byte(0x8001, i);
+            dumpBankCHR(0x1000, 0x1400);
           }
           break;
       }

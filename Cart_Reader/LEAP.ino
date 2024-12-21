@@ -103,7 +103,7 @@ byte leapsize;
 byte newleapsize;
 
 byte tempbyte;
-char tempword;
+word tempword;
 word ptrword;
 word tempcheck;
 
@@ -528,7 +528,7 @@ void setROMSize_LEAP()
   }
   print_Msg(FS(FSTRING_ROM_SIZE));
   print_Msg(LEAPSTER[newleapsize]);
-  println_Msg(F("KB"));
+  println_Msg(F("MB"));
   display_Update();
   delay(1000);
 #else
@@ -542,7 +542,7 @@ setrom:
       Serial.print(i);
       Serial.print(F(" = "));
       Serial.print(LEAPSTER[i + leaplo]);
-      Serial.println(F("KB"));
+      Serial.println(F("MB"));
     }
     Serial.print(F("Enter ROM Size: "));
     while (Serial.available() == 0) {}
@@ -557,7 +557,7 @@ setrom:
   }
   Serial.print(F("ROM Size = "));
   Serial.print(LEAPSTER[newleapsize]);
-  Serial.println(F("KB"));
+  Serial.println(F("MB"));
 #endif
   EEPROM_writeAnything(LEAP_SIZE, newleapsize);
   leapsize = newleapsize;
