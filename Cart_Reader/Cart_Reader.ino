@@ -329,11 +329,6 @@ boolean holdEventPast2 = false;      // whether or not the hold event happened a
 boolean longholdEventPast2 = false;  // whether or not the long hold event happened already
 #endif
 
-#ifdef ENABLE_SERIAL
-// For incoming serial data
-int incomingByte;
-#endif
-
 // Variables for the menu
 int choice = 0;
 // Temporary array that holds the menu option read out of progmem
@@ -2991,11 +2986,11 @@ byte questionBox_Serial(const __FlashStringHelper* question __attribute__((unuse
   while (Serial.available() == 0) {
   }
 
-  // Read the incoming byte:
-  incomingByte = Serial.read() - 48;
+  // Read the incoming byte (can't be -1, as there must be data available)
+  char incomingByte = Serial.read();
 
   // Page up (u)
-  if (incomingByte == 69) {
+  if (incomingByte == 'u') {
     if (currPage > 1) {
       lastPage = currPage;
       currPage--;
@@ -3005,7 +3000,7 @@ byte questionBox_Serial(const __FlashStringHelper* question __attribute__((unuse
   }
 
   // Page down (d)
-  else if (incomingByte == 52) {
+  else if (incomingByte == 'd') {
     if (numPages > currPage) {
       lastPage = currPage;
       currPage++;
@@ -3013,14 +3008,14 @@ byte questionBox_Serial(const __FlashStringHelper* question __attribute__((unuse
   }
 
   // Execute choice
-  else if ((incomingByte >= 0) && (incomingByte < 7)) {
+  else if ((incomingByte >= '0') && (incomingByte < '7')) {
     numPages = 0;
   }
 
   // Print the received byte for validation e.g. in case of a different keyboard mapping
   //Serial.println(incomingByte);
   //Serial.println(FS(FSTRING_EMPTY));
-  return incomingByte;
+  return incomingByte - '0';
 }
 #endif
 
@@ -3234,21 +3229,27 @@ void checkUpdater() {
 uint8_t checkButton() {
   while (Serial.available() == 0) {
   }
-  incomingByte = Serial.read() - 48;
+  // read() can't return -1 since there's data available.
+  char incomingByte = Serial.read();
 
   //Next
-  if (incomingByte == 52) {
+  if (incomingByte == 'd') {
     return 1;
   }
 
   //Previous
-  else if (incomingByte == 69) {
+  else if (incomingByte == 'u') {
     return 2;
   }
 
   //Selection
-  else if ((incomingByte == 240) || (incomingByte == -16) || (incomingByte == 0)) {
+  else if ((incomingByte == ' ') || (incomingByte == '0')) {
     return 3;
+  }
+
+  //Long Press (simulate)
+  else if ((incomingByte == 'l') || (incomingByte == 'L')) {
+    return 4;
   }
 
   return 0;
@@ -3260,37 +3261,8 @@ void wait_serial() {
   }
   while (Serial.available() == 0) {
   }
-  incomingByte = Serial.read() - 48;
-  /* if ((incomingByte == 53) && (fileName[0] != '\0')) {
-      // Open file on sd card
-      sd.chdir(folder);
-      if (myFile.open(fileName, O_READ)) {
-        // Get rom size from file
-        fileSize = myFile.fileSize();
-
-        // Send filesize
-        char tempStr[16];
-        sprintf_P(tempStr, PSTR("%d"), fileSize);
-        Serial.write(tempStr);
-
-        // Wait for ok
-        while (Serial.available() == 0) {
-        }
-
-        // Send file
-        for (unsigned long currByte = 0; currByte < fileSize; currByte++) {
-          // Blink led
-          if (currByte % 1024 == 0)
-            blinkLED();
-          Serial.write(myFile.read());
-        }
-        // Close the file:
-        myFile.close();
-      }
-      else {
-        print_FatalError(open_file_STR);
-      }
-    }*/
+  // Result is ignored, so don't even bother putting it in a variable
+  Serial.read();
 }
 #endif
 
