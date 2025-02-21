@@ -267,15 +267,19 @@ constexpr char string_right_to_select14[] PROGMEM = "and right to Select";
 constexpr char string_rotate_to_change15[] PROGMEM = "Rotate to Change";
 constexpr char string_press_to_select16[] PROGMEM = "Press to Select";
 
-static const char* const string_table[] PROGMEM = { string_press_button0, string_sd_error1, FSTRING_RESET, string_did_not_verify3, string_bytes4, string_error5, string_create_file6, string_open_file7, string_file_too_big8, string_done9, string_saving_to10, string_verifying11, string_flashing_file12, string_press_to_change13, string_right_to_select14, string_rotate_to_change15, string_press_to_select16 };
+static constexpr const char* const string_table[] PROGMEM = {
+  string_press_button0, string_sd_error1, FSTRING_RESET,
+  string_did_not_verify3, string_bytes4, string_error5, string_create_file6,
+  string_open_file7, string_file_too_big8, string_done9, string_saving_to10,
+  string_verifying11, string_flashing_file12, string_press_to_change13,
+  string_right_to_select14, string_rotate_to_change15, string_press_to_select16
+};
 
 void print_STR(byte string_number, boolean newline) {
-  char string_buffer[22];
-  strcpy_P(string_buffer, (char*)pgm_read_word(&(string_table[string_number])));
   if (newline)
-    println_Msg(string_buffer);
+    println_Msg(FS(pgm_read_word(string_table + string_number)));
   else
-    print_Msg(string_buffer);
+    print_Msg(FS(pgm_read_word(string_table + string_number)));
 }
 
 /******************************************
@@ -1959,19 +1963,12 @@ void dateTime(uint16_t* date, uint16_t* time) {
   Call in any other script
 *****************************************/
 // Format a Date/Time stamp
-String RTCStamp() {
+char* RTCStamp(char time[21]) {
   // Set a format
-  char dtstamp[] = "DDMMMYYYY hh:mm:ssAP";
+  memcpy(time, "DDMMMYYYY hh:mm:ssAP", 21);
 
   // Get current Date/Time
-  DateTime now = rtc.now();
-
-  // Convert it to a string and caps lock it
-  String dts = now.toString(dtstamp);
-  dts.toUpperCase();
-
-  // Print results
-  return dts;
+  return rtc.now().toString(time);
 }
 #endif
 
@@ -2051,7 +2048,7 @@ void clkcal() {
         print_Msg(F("Correction:"));
         println_Msg(String(cal_factor));
         print_Msg(F("Step:"));
-        print_right(cal_offset);
+        print_Msg(cal_offset);
         println_Msg(FS(FSTRING_EMPTY));
 #ifdef ENABLE_BUTTON2
         println_Msg(F("(Hold button to save)"));
@@ -2085,14 +2082,14 @@ void clkcal() {
 
       // if the cart readers input buttons is double clicked
       if (a == 2) {
-        cal_offset /= 10ULL;
+        cal_offset /= 10L;
         if (cal_offset < 1) {
-          cal_offset = 100000000ULL;
+          cal_offset = 100000000L;
         }
       }
       if (b == 2) {
-        cal_offset *= 10ULL;
-        if (cal_offset > 100000000ULL) {
+        cal_offset *= 10L;
+        if (cal_offset > 100000000L) {
           cal_offset = 1;
         }
       }
@@ -2119,8 +2116,8 @@ void clkcal() {
       }
 
       if (a == 3) {  //button short hold
-        cal_offset *= 10ULL;
-        if (cal_offset > 100000000ULL) {
+        cal_offset *= 10L;
+        if (cal_offset > 100000000L) {
           cal_offset = 1;
         }
       }
@@ -2131,22 +2128,6 @@ void clkcal() {
 #endif
     }
   }
-}
-
-void print_right(int32_t number) {
-  int32_t abs_number = number;
-  if (abs_number < 0)
-    abs_number *= -1;
-  else
-    print_Msg(FS(FSTRING_SPACE));
-
-  if (abs_number == 0)
-    abs_number = 1;
-  while (abs_number < 100000000ULL) {
-    print_Msg(FS(FSTRING_SPACE));
-    abs_number *= 10ULL;
-  }
-  println_Msg(number);
 }
 
 void savetofile() {
@@ -2166,42 +2147,32 @@ void savetofile() {
 #endif
 
 #if defined(OPTION_CLOCKGEN_CALIBRATION) || defined(OPTION_CLOCKGEN_USE_CALIBRATION)
-int32_t atoi32_signed(const char* input_string) {
-  if (input_string == NULL) {
-    return 0;
-  }
-
-  int int_sign = 1;
-  int i = 0;
-
-  if (input_string[0] == '-') {
-    int_sign = -1;
-    i = 1;
-  }
-
-  int32_t return_val = 0;
-
-  while (input_string[i] != '\0') {
-    if (input_string[i] >= '0' && input_string[i] <= '9') {
-      return_val = (return_val * 10) + (input_string[i] - '0');
-    } else if (input_string[i] != '\0') {
-      return 0;
-    }
-
-    i++;
-  }
-
-  return_val = return_val * int_sign;
-
-  return return_val;
-}
 
 int32_t readClockOffset() {
-  int32_t clock_offset;
+  FsFile clock_file;
+  if (!clock_file.open("/snes_clk.txt", O_READ)) {
+    return INT32_MIN;
+  }
 
-  EEPROM_readAnything(CLK_GEN_OFFSET, clock_offset);
+  char clock_buf[12] = {};
+  int8_t read = clock_file.read(clock_buf, 11);
+  clock_file.close();
+  if ((read == -1) || ((read == 11) && (clock_buf[0] != '-'))) {
+    return INT32_MIN;
+  }
 
-  return clock_offset;
+  for (uint8_t i = 0; i < 12; i++) {
+    if (clock_buf[i] != '-' && clock_buf[i] < '0' && clock_buf[i] > '9') {
+      if ((i == 0) || ((i == 1) && (clock_buf[0] == '-'))) {
+        return INT32_MIN;
+      } else {
+        clock_buf[i] = 0;
+        break;
+      }
+    }
+  }
+
+  return atol(clock_buf);
 }
 #endif
 
@@ -2484,7 +2455,7 @@ void setColor_RGB(byte r, byte g, byte b) {
 byte buildRomName(char* output, const byte* input, byte length) {
   byte input_char;
   byte output_len = 0;
-  for (unsigned int i = 0; i < length; i++) {
+  for (byte i = 0; i < length; i++) {
     input_char = input[i];
     if (isprint(input_char) && input_char != '<' && input_char != '>' && input_char != ':' && input_char != '"' && input_char != '/' && input_char != '\\' && input_char != '|' && input_char != '?' && input_char != '*') {
       output[output_len++] = input_char;
@@ -2658,23 +2629,19 @@ void print_Msg(const __FlashStringHelper* string) {
 void print_Msg(const char myString[]) {
 #if (defined(ENABLE_LCD) || defined(ENABLE_OLED))
   // test for word wrap
-  if ((display.tx + strlen(myString) * 6) > 128) {
-    unsigned int strPos = 0;
+  size_t strPos = 0;
+  while (myString[strPos]) {
+    if (display.tx >= 122) {
+      // Newline
+      if (display.ty + 8 > 56) {
+        break;
+      }
+      display.setCursor(0, display.ty + 8);
+    }
     // Print until end of display
-    while (display.tx < 122) {
-      display.print(myString[strPos]);
-      strPos++;
-    }
-    // Newline
-    display.setCursor(0, display.ty + 8);
-    // Print until end of display and ignore remaining characters
-    while ((strPos < strlen(myString)) && (display.tx < 122)) {
-      display.print(myString[strPos]);
-      strPos++;
-    }
-  } else {
-    display.print(myString);
+    display.print(myString[strPos++]);
   }
+
 #endif
 #ifdef ENABLE_SERIAL
   Serial.print(myString);
@@ -2800,24 +2767,7 @@ void println_Msg(byte message, int outputFormat) {
 
 void println_Msg(const char myString[]) {
 #if (defined(ENABLE_LCD) || defined(ENABLE_OLED))
-  // test for word wrap
-  if ((display.tx + strlen(myString) * 6) > 128) {
-    unsigned int strPos = 0;
-    // Print until end of display
-    while ((display.tx < 122) && (myString[strPos] != '\0')) {
-      display.print(myString[strPos]);
-      strPos++;
-    }
-    // Newline
-    display.setCursor(0, display.ty + 8);
-    // Print until end of display and ignore remaining characters
-    while ((strPos < strlen(myString)) && (display.tx < 122) && (myString[strPos] != '\0')) {
-      display.print(myString[strPos]);
-      strPos++;
-    }
-  } else {
-    display.print(myString);
-  }
+  print_Msg(myString);
   display.setCursor(0, display.ty + 8);
 #endif
 #ifdef ENABLE_SERIAL
@@ -3209,7 +3159,8 @@ void checkUpdater() {
         rtc.adjust(DateTime(cmd.substring(8).toInt()));
       }
       ClockedSerial.print(F("Current Time: "));
-      ClockedSerial.println(RTCStamp());
+      char time[21];
+      ClockedSerial.println(RTCStamp(time));
 #else  /* !ENABLE_RTC */
       ClockedSerial.println(FS(FSTRING_MODULE_NOT_ENABLED));
 #endif /* ENABLE_RTC */
@@ -3441,7 +3392,7 @@ uint8_t checkButton() {
 
   // Check if rotary encoder has changed
   if (rotaryPos != newPos) {
-    int rotaryDir = (int)encoder.getDirection();
+    int8_t rotaryDir = static_cast<int8_t>(encoder.getDirection());
     rotaryPos = newPos;
     if (rotaryDir == 1) {
       return 1;
@@ -3705,39 +3656,7 @@ page:
   }
 
   // wait for user choice to come back from the question box menu
-  switch (answer) {
-    case 0:
-      strncpy(fileName, fileNames[0], FILENAME_LENGTH - 1);
-      break;
-
-    case 1:
-      strncpy(fileName, fileNames[1], FILENAME_LENGTH - 1);
-      break;
-
-    case 2:
-      strncpy(fileName, fileNames[2], FILENAME_LENGTH - 1);
-      break;
-
-    case 3:
-      strncpy(fileName, fileNames[3], FILENAME_LENGTH - 1);
-      break;
-
-    case 4:
-      strncpy(fileName, fileNames[4], FILENAME_LENGTH - 1);
-      break;
-
-    case 5:
-      strncpy(fileName, fileNames[5], FILENAME_LENGTH - 1);
-      break;
-
-    case 6:
-      strncpy(fileName, fileNames[6], FILENAME_LENGTH - 1);
-      break;
-
-      //case 7:
-      // File import
-      //break;
-  }
+  strncpy(fileName, fileNames[answer], FILENAME_LENGTH - 1);
 
   // Add directory to our filepath if we just entered a new directory
   if (fileName[0] == '/') {

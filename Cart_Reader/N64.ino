@@ -2151,7 +2151,7 @@ void getCartInfo_N64() {
       // If no match skip to next entry
       else {
         // skip rest of line
-        skip_line(&myFile);
+        myFile.seekCur(7);
         // skip third empty line
         skip_line(&myFile);
       }
@@ -3017,7 +3017,8 @@ void savesummary_N64(boolean checkfound, char crcStr[9], unsigned long timeElaps
 
 #ifdef ENABLE_RTC
   myFile.print(F("Dumped\t: "));
-  myFile.println(RTCStamp());
+  char time[21];
+  myFile.println(RTCStamp(time));
 #endif
 
   myFile.print(F("CRC\t: "));
