@@ -19,6 +19,9 @@ Atari 7800 Development Card
 Attack of the Petscii Robots
 7,4
 
+A.R.T.I.
+1,6
+
 Ballblazer
 0,1
 
@@ -38,7 +41,7 @@ Berzerk
 0,2
 
 Bounty Bob Strikes Back!
-8,5
+8,2
 
 Centipede
 0,0
@@ -51,6 +54,9 @@ Choplifter! (USA)
 
 Commando
 1,4
+
+Countermeasure 2
+0,2
 
 Crack'ed
 1,4
@@ -196,6 +202,9 @@ Space Duel
 Summer Games
 1,4
 
+Super Circus Atari
+8,1
+
 Super Huey UH-IX
 0,2
 
@@ -204,6 +213,9 @@ Super Skateboardin'
 
 Tank Command
 5,3
+
+Tiger-Heli
+8,5
 
 Title Match Pro Wrestling
 0,1

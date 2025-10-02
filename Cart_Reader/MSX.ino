@@ -518,7 +518,7 @@ void readROM_MSX() {
 
       case 14: // Hudson Soft Bee Pack (16K/32K)
         CS1_ENABLE;
-        readSegment_MSX(0x4000,0x8000); // 16K Bank 0
+        readSegment_MSX(0x4000, 0x8000); // 16K Bank 0
         CS1_DISABLE;
         if (msxsize == 3) { // 32K
           CS2_ENABLE;
@@ -846,7 +846,7 @@ void setMapper_MSX() {
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   navigateMenu(0, msxmapcount - 1, &printMapperSelection_MSX);
   newmsxmapper = msxmapselect;
-  
+
   display.setCursor(0, 56);
   print_Msg(F("MAPPER "));
   print_Msg(newmsxmapper);
@@ -900,9 +900,9 @@ void checkMapperSize_MSX() {
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
 void printRomSize_MSX(uint8_t index) {
-    display_Clear();
-    print_Msg(FS(FSTRING_ROM_SIZE));
-    println_Msg(MSX[index]);
+  display_Clear();
+  print_Msg(FS(FSTRING_ROM_SIZE));
+  println_Msg(MSX[index]);
 }
 #endif
 
@@ -1021,9 +1021,9 @@ setrom:
 
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
 void printRamSize_MSX(uint8_t index) {
-    display_Clear();
-    print_Msg(F("RAM Size: "));
-    println_Msg(MSXRAM[index]);
+  display_Clear();
+  print_Msg(F("RAM Size: "));
+  println_Msg(MSXRAM[index]);
 }
 #endif
 

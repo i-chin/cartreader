@@ -17,6 +17,13 @@ boolean isSVP = 0;
 #if (!defined(ENABLE_FLASH8) && defined(ENABLE_FLASH))
 unsigned long blank;
 #endif
+#ifdef ENABLE_FLASH
+unsigned long flashSizeCFI[] = {0, 0};
+unsigned long totalFlashSizeCFI = 0;
+unsigned long chipIdLowCFI[] = {0, 0};
+unsigned long chipIdHighCFI[] = {0, 0};
+byte totalChipsCFI = 0;
+#endif
 
 //***********************************************
 // EEPROM SAVE TYPES
@@ -34,7 +41,7 @@ byte eepType;
 // chksum is located in ROM at 0x18E (0xC7)
 // eepType and eepSize are combined to conserve memory
 //*********************************************************
-const byte MDSize[] PROGMEM = { 1, 2, 4, 8, 12, 16, 20, 24, 32, 40 };
+const byte MDSize[] PROGMEM = { 1, 2, 4, 8, 12, 16, 20, 24, 32, 40, 72, 120 };
 
 static const word PROGMEM eepid[] = {
   // ACCLAIM TYPE 1
@@ -214,7 +221,8 @@ void pulse_clock(int n) {
 static const char MDMenuItem1[] PROGMEM = "Game Cartridge";
 static const char MDMenuItem2[] PROGMEM = "SegaCD RamCart";
 static const char MDMenuItem3[] PROGMEM = "Flash Repro";
-static const char* const menuOptionsMD[] PROGMEM = { MDMenuItem1, MDMenuItem2, MDMenuItem3, FSTRING_RESET };
+static const char MDMenuItem4[] PROGMEM = "Flash CFI";
+static const char* const menuOptionsMD[] PROGMEM = { MDMenuItem1, MDMenuItem2, MDMenuItem3, MDMenuItem4, FSTRING_RESET };
 
 // Cart menu items
 static const char MDCartMenuItem4[] PROGMEM = "Force ROM size";
@@ -230,8 +238,8 @@ void mdMenu() {
   // create menu with title and 4 options to choose from
   unsigned char mdDev;
   // Copy menuOptions out of progmem
-  convertPgm(menuOptionsMD, 4);
-  mdDev = question_box(F("Select MD device"), menuOptions, 4, 0);
+  convertPgm(menuOptionsMD, 5);
+  mdDev = question_box(F("Select MD device"), menuOptions, 5, 0);
 
   // wait for user choice to come back from the question box menu
   switch (mdDev) {
@@ -300,9 +308,42 @@ void mdMenu() {
       display_Update();
       wait();
       break;
-#endif
 
     case 3:
+      display_Clear();
+      display_Update();
+      setup_MD();
+      mode = CORE_MD_CART;
+      // Change working dir to root
+      filePath[0] = '\0';
+      sd.chdir("/");
+      fileBrowser(FS(FSTRING_SELECT_FILE));
+      display_Clear();
+      sprintf(filePath, "%s/%s", filePath, fileName);
+      // Setting CS(PH3) LOW
+      PORTH &= ~(1 << 3);
+      display_Clear();
+      // Ensure the SRAM is not enabled
+      enableSram_MD(0);
+      identifyFlashCFI_MD();
+      eraseFlashCFI_MD();
+      writeCFI_MD();
+      resetFlashCFI_MD();
+      delay(1000);
+      display_Clear();
+      println_Msg(F("Verifying..."));
+      verifyFlashCFI_MD();
+      // Set CS(PH3) HIGH
+      PORTH |= (1 << 3);
+      // Prints string out of the common strings array either with or without newline
+      print_STR(press_button_STR, 1);
+      display_Update();
+      wait();
+      break;
+
+#endif
+
+    case 4:
       resetArduino();
       break;
 
@@ -910,7 +951,7 @@ void getCartInfo_MD() {
     chksum = 0xC560;
     cartSize = 0xA0000;
   }
-  
+
   // Slaughter Sport (USA)
   if (!strncmp("GMT5604600jJ", romName, 12) && (chksum == 0xFFFF)) {
     strcpy(romName, "SLAUGHTERSPORT");
@@ -2969,14 +3010,20 @@ void readRealtec_MD() {
 }
 
 void printRomSize_MD(int index) {
+#ifdef ENABLE_GLOBAL_LOG
+  dont_log = true;
+#endif
   display_Clear();
   print_Msg(FS(FSTRING_ROM_SIZE));
   print_Msg(pgm_read_byte(&(MDSize[index])));
   println_Msg(F(" Mbit"));
+#ifdef ENABLE_GLOBAL_LOG
+  dont_log = false;
+#endif
 }
 
 void force_cartSize_MD() {
-  cartSize = navigateMenu(0, 9, &printRomSize_MD);
+  cartSize = navigateMenu(0, sizeof(MDSize) - 1, &printRomSize_MD);
   cartSize = pgm_read_byte(&(MDSize[cartSize])) * 131072;
 #if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
   display.setCursor(0, 56);  // Display selection at bottom
@@ -2988,7 +3035,325 @@ void force_cartSize_MD() {
   delay(1000);
 }
 
-#endif
+// CFI Support
+#ifdef ENABLE_FLASH
+void eraseFlashCFI_MD() {
+  for (byte currChip = 0; currChip < totalChipsCFI; currChip++) {
+    print_Msg(F("Erasing Chip"));
+    print_Msg(currChip);
+    println_Msg("...");
+    display_Update();
+    eraseFlashCFIChip_MD(currChip);
+  }
+  display_Clear();
+}
+
+void eraseFlashCFIChip_MD(byte currChip) {
+  resetFlashCFIChip_MD(currChip);
+
+  dataOut_MD();
+  sendCFICommand_MD(currChip, 0x80);
+  sendCFICommand_MD(currChip, 0x10);
+
+  dataIn_MD();
+  byte statusReg = readFlashCFI_MD(currChip, 0);
+  while ((statusReg & 0x80) != 0x80) {
+    blinkLED();
+    delay(100);
+    statusReg = readFlashCFI_MD(currChip, 0);
+  }
+}
+
+void resetFlashCFI_MD() {
+  for (byte currChip = 0; currChip < totalChipsCFI; currChip++) {
+    resetFlashCFIChip_MD(currChip);
+  }
+}
+
+void resetFlashCFIChip_MD(byte currChip) {
+  dataOut_MD();
+  writeFlashCFI_MD(currChip, 0x555, 0xf0);
+  delay(100);
+}
+
+void writeCFI_MD() {
+  if (myFile.open(filePath, O_READ)) {
+    // Get rom size from file
+    fileSize = myFile.fileSize();
+    if (fileSize > totalFlashSizeCFI) {
+      print_FatalError(file_too_big_STR);
+      return;
+    }
+
+    unsigned long flashed = 0;
+    byte currChip = 0;
+    while (flashed < fileSize) {
+      unsigned long toFlash = min(fileSize - flashed, flashSizeCFI[currChip]);
+      writeCFIChip_MD(currChip, toFlash, fileSize);
+      flashed += toFlash;
+      currChip++;
+    }
+
+    myFile.close();
+  } else {
+    print_FatalError(sd_error_STR);
+  }
+}
+
+void writeCFIChip_MD(byte currChip, unsigned long toFlash, unsigned long fileSize) {
+  display_Clear();
+  print_STR(flashing_file_STR, 0);
+  print_Msg(filePath);
+  println_Msg(F("..."));
+  print_Msg(F("Writing"));
+  if (currChip == 0 && toFlash == fileSize)  {
+    println_Msg("...");
+  } else {
+    print_Msg(" Chip");
+    print_Msg(currChip);
+    println_Msg("...");
+  }
+  display_Update();
+
+  //Initialize progress bar
+  uint32_t processedProgressBar = 0;
+  uint32_t totalProgressBar = (uint32_t)toFlash / 2;
+  draw_progressbar(0, totalProgressBar);
+
+  resetFlashCFIChip_MD(currChip);
+  for (unsigned long a = 0; a < toFlash / 2; a += 256) {
+    myFile.read(sdBuffer, 512);
+
+    for (int c = 0; c < 256; c++) {
+      dataOut_MD();
+      sendCFICommand_MD(currChip, 0xa0);
+
+      word currWord = ((sdBuffer[c*2] & 0xFF) << 8) | (sdBuffer[c*2 + 1] & 0xFF);
+      writeFlashCFI_MD(currChip, a + c, currWord);
+
+      dataIn_MD();
+      byte statusReg = readFlashCFI_MD(currChip, a + c);
+      while ((statusReg & 0x80) != (sdBuffer[c*2+1] & 0x80)) {
+        statusReg = readFlashCFI_MD(currChip, a + c);
+      }
+    }
+
+    // update progress bar
+    processedProgressBar += 256;
+    draw_progressbar(processedProgressBar, totalProgressBar);
+  }
+
+  resetFlashCFIChip_MD(currChip);
+}
+
+void verifyFlashCFI_MD() {
+  // Open file on sd card
+  if (myFile.open(filePath, O_READ)) {
+    // Get rom size from file
+    fileSize = myFile.fileSize();
+    if (fileSize > totalFlashSizeCFI) {
+      print_FatalError(file_too_big_STR);
+    }
+
+    unsigned long verified = 0;
+    byte currChip = 0;
+    while (verified < fileSize) {
+      unsigned long toVerify = min(fileSize - verified, flashSizeCFI[currChip]);
+      verifyFlashCFIChip_MD(currChip, toVerify);
+      verified += toVerify;
+      currChip++;
+    }
+
+    myFile.close();
+  } else {
+    print_STR(open_file_STR, 1);
+    display_Update();
+  }
+}
+
+void verifyFlashCFIChip_MD(byte currChip, unsigned long toVerify) {
+  print_Msg(F("Verifying Chip"));
+  print_Msg(currChip);
+  println_Msg(F("..."));
+  display_Update();
+
+  blank = 0;
+  word d = 0;
+  dataIn_MD();
+  for (unsigned long a = 0; a < toVerify / 2; a += 256) {
+    myFile.read(sdBuffer, 512);
+
+    for (int c = 0; c < 256; c++) {
+      word currWord = ((sdBuffer[c*2] & 0xFF) << 8) | (sdBuffer[c*2 + 1] & 0xFF);
+      if (readFlashCFI_MD(currChip, a + c) != currWord) {
+        blank++;
+      }
+    }
+  }
+
+  if (blank == 0) {
+    println_Msg(F("Flashrom verified OK"));
+    display_Update();
+  } else {
+    print_STR(error_STR, 0);
+    print_Msg(blank);
+    print_STR(_bytes_STR, 1);
+    print_Error(did_not_verify_STR);
+  }
+}
+
+void identifyFlashCFI_MD() {
+  totalChipsCFI = 0;
+  totalFlashSizeCFI = 0;
+
+  if (identifyFlashCFIChip_MD(0) || identifyCFI_29F800_MD(0)) {
+    totalFlashSizeCFI += flashSizeCFI[0];
+  } else {
+    println_Msg(F("CFI Query failed!"));
+    resetFlashCFIChip_MD(0);
+    print_STR(press_button_STR, 0);
+    display_Update();
+    wait();
+    resetArduino();
+    return;
+  }
+
+  if (totalFlashSizeCFI < 2097152) {
+    // Only supports 2 flash chips if the first one is 16Mbit.
+    return;
+  }
+
+  if (identifySramCFI_MD(1)) {
+    println_Msg(F("Chip1 SRAM"));
+    display_Update();
+    return;
+  }
+
+  if (identifyFlashCFIChip_MD(1)) {
+    totalFlashSizeCFI += flashSizeCFI[1];
+  }
+}
+
+bool identifySramCFI_MD(byte currChip) {
+  dataIn_MD();
+  word firstWord = readFlashCFI_MD(currChip, 0x0);
+  dataOut_MD();
+  writeFlashCFI_MD(currChip, 0x0, firstWord + 0x0101);
+  dataIn_MD();
+  word readBack = readFlashCFI_MD(currChip, 0x0);
+  dataOut_MD();
+  writeFlashCFI_MD(currChip, 0x0, firstWord);
+  dataIn_MD();
+  // If we were able to change the value, this is a SRAM Chip and not Flash.
+  return firstWord != readBack;
+}
+
+bool identifyFlashCFIChip_MD(byte currChip) {
+  startCFIMode_MD(currChip);
+  dataIn_MD();
+  char cfiQRYx16[13];
+  sprintf(cfiQRYx16, "%02X%02X%02X",
+    readFlashCFI_MD(currChip, 0x10),
+    readFlashCFI_MD(currChip, 0x11),
+    readFlashCFI_MD(currChip, 0x12));
+
+  char cfiID[17];
+  unsigned long chipIdHigh = (long(readFlashCFI_MD(currChip, 0x61)) << 16)
+        | readFlashCFI_MD(currChip, 0x62);
+  unsigned long chipIdLow = (long(readFlashCFI_MD(currChip, 0x63)) << 16)
+        | readFlashCFI_MD(currChip, 0x64);
+  sprintf(cfiID, "%08lX%08lX", chipIdHigh, chipIdLow);
+  chipIdLowCFI[currChip] = chipIdLow;
+  chipIdHighCFI[currChip] = chipIdHigh;
+
+  if (currChip == 1 && chipIdLowCFI[0] == chipIdLow && chipIdHighCFI[0] == chipIdHigh) {
+    // If the ID matches then this board has only one flash chip
+    resetFlashCFIChip_MD(currChip);
+    dataIn_MD();
+    return false;
+  }
+
+  word sizeReg = readFlashCFI_MD(currChip, 0x27);
+  unsigned long size = 1L << sizeReg;
+  if (strcmp(cfiQRYx16, "515259") != 0) {  // QRY in x16 mode
+    // Did not return "QRY", does not support CFI
+    return false;
+  }
+
+  totalChipsCFI++;
+  flashSizeCFI[currChip] = size;
+  print_Msg(F("Chip"));
+  print_Msg(currChip);
+  print_Msg(F(" CFI "));
+  print_Msg(size >> 17);
+  println_Msg(F("MBit x16"));
+  print_Msg(F("SN: "));
+  println_Msg(cfiID);
+  display_Update();
+
+  // Reset flash
+  resetFlashCFIChip_MD(currChip);
+  dataIn_MD();
+
+  return true;
+}
+
+// The 29F800 is compatible with CFI commands but does not offer
+// the ID part of CFI so we have to identify it here.
+bool identifyCFI_29F800_MD(byte currChip) {
+  resetFlashCFIChip_MD(currChip);
+  dataOut_MD();
+  sendCFICommand_MD(currChip, 0x90);
+  dataIn_MD();
+  word deviceId = readFlashCFI_MD(currChip, 0x01);
+  if (deviceId == 0x2258) {
+    totalChipsCFI++;
+    flashSizeCFI[currChip] = 1048576;
+    print_Msg(F("Chip"));
+    print_Msg(currChip);
+    println_Msg(F(" 8MBit 29F800"));
+    display_Update();
+    return true;
+  }
+  return false;
+}
+
+void sendCFICommand_MD(byte currChip, byte cmd) {
+  writeFlashCFI_MD(currChip, 0x555, 0xaa);
+  writeFlashCFI_MD(currChip, 0x2AA, 0x55);
+  writeFlashCFI_MD(currChip, 0x555, cmd);
+}
+
+void startCFIMode_MD(byte currChip) {
+  dataOut_MD();
+  writeFlashCFI_MD(currChip, 0x555, 0xf0);  //x16 mode reset command
+  delay(500);
+  writeFlashCFI_MD(currChip, 0x555, 0xf0);  //Double reset to get out of possible Autoselect + CFI mode
+  delay(500);
+  writeFlashCFI_MD(currChip, 0x55, 0x98);  //x16 CFI Query command
+}
+
+void writeFlashCFI_MD(byte currChip, unsigned long myAddress, word myData) {
+  if (currChip == 1) {
+    // Pin A20 switches from low to high ROM
+    return writeFlash_MD(myAddress | (1L << 20), myData);
+  } else {
+    return writeFlash_MD(myAddress, myData);
+  }
+}
+
+word readFlashCFI_MD(byte currChip, unsigned long myAddress) {
+  if (currChip == 1) {
+    // Pin A20 switches from low to high ROM
+    return readFlash_MD(myAddress | (1L << 20));
+  } else {
+    return readFlash_MD(myAddress);
+  }
+}
+
+#endif // ENABLE_FLASH
+
+#endif // ENABLE_MD
 
 //******************************************
 // End of File

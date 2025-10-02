@@ -63,7 +63,8 @@ static const char* const menuOptionsN64Controller[] PROGMEM = { N64ContMenuItem1
 
 // N64 cart menu items
 static const char N64CartMenuItem4[] PROGMEM = "Force Savetype";
-static const char* const menuOptionsN64Cart[] PROGMEM = { FSTRING_READ_ROM, FSTRING_READ_SAVE, FSTRING_WRITE_SAVE, N64CartMenuItem4, FSTRING_RESET };
+static const char N64CartMenuItem5[] PROGMEM = "Force ROM size";
+static const char* const menuOptionsN64Cart[] PROGMEM = { FSTRING_READ_ROM, FSTRING_READ_SAVE, FSTRING_WRITE_SAVE, N64CartMenuItem4, N64CartMenuItem5, FSTRING_RESET };
 
 // Rom menu
 static const char N64RomItem1[] PROGMEM = "4 MB";
@@ -84,6 +85,11 @@ static const char N64SaveItem5[] PROGMEM = "FLASH";
 static const char* const saveOptionsN64[] PROGMEM = { N64SaveItem1, N64SaveItem2, N64SaveItem3, N64SaveItem4, N64SaveItem5 };
 
 #if defined(ENABLE_FLASH)
+// N64 erase selection items
+static const char N64FlashEraseItem1[] PROGMEM = "Yes";
+static const char N64FlashEraseItem2[] PROGMEM = "No";
+static const char* const menuOptionsN64FlashErase[] PROGMEM = { N64FlashEraseItem1, N64FlashEraseItem2 };
+
 // Repro write buffer menu
 static const char N64BufferItem1[] PROGMEM = "No buffer";
 static const char N64BufferItem2[] PROGMEM = "32 Byte";
@@ -238,11 +244,11 @@ void n64ControllerMenu() {
 
 // N64 Cartridge Menu
 void n64CartMenu() {
-  // create menu with title and 4 options to choose from
+  // create menu with title and 6 options to choose from
   unsigned char mainMenu;
   // Copy menuOptions out of progmem
-  convertPgm(menuOptionsN64Cart, 5);
-  mainMenu = question_box(F("N64 Cart Reader"), menuOptions, 5, 0);
+  convertPgm(menuOptionsN64Cart, 6);
+  mainMenu = question_box(F("N64 Cart Reader"), menuOptions, 6, 0);
 
   // wait for user choice to come back from the question box menu
   switch (mainMenu) {
@@ -422,6 +428,52 @@ void n64CartMenu() {
       break;
 
     case 4:
+      // Set cartsize manually
+      unsigned char N64RomMenu;
+      // Copy menuOptions out of progmem
+      convertPgm(romOptionsN64, 7);
+      N64RomMenu = question_box(F("Select ROM size"), menuOptions, 7, 0);
+
+      // wait for user choice to come back from the question box menu
+      switch (N64RomMenu) {
+        case 0:
+          // 4MB
+          cartSize = 4;
+          break;
+
+        case 1:
+          // 8MB
+          cartSize = 8;
+          break;
+
+        case 2:
+          // 12MB
+          cartSize = 12;
+          break;
+
+        case 3:
+          // 16MB
+          cartSize = 16;
+          break;
+
+        case 4:
+          // 32MB
+          cartSize = 32;
+          break;
+
+        case 5:
+          // 64MB
+          cartSize = 64;
+          break;
+
+        case 6:
+          // 128MB
+          cartSize = 128;
+          break;
+      }
+      break;
+
+    case 5:
       resetArduino();
       break;
   }
@@ -833,13 +885,13 @@ void sendJoyBus(const byte* buffer, char length) {
                        //   instruction. Pick Z as it is the only call-used such register,
                        //   avoiding the need to preserve any value a caller may have set it to.
                        : [buffer] "+z"(buffer),
-                         [length] "+r"(length),
-                         [cur_byte] "=&r"(cur_byte),
-                         [mask] "=&a"(mask),
-                         [scratch] "=&a"(scratch)
+                       [length] "+r"(length),
+                       [cur_byte] "=&r"(cur_byte),
+                       [mask] "=&a"(mask),
+                       [scratch] "=&a"(scratch)
                        : [line_low] "r"(line_low),
-                         [line_high] "r"(line_high),
-                         [out_byte] "i"(&DDRH)
+                       [line_high] "r"(line_high),
+                       [out_byte] "i"(&DDRH)
                        : "cc", "memory");
 }
 
@@ -940,13 +992,13 @@ word recvJoyBus(byte* output, byte byte_count) {
                        "\trjmp .read_end_%=\n"              // 2
                        ".read_end_%=:\n"
                        : [output] "+z"(output),
-                         [byte_count] "+r"(byte_count),
-                         [mask] "=&a"(mask),
-                         [cur_byte] "=&r"(cur_byte),
-                         [timeout] "=&a"(timeout),
-                         [scratch] "=&a"(scratch)
+                       [byte_count] "+r"(byte_count),
+                       [mask] "=&a"(mask),
+                       [cur_byte] "=&r"(cur_byte),
+                       [timeout] "=&a"(timeout),
+                       [scratch] "=&a"(scratch)
                        : [in_byte] "i"(&PINH),
-                         [in_bit] "i"(4)
+                       [in_bit] "i"(4)
                        : "cc", "memory");
   return byte_count;
 }
@@ -2001,50 +2053,7 @@ void printCartInfo_N64() {
     print_STR(press_button_STR, 1);
     display_Update();
     wait();
-
-    // Set cartsize manually
-    unsigned char N64RomMenu;
-    // Copy menuOptions out of progmem
-    convertPgm(romOptionsN64, 7);
-    N64RomMenu = question_box(F("Select ROM size"), menuOptions, 7, 0);
-
-    // wait for user choice to come back from the question box menu
-    switch (N64RomMenu) {
-      case 0:
-        // 4MB
-        cartSize = 4;
-        break;
-
-      case 1:
-        // 8MB
-        cartSize = 8;
-        break;
-
-      case 2:
-        // 12MB
-        cartSize = 12;
-        break;
-
-      case 3:
-        // 16MB
-        cartSize = 16;
-        break;
-
-      case 4:
-        // 32MB
-        cartSize = 32;
-        break;
-
-      case 5:
-        // 64MB
-        cartSize = 64;
-        break;
-
-      case 6:
-        // 128MB
-        cartSize = 128;
-        break;
-    }
+    cartSize = 2;
   }
 }
 
@@ -2118,6 +2127,9 @@ void getCartInfo_N64() {
   display_Clear();
   println_Msg(F("Searching database..."));
   display_Update();
+#if defined(SERIAL_MONITOR)
+  println_Msg(FS(FSTRING_EMPTY));
+#endif
 
   if (myFile.open("n64.txt", O_READ)) {
     // Loop through file
@@ -2165,6 +2177,38 @@ void getCartInfo_N64() {
   }
 }
 
+void printSlotNumber(int index) {
+  display_Clear();
+  print_Msg(F("Slot Number: "));
+  if (index == 0)
+    println_Msg(F("Menu"));
+  else if (index == 21)
+    println_Msg(F("2nd half"));
+  else
+    println_Msg(index);
+}
+
+byte selectSlotNumber() {
+  byte slotNumber;
+  slotNumber = navigateMenu(0, 21, &printSlotNumber);
+#if (defined(ENABLE_OLED) || defined(ENABLE_LCD))
+  display.setCursor(0, 56);  // Display selection at bottom
+#endif
+  print_Msg(F("Slot Number: "));
+  if (slotNumber == 0)
+    println_Msg(F("Menu"));
+  else if (slotNumber == 21)
+    println_Msg(F("2nd half"));
+  else
+    println_Msg(slotNumber);
+  display_Update();
+#if defined(SERIAL_MONITOR)
+  println_Msg(FS(FSTRING_EMPTY));
+#endif
+  delay(200);
+  return slotNumber;
+}
+
 // Read rom ID
 void idCart() {
   // Set the address
@@ -2198,6 +2242,68 @@ void idCart() {
   // If name consists out of all japanese characters use cart id
   if (buildRomName(romName, &sdBuffer[0x20], 20) == 0) {
     strcpy(romName, cartID);
+  }
+
+  // 18-in-1 repro
+  if (strcmp("CZN Production!", romName) == 0) {
+    word cmdOne;
+    word cmdTwo;
+    byte slotNum = selectSlotNumber();
+
+    // 1st half with menu (power-on default)
+    if (slotNum == 0) {
+      cmdOne = 0x0000;
+      cmdTwo = 0x0800;
+    }
+    // 2nd half of rom chip
+    else if (slotNum == 21) {
+      cmdOne = 0x0000;
+      cmdTwo = 0x0C00;
+    }
+    // Set game
+    else {
+      setAddress_N64(romBase + 0x00101000 + (slotNum - 1) * 4);
+      cmdOne = readWord_N64();
+      cmdTwo = readWord_N64();
+    }
+
+    // Set 18-in-1 mapper
+    setAddress_N64(0x8000000);
+    writeWord_N64(cmdOne);
+    setAddress_N64(0x8000002);
+    writeWord_N64(cmdTwo);
+
+    // Read rom header again
+    setAddress_N64(romBase);
+    for (int c = 0; c < 64; c += 2) {
+      // split word
+      word myWord = readWord_N64();
+      byte loByte = myWord & 0xFF;
+      byte hiByte = myWord >> 8;
+
+      // write to buffer
+      sdBuffer[c] = hiByte;
+      sdBuffer[c + 1] = loByte;
+    }
+    // Pull ale_H(PC1) high
+    PORTC |= (1 << 1);
+
+    // CRC1
+    sprintf(checksumStr, "%02X%02X%02X%02X", sdBuffer[0x10], sdBuffer[0x11], sdBuffer[0x12], sdBuffer[0x13]);
+
+    // Get cart id
+    cartID[0] = sdBuffer[0x3B];
+    cartID[1] = sdBuffer[0x3C];
+    cartID[2] = sdBuffer[0x3D];
+    cartID[3] = sdBuffer[0x3E];
+
+    // Get rom version
+    romVersion = sdBuffer[0x3F];
+
+    // If name consists out of all japanese characters use cart id
+    if (buildRomName(romName, &sdBuffer[0x20], 20) == 0) {
+      strcpy(romName, cartID);
+    }
   }
 
 #ifdef OPTION_N64_SAVESUMMARY
@@ -2267,7 +2373,7 @@ void writeEeprom_N64() {
   }
 }
 
-boolean readEepromPageList(byte* output, byte page_number, byte page_count) {
+boolean readEepromPageList(byte * output, byte page_number, byte page_count) {
   byte command[] = { 0x04, page_number };
 
   // Disable interrupts for more uniform clock pulses
@@ -2835,7 +2941,7 @@ void readRom_N64() {
 
   //Initialize progress bar
   uint32_t processedProgressBar = 0;
-  uint32_t totalProgressBar = (uint32_t)(cartSize)*1024 * 1024;
+  uint32_t totalProgressBar = (uint32_t)(cartSize) * 1024 * 1024;
   draw_progressbar(0, totalProgressBar);
 
   for (unsigned long currByte = romBase; currByte < (romBase + (cartSize * 1024 * 1024)); currByte += 512) {
@@ -2880,7 +2986,7 @@ uint32_t readRom_N64() {
 
   //Initialize progress bar
   uint32_t processedProgressBar = 0;
-  uint32_t totalProgressBar = (uint32_t)(cartSize)*1024 * 1024;
+  uint32_t totalProgressBar = (uint32_t)(cartSize) * 1024 * 1024;
   draw_progressbar(0, totalProgressBar);
 
   // prepare crc32
@@ -3236,6 +3342,25 @@ void flashRepro_N64() {
 
   // Open file on sd card
   if (myFile.open(filePath, O_READ)) {
+    // create submenu with title and 2 options to choose from
+    boolean selectedErase = 0;
+    unsigned char n64FlashErase;
+    // Copy menuOptions out of progmem
+    convertPgm(menuOptionsN64FlashErase, 2);
+    n64FlashErase = question_box(F("Erase?"), menuOptions, 2, 0);
+
+    // wait for user choice to come back from the question box menu
+    switch (n64FlashErase) {
+      case 0:
+        selectedErase = 1;
+        break;
+
+      case 1:
+        selectedErase = 0;
+        break;
+    }
+
+    display_Clear();
     // Get rom size from file
     fileSize = myFile.fileSize();
     print_Msg(F("File size: "));
@@ -3248,22 +3373,28 @@ void flashRepro_N64() {
       print_FatalError(file_too_big_STR);
     }
 
-    // Erase needed sectors
-    if (flashid == 0x227E) {
-      // Spansion S29GL256N or Fujitsu MSP55LV512 with 0x20000 sector size and 32 byte buffer
-      eraseSector_N64(0x20000);
-    } else if (flashid == 0x7E7E) {
-      // Fujitsu MSP55LV100S
-      eraseMSP55LV100_N64();
-    } else if ((flashid == 0x8813) || (flashid == 0x8816)) {
-      // Intel 4400L0ZDQ0
-      eraseIntel4400_N64();
-      resetIntel4400_N64();
-    } else if ((flashid == 0x22C9) || (flashid == 0x22CB)) {
-      // Macronix MX29LV640, C9 is top boot and CB is bottom boot block
-      eraseSector_N64(0x8000);
-    } else {
-      eraseFlashrom_N64();
+    if (selectedErase) {
+      // Erase needed sectors
+      if (flashid == 0x227E) {
+        // Spansion S29GL256N or Fujitsu MSP55LV512 with 0x20000 sector size and 32 byte buffer
+        eraseSector_N64(0x20000);
+      } else if (flashid == 0x7E7E) {
+        // Fujitsu MSP55LV100S
+        eraseMSP55LV100_N64();
+      } else if ((flashid == 0x8813) || (flashid == 0x8816)) {
+        // Intel 4400L0ZDQ0
+        eraseIntel4400_N64();
+        resetIntel4400_N64();
+      } else if ((flashid == 0x22C9) || (flashid == 0x22CB)) {
+        // Macronix MX29LV640, C9 is top boot and CB is bottom boot block
+        eraseSector_N64(0x8000);
+      } else {
+        eraseFlashrom_N64();
+      }
+    }
+    else {
+      print_Msg(F("Blankcheck..."));
+      display_Update();
     }
 
     // Check if erase was successful
@@ -3642,7 +3773,7 @@ void eraseMSP55LV100_N64() {
     // Blink led
     blinkLED();
 
-    // Send Erase Command to first chip
+    // Send Erase Command
     setAddress_N64(flashBase + (0x555 << 1));
     writeWord_N64(0xAAAA);
     setAddress_N64(flashBase + (0x2AA << 1));

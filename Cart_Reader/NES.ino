@@ -312,6 +312,7 @@ static const struct mapper_NES PROGMEM mapsize[] = {
   { 288, 0, 3, 0, 4, 0, 0 },   // GKCXIN1 (21-in-1)
   { 289, 5, 7, 0, 0, 0, 0 },   // 60311C / N76A-1
   { 290, 0, 5, 0, 4, 0, 0 },   // Asder 20-in-1
+  { 312, 0, 3, 0, 0, 0, 0 },   // Kaiser's Highway Star
   // 313 - undumpable (reset-based TKROM multicarts)
   { 314, 6, 7, 0, 7, 0, 0 },   // bmc-64in1norepeat
   { 315, 0, 5, 0, 7, 0, 0 },   // 820732C / 830134C
@@ -2123,6 +2124,10 @@ void readPRG(bool readrom) {
       case 998:
       case 999:
         if ((mapper == 206) && (prgsize == 1)) {
+          write_prg_byte(0x8000, 6);
+          write_prg_byte(0x8001, 0);
+          write_prg_byte(0x8000, 7);
+          write_prg_byte(0x8001, 1);
           dumpBankPRG(0x0, 0x8000, base);
         } else {
           banks = int_pow(2, prgsize) * 2;
@@ -2601,9 +2606,11 @@ void readPRG(bool readrom) {
       case 57:
         banks = int_pow(2, prgsize);
         for (size_t i = 0; i < banks; i++) {
-          write_prg_byte(0x8800, (i & 0x07) << 5);
-          write_prg_byte(0x8000, 0);
-          dumpBankPRG(0x0, 0x4000, base);
+          for (word address = 0; address < 0x4000; address += 512) {
+            write_prg_pulsem2(0x8800, i << 5);
+            write_prg_pulsem2(0x8000, 0x80);
+            dumpPRG_pulsem2(base, address);
+          }
         }
         break;
 
@@ -3302,6 +3309,14 @@ void readPRG(bool readrom) {
         }
         break;
 
+      case 312:
+        banks = int_pow(2, prgsize);
+        for (size_t i = 0; i < banks; i++) {
+          write_prg_byte(0x6000, i);
+          dumpBankPRG(0x0, 0x4000, base);
+        }
+        break;
+
       case 314: // 1024K/2048K
         banks = int_pow(2, prgsize) / 2;
         for (size_t i = 0; i < banks; i++) {
@@ -3342,8 +3357,10 @@ void readPRG(bool readrom) {
       case 380:
         banks = int_pow(2, prgsize);
         for (size_t i = 0; i < banks; i++) {
-          write_prg_byte(0xF201 + ((i & 0x1F) << 2), 0);
-          dumpBankPRG(0x0, 0x4000, base);
+          for (word address = 0x0; address < 0x4000; address += 512) {
+            write_prg_pulsem2(0x8201 + ((i << 2) & 0x7C), 0);
+            dumpPRG_pulsem2(base, address);
+          }
         }
         break;
 
@@ -3869,9 +3886,11 @@ void readCHR(bool readrom) {
         case 57:
           banks = int_pow(2, chrsize) / 2;
           for (size_t i = 0; i < banks; i++) {
-            write_prg_byte(0x8800, i & 0x07);                  // A15-A13
-            write_prg_byte(0x8000, 0x80 | ((i & 0x08) << 3));  // A16
-            dumpBankCHR(0x0, 0x2000);
+            for (word address = 0x0; address < 0x2000; address += 512) {
+              write_prg_pulsem2(0x8800, i & 0x07);                  // A15-A13
+              write_prg_pulsem2(0x8000, 0x80 | ((i & 0x08) << 3));  // A16
+              dumpCHR_pulsem2(address);
+            }
           }
           break;
 
@@ -4497,7 +4516,7 @@ void readRAM() {
 
         case 16:  // 256-byte EEPROM 24C02
         case 159:
-          {  // 128-byte EEPROM 24C01 [Little Endian]
+          { // 128-byte EEPROM 24C01 [Little Endian]
             size_t eepsize;
             if (mapper == 159)
               eepsize = 128;
@@ -4697,7 +4716,7 @@ void writeRAM() {
 
         case 16:  // 256-byte EEPROM 24C02
         case 159:
-          {  // 128-byte EEPROM 24C01 [Little Endian]
+          { // 128-byte EEPROM 24C01 [Little Endian]
             size_t eepsize;
             if (mapper == 159)
               eepsize = 128;

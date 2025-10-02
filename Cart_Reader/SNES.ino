@@ -36,7 +36,7 @@ static const char snsMenuItem5[] PROGMEM = "Game Processor RAM";
 static const char snsMenuItem6[] PROGMEM = "Flash repro";
 #ifdef OPTION_CLOCKGEN_CALIBRATION
 static const char snsMenuItem7[] PROGMEM = "Calibrate Clock";
-static const char* const menuOptionsSNS[] PROGMEM = { snsMenuItem1, snsMenuItem2, snsMenuItem3, snsMenuItem4, snsMenuItem5, snsMenuItem6, snsMenuItem7, FSTRING_RESET };
+static const char* const menuOptionsSNS[] PROGMEM = { snsMenuItem1, snsMenuItem2, snsMenuItem3, snsMenuItem4, snsMenuItem5, snsMenuItem6, snsMenuItem7 };
 #else
 static const char* const menuOptionsSNS[] PROGMEM = { snsMenuItem1, snsMenuItem2, snsMenuItem3, snsMenuItem4, snsMenuItem5, snsMenuItem6, FSTRING_RESET };
 #endif
@@ -73,9 +73,9 @@ static const char reproCFIItem6[] PROGMEM = "1x 8MB";
 static const char* const menuOptionsReproCFI[] PROGMEM = { reproCFIItem1, reproCFIItem2, reproCFIItem3, reproCFIItem4, reproCFIItem5, reproCFIItem6, FSTRING_RESET };
 
 /* ROM file order
-static const char reproEXItem1[] PROGMEM = "ExROM (CDAB)";
-static const char reproEXItem2[] PROGMEM = "standard (ABCD)";
-static const char* const menuOptionsReproEX[] PROGMEM = { reproEXItem1, reproEXItem2, FSTRING_RESET };
+  static const char reproEXItem1[] PROGMEM = "ExROM (CDAB)";
+  static const char reproEXItem2[] PROGMEM = "standard (ABCD)";
+  static const char* const menuOptionsReproEX[] PROGMEM = { reproEXItem1, reproEXItem2, FSTRING_RESET };
 */
 
 /*boolean reproEXMenu() {
@@ -99,7 +99,7 @@ static const char* const menuOptionsReproEX[] PROGMEM = { reproEXItem1, reproEXI
       break;
   }
   return fileOrder;
-}*/
+  }*/
 
 // Setup number of flashroms
 void reproCFIMenu() {
@@ -318,13 +318,8 @@ void snsMenu() {
   // create menu with title and 7 options to choose from
   unsigned char snsCart;
   // Copy menuOptions out of progmem
-#ifdef OPTION_CLOCKGEN_CALIBRATION
-  convertPgm(menuOptionsSNS, 8);
-  snsCart = question_box(FS(FSTRING_SELECT_CART_TYPE), menuOptions, 8, 0);
-#else
   convertPgm(menuOptionsSNS, 7);
   snsCart = question_box(FS(FSTRING_SELECT_CART_TYPE), menuOptions, 7, 0);
-#endif
 
   // wait for user choice to come back from the question box menu
   switch (snsCart) {
